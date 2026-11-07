@@ -8,5 +8,8 @@ out/
 # 利用者ごとの Claude Code 設定
 .claude/settings.local.json
 
+# 生成物（scripts/manifest.ts が作る）
+distribution-manifest.json
+
 # OS
 .DS_Store

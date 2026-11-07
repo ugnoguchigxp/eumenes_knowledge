@@ -4,6 +4,8 @@
 
 状態: 計画案。今回の作業はディレクトリと本書の作成まで。ライブラリ、examples、CLI、MCP、tgz、Eumenesへの接続は未実装。以下の詳細契約は実装前に確定する。
 
+2026-11-07追記: P0の契約・採用範囲・受入値は [p0.md](p0.md) で利用者が承認し確定した。本書と p0.md が異なる場合は p0.md を優先する。Eumenesへの導入は examples と clean tgz 受入で十分に検証した後とし、P6の着手は利用者の指示を待つ。
+
 ## 1. 目的と合意済みの前提
 
 Eumenesに集約した文書を、会話・制作・coding agentから同じ知識として利用する。文書の検索、対象と関係の抽出、関連文書の探索、引用根拠の取得を担う。
@@ -70,7 +72,12 @@ LightRAGをそのまま梱包せず、必要な処理・指示を選んでTypeSc
 | --- | --- |
 | 文書からの対象・関係抽出 | 抽出プロンプトと根拠へ戻る設計を評価・部分採用する |
 | 対象・関係・文書断片を組み合わせる検索 | 必要な検索経路を比較し、効果のある範囲を移植する |
-| 文書分割 | Markdownの見出し・本文位置を保持する。分割は構造・容量の処理とし、意味上の分類はLLMが行う |
+| 文書分割 | Markdownの見出し・本文位置を保持する。分割は構造・容量の処理とし、意味上の分類はLLMが行う。埋め込みで切れ目を決める上流の分割方式は移植しない |
+| 追加抽出（gleaning） | 回数を契約のパラメータにし、既定0。採否はP3の比較で決める |
+| 記述の要約マージ | 派生データとして持ち、入力は検証済みの言及の行にする。根拠が変われば失効・再生成を予約する |
+| クエリのキーワード抽出 | 部分採用。対象・関係経由の検索経路とあわせてP3で比較する |
+| 削除・再構築 | 移植しない。上流はLLM応答キャッシュを再計算の入力にしており、欠けると外した文書由来の説明が残る。検証済みの記録を正本に独自実装する |
+| rerank・回答キャッシュ | 移植しない |
 | 保存・排他・実行 | EumenesのSQLite・writer・queue・LARM契約へ合わせて実装する |
 | UI・FastAPI・Provider管理・PDF変換・最終回答生成 | 移植しない。既存のEumenes・Doclingの機能を利用する |
 
@@ -107,6 +114,8 @@ Python版と同等の性能・精度、LightRAG全機能への互換性は約束
 共有対象・関係の根拠は文書・版・断片ごとに追跡する。一つの文書を外した際は、その寄与だけを除き、残る根拠で必要な再計算を行う。原資料を失った派生説明を残存文書の根拠へ付け替えない。
 
 現在確認したDocling文書APIは一覧・GET・PUTを提供し、削除APIや完全な変更feedの存在は確認していない。削除endpointを仮定せず、Eumenesでの明示的な利用除外と、外部の削除・権限変更の検知を区別する。404・一時的な取得失敗・部分一覧だけを根拠に、文書削除や全件照合完了と判断しない。検知と再確認の契約はP0の必須確定事項とする。
+
+Doclingの文書ライブラリ拡張（DELETE・rename/move・フォルダー・一括操作。2026-11-07時点でLARM本番は未配備）は、capabilitiesに現れた場合だけ使う。未配備の間は現行の一覧・GET・PUTで動き、mockでは両方を再現する。文書の状態と検知の契約は p0.md §2 を正本とする。
 
 ### 5.3 意味判断と機械的な処理
 
@@ -239,7 +248,7 @@ eumenes_knowledge/
 
 - [x] `/Users/y.noguchi/Code/eumenes_knowledge` を新規作成する。
 - [x] 技術親和性、データの集約、LightRAG部分利用、examples、CLI/MCP、tgz、検証と段階を本書へ記録する。
-- [ ] P0の詳細契約・採用範囲・測定条件を確定する。
+- [x] P0の詳細契約・採用範囲・測定条件を確定する（[p0.md](p0.md)、2026-11-07承認）。
 - [ ] P1〜P5を実装し、mock環境とclean tgz受入を通す。
 - [ ] Eumenes側の統合設計を合意し、P6の実装と固定・実接続・実利用受入を行う。
 
@@ -261,11 +270,16 @@ eumenes_knowledge/
 
 ### 上流の仕様・実装
 
-- [LightRAG](https://github.com/HKUDS/LightRAG)
-- [LightRAGの抽出・検索処理](https://github.com/HKUDS/LightRAG/blob/main/lightrag/operate.py)
-- [LightRAGの抽出指示](https://github.com/HKUDS/LightRAG/blob/main/lightrag/prompt.py)
-- [LightRAGの保存契約・無向グラフ](https://github.com/HKUDS/LightRAG/blob/main/lightrag/base.py)
-- [LightRAG MITライセンス](https://github.com/HKUDS/LightRAG/blob/main/LICENSE)
+LightRAGは commit `aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a`（2026-10-14、版表記1.5.8）に固定した。各ファイルの sha256 と git blob は [p0/lightrag.md](p0/lightrag.md) §0 に記録している。
+
+- [LightRAG（固定commit）](https://github.com/HKUDS/LightRAG/tree/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a)
+- [LightRAGの抽出・検索処理](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/operate.py)
+- [LightRAGの抽出指示](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/prompt.py)
+- [LightRAGの保存契約・無向グラフ](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/base.py)
+- [LightRAGの文書削除・再構築](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/lightrag.py)
+- [LightRAGの分割](https://github.com/HKUDS/LightRAG/tree/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/chunker)・[断片のschema](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/chunk_schema.py)
+- [LightRAGの断片・文書ID](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/utils_pipeline.py)・[取り込み処理](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/pipeline.py)・[補助処理](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/utils.py)
+- [LightRAG MITライセンス](https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/LICENSE)
 - [Open Knowledge Format仕様](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md)
 
-上流リンクは調査用であり、移植元の固定を意味しない。P0でcommit URLに固定する。OKFは任意の入出力形式として検討し、既存Docling文書の一括変換やfrontmatter書換えを初期要件にしない。
+OKFは任意の入出力形式として検討し、既存Docling文書の一括変換やfrontmatter書換えを初期要件にしない。

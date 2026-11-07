@@ -1,0 +1,31 @@
+[install]
+peer = false
+minimumReleaseAge = 604800
+
+[test]
+# The P0 spikes keep their own package.json and dependencies; run them from their own directories.
+pathIgnorePatterns = ["p0/**", "dist/**", "node_modules/**"]
+
+# Same [fmt] settings as Eumenes (bunfig.toml), so `bun fmt` output is identical.
+[fmt]
+useTabs = true
+tabWidth = 2
+printWidth = 80
+singleQuote = false
+jsxSingleQuote = false
+quoteProps = "as-needed"
+trailingComma = "all"
+semi = true
+arrowParens = "always"
+bracketSameLine = false
+bracketSpacing = true
+sortPackageJson = false
+ignorePatterns = [
+	"**/*.md",
+	"node_modules/**",
+	"dist/**",
+	"out/**",
+	"p0/**",
+	"src/contexts/generated.ts",
+	"examples/fixtures/**",
+]

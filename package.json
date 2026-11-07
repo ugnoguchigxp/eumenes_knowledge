@@ -1,0 +1,69 @@
+{
+	"name": "eumenes_knowledge",
+	"version": "0.1.0-dev.0",
+	"private": true,
+	"description": "Document knowledge library for Eumenes: search, entity/relation extraction, related documents and citation evidence over Docling Markdown.",
+	"license": "MIT",
+	"type": "module",
+	"sideEffects": false,
+	"packageManager": "bun@1.4.4",
+	"files": [
+		"dist",
+		"LICENSE",
+		"THIRD_PARTY_NOTICES.md",
+		"distribution-manifest.json"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./sqlite": {
+			"types": "./dist/sqlite/index.d.ts",
+			"default": "./dist/sqlite/index.js"
+		},
+		"./client": {
+			"types": "./dist/client/index.d.ts",
+			"default": "./dist/client/index.js"
+		},
+		"./cli": {
+			"types": "./dist/cli/index.d.ts",
+			"default": "./dist/cli/index.js"
+		},
+		"./mcp": {
+			"types": "./dist/mcp/index.d.ts",
+			"default": "./dist/mcp/index.js"
+		},
+		"./distribution-manifest.json": "./distribution-manifest.json",
+		"./package.json": "./package.json"
+	},
+	"bin": {
+		"eumenes-knowledge": "./dist/cli/bin.js",
+		"eumenes-knowledge-mcp": "./dist/mcp/bin.js"
+	},
+	"scripts": {
+		"typecheck": "bun check && bun check -p tsconfig.build.json",
+		"lint": "oxlint --deny-warnings",
+		"format": "bun fmt",
+		"format:check": "bun fmt --check",
+		"test": "bun test",
+		"contexts:generate": "bun scripts/generate-contexts.ts",
+		"contexts:check": "bun scripts/generate-contexts.ts --check",
+		"verify": "bun scripts/verify.ts",
+		"examples:verify": "bun scripts/examples-verify.ts",
+		"build": "bun scripts/build.ts",
+		"manifest": "bun scripts/manifest.ts",
+		"verify:imports": "bun scripts/import-probe.ts",
+		"release": "bun scripts/pack.ts",
+		"verify:package": "bun scripts/verify-package.ts"
+	},
+	"dependencies": {
+		"zod": "4.4.3"
+	},
+	"devDependencies": {
+		"@types/bun": "1.3.14",
+		"hono": "4.12.34",
+		"oxlint": "1.86.0",
+		"typescript": "7.0.2"
+	}
+}
