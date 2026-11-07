@@ -2,20 +2,22 @@ import { describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import {
 	SourceError,
-	ingestDocumentDedupeKey,
-	type CreateIngestDocumentHandler,
+	ingestNextDedupeKey,
+	type CreateIngestNextHandler,
 	type CreateSyncPageHandler,
 } from "../contracts/index.js";
 import {
 	beginScanInTransaction,
 	failScanInTransaction,
+	getChainInTransaction,
 	getDocumentInTransaction,
 	observeDocumentInTransaction,
 	readScanInSnapshot,
 	retireDocumentInTransaction,
 } from "../sqlite/index.js";
-import { createIngestDocumentHandler, createSyncPageHandler } from "./index.js";
+import { createIngestNextHandler, createSyncPageHandler } from "./index.js";
 import {
+	claimOf,
 	docId,
 	drain,
 	makeDoc,
@@ -25,9 +27,9 @@ import {
 	syncAll,
 } from "./harness.fixture.js";
 
-// The creators keep the contract's types (the ingest one only adds an optional option).
+// The creators keep the contract's types (the sync one only adds an optional option).
 const _sync: CreateSyncPageHandler = createSyncPageHandler;
-const _ingest: CreateIngestDocumentHandler = createIngestDocumentHandler;
+const _ingest: CreateIngestNextHandler = createIngestNextHandler;
 void _sync;
 void _ingest;
 
@@ -37,7 +39,7 @@ const key = (n: number) => ({
 });
 
 describe("new document", () => {
-	test("is stale with an ingest job, then current after ingest", async () => {
+	test("is stale with one chain job, then current after ingest", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "# Hello\n"));
 		const first = await runJob(env.db, env.sync, {
@@ -52,10 +54,11 @@ describe("new document", () => {
 		expect(row.generation).toBe(0);
 		expect(env.sink.calls).toHaveLength(1);
 		const job = env.sink.calls[0]!;
-		expect(job.kind).toBe("knowledge.ingest-document");
+		expect(job.kind).toBe("knowledge.ingest-next");
 		expect(job.lane).toBe("background");
 		expect(job.payloadVersion).toBe(1);
-		expect(job.dedupeKey).toBe(ingestDocumentDedupeKey(job.payload as never));
+		expect(job.payload).toEqual({ sweep: 1 });
+		expect(job.dedupeKey).toBe(ingestNextDedupeKey({ sweep: 1 }));
 
 		const { logs } = await drain(env);
 		expect(logs[0]!.settled).toBe("applied");
@@ -96,23 +99,28 @@ describe("new document", () => {
 		expect(scan.state).toBe("complete");
 	});
 
-	test("a stale document re-observed unchanged asks again under the same key", async () => {
+	test("a stale document re-observed unchanged adds no second chain job while the chain is live", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "x"));
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		expect(env.sink.calls).toHaveLength(2);
-		expect(env.sink.calls[0]!.dedupeKey).toBe(env.sink.calls[1]!.dedupeKey);
+		const scan = () =>
+			runJob(env.db, env.sync, {
+				scanId: randomUUID(),
+				cursor: null,
+				page: 0,
+			});
+		await scan();
+		const second = await scan();
+		expect(env.sink.calls).toHaveLength(1);
 		expect(env.sink.open).toHaveLength(1);
 		expect(getDocumentInTransaction(env.db, key(1))!.generation).toBe(0);
+		// The second scan still counts the document as waiting.
+		expect(second.settled).toBe("applied");
+		expect(
+			rows(
+				env.db,
+				"SELECT documents_queued FROM knowledge_scans ORDER BY rowid",
+			),
+		).toEqual([{ documents_queued: 1 }, { documents_queued: 1 }]);
 	});
 });
 
@@ -205,12 +213,15 @@ describe("version changes", () => {
 		const row = getDocumentInTransaction(env.db, key(1))!;
 		expect(row.state).toBe("current");
 		expect(row.generation).toBe(2);
+		// Nothing waits any more: the pending link finds nothing to do and stops the chain.
 		const stale = await runJob(
 			env.db,
 			env.ingest,
 			env.ingest.schema.parse(pending.payload),
 		);
 		expect(stale.prepared).toBe("stale");
+		expect(getChainInTransaction(env.db).openSweep).toBeNull();
+		expect(env.inference.calls).toHaveLength(1);
 	});
 });
 
@@ -259,7 +270,7 @@ describe("unavailable is not removal", () => {
 		const row = getDocumentInTransaction(env.db, key(1))!;
 		expect(row.state).toBe("stale");
 		expect(row.generation).toBe(2);
-		expect(env.sink.open).toHaveLength(1);
+		expect(env.sink.open.map((j) => j.kind)).toEqual(["knowledge.ingest-next"]);
 	});
 
 	test("a new document outside the allowed areas is unavailable and queues nothing", async () => {
@@ -322,11 +333,14 @@ describe("unavailable is not removal", () => {
 		retireDocumentInTransaction(env.db, key(1), "excluded", env.clock.t);
 		retireDocumentInTransaction(env.db, key(2), "removed", env.clock.t);
 		expect(getDocumentInTransaction(env.db, key(1))!.generation).toBe(1);
-		const calls = env.sink.calls.length;
+		const ingests = env.inference.calls.length;
 		env.source.put(makeDoc(1, "one changed", { title: "T1" }));
 		env.source.put(makeDoc(2, "two changed", { title: "T2" }));
 		await syncAll(env);
-		expect(env.sink.calls).toHaveLength(calls);
+		// The withdrawn versions are cleaned up, but nothing is read or extracted again.
+		expect(env.inference.calls).toHaveLength(ingests);
+		expect(env.source.readCalls).toBe(2);
+		expect(rows(env.db, "SELECT 1 FROM knowledge_versions")).toHaveLength(0);
 		const a = getDocumentInTransaction(env.db, key(1))!;
 		const b = getDocumentInTransaction(env.db, key(2))!;
 		expect([a.state, b.state]).toEqual(["excluded", "removed"]);
@@ -349,7 +363,11 @@ describe("scans", () => {
 			errorCode: null,
 		});
 		expect(scan.finishedAt).not.toBeNull();
-		expect(rest.logs.every((l) => l.settled === "applied")).toBe(true);
+		expect(
+			rest.logs
+				.filter((l) => l.settled !== undefined)
+				.every((l) => l.settled === "applied"),
+		).toBe(true);
 		expect(
 			rows(env.db, "SELECT 1 FROM knowledge_documents WHERE state = 'current'"),
 		).toHaveLength(5);
@@ -412,13 +430,7 @@ describe("scans", () => {
 			page: 0,
 		});
 		expect(log.prepared).toBe("stale");
-		const ing = await runJob(env.db, env.ingest, {
-			sourceNamespace: "docling",
-			documentId: docId(1),
-			markdownSha256: "a".repeat(64),
-			generation: 0,
-			retry: 0,
-		});
+		const ing = await runJob(env.db, env.ingest, { sweep: 1 });
 		expect(ing.prepared).toBe("stale");
 	});
 
@@ -553,69 +565,51 @@ describe("scans", () => {
 });
 
 describe("late and rolled-back results", () => {
-	test("a result prepared before a newer observation is stale and writes nothing", async () => {
+	const scanPage0 = (env: ReturnType<typeof makeEnv>) =>
+		runJob(env.db, env.sync, { scanId: randomUUID(), cursor: null, page: 0 });
+
+	test("a result prepared before a newer observation is stale and publishes nothing", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "v1"));
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		// Observe v2 between execute and settle.
-		const env2 = makeEnv();
-		env2.source.put(makeDoc(1, "v1"));
-		await runJob(env2.db, env2.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		const p2 = env2.ingest.schema.parse(env2.sink.open.shift()!.payload);
-		const claim = {
-			jobId: "i",
-			kind: "knowledge.ingest-document" as const,
-			payloadVersion: 1,
-			payload: p2,
-			attempt: 1,
-			maxAttempts: 3,
-			deadlineAtMs: null,
-		};
-		const input = env2.db.transaction(() =>
-			env2.ingest.prepareInTransaction(env2.db, claim),
+		await scanPage0(env);
+		const payload = env.ingest.schema.parse(env.sink.open.shift()!.payload);
+		const claim = claimOf(env.ingest.kind, payload);
+		const prepared = env.db.transaction(() =>
+			env.ingest.prepareInTransaction(env.db, claim),
 		)();
-		expect(input.status).toBe("ready");
-		if (input.status !== "ready") return;
-		const result = await env2.ingest.execute(input.input, {
+		expect(prepared.status).toBe("ready");
+		if (prepared.status !== "ready") return;
+		const result = await env.ingest.execute(prepared.input, {
 			signal: new AbortController().signal,
 			jobId: "i",
 			attempt: 1,
 		});
-		env2.source.put(makeDoc(1, "v2 changed"));
-		await runJob(env2.db, env2.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		expect(getDocumentInTransaction(env2.db, key(1))!.generation).toBe(1);
-		const settled = env2.db.transaction(() =>
-			env2.ingest.settleInTransaction(env2.db, claim, input.input, {
+		// v2 is observed between execute and settle.
+		env.source.put(makeDoc(1, "v2 changed"));
+		await scanPage0(env);
+		expect(getDocumentInTransaction(env.db, key(1))!.generation).toBe(1);
+		const settled = env.db.transaction(() =>
+			env.ingest.settleInTransaction(env.db, claim, prepared.input, {
 				type: "success",
 				result,
 			}),
 		)();
 		expect(settled).toBe("stale");
-		const row = getDocumentInTransaction(env2.db, key(1))!;
+		const row = getDocumentInTransaction(env.db, key(1))!;
 		expect(row.state).toBe("stale");
 		expect(row.appliedMarkdownSha256).toBeNull();
+		expect(row.publishedVersionId).toBeNull();
+		// The row moved on, so the old attempt is not counted against the new version.
+		expect(row.ingestRetry).toBe(0);
+		// The staged version was abandoned, and the settle's cleanup already deleted its rows.
+		expect(rows(env.db, "SELECT 1 FROM knowledge_versions")).toHaveLength(0);
+		expect(rows(env.db, "SELECT 1 FROM knowledge_fragments")).toHaveLength(0);
 	});
 
 	test("a superseded read is not applied", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "v1"));
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
+		await scanPage0(env);
 		// The source already holds v2 while the registry still waits for v1.
 		env.source.docs.set(docId(1), makeDoc(1, "v2 changed"));
 		const { logs } = await drain(env);
@@ -627,43 +621,35 @@ describe("late and rolled-back results", () => {
 		const row = getDocumentInTransaction(env.db, key(1))!;
 		expect(row.state).toBe("stale");
 		expect(row.appliedMarkdownSha256).toBeNull();
+		expect(env.inference.calls).toHaveLength(0);
 	});
 
 	test("a binding change after prepare makes the ingest result stale", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "v1"));
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
+		await scanPage0(env);
 		const payload = env.ingest.schema.parse(env.sink.open.shift()!.payload);
 		const log = await runJob(env.db, env.ingest, payload, () => {
 			env.source.currentBinding = "binding-2";
 		});
 		expect(log.settled).toBe("stale");
-		expect(getDocumentInTransaction(env.db, key(1))!.state).toBe("stale");
+		const row = getDocumentInTransaction(env.db, key(1))!;
+		expect(row.state).toBe("stale");
+		expect(row.publishedVersionId).toBeNull();
+		// The staged version was abandoned, and the settle's cleanup already deleted its rows.
+		expect(rows(env.db, "SELECT 1 FROM knowledge_versions")).toHaveLength(0);
+		expect(rows(env.db, "SELECT 1 FROM knowledge_fragments")).toHaveLength(0);
 	});
 
-	test("an exception while settling rolls the whole transaction back", async () => {
+	test("an exception while settling a scan page rolls the whole transaction back", async () => {
 		const env = makeEnv();
 		env.source.pageSize = 2;
 		for (let i = 1; i <= 3; i++) env.source.put(makeDoc(i, `b${i}`));
 		const scanId = randomUUID();
-		// Fail on the second ingest job: the first insert and the first enqueue must be undone.
-		let seen = 0;
-		env.sink.throwOn = (job) =>
-			job.kind === "knowledge.ingest-document" && ++seen === 2;
+		// The next page's job is enqueued last: its failure must undo the observations and the chain.
+		env.sink.throwOn = (job) => job.kind === "knowledge.sync-page";
 		const payload = { scanId, cursor: null, page: 0 };
-		const claim = {
-			jobId: "j",
-			kind: "knowledge.sync-page" as const,
-			payloadVersion: 1,
-			payload,
-			attempt: 1,
-			maxAttempts: 1,
-			deadlineAtMs: null,
-		};
+		const claim = claimOf(env.sync.kind, payload);
 		const prepared = env.db.transaction(() =>
 			env.sync.prepareInTransaction(env.db, claim),
 		)();
@@ -683,6 +669,7 @@ describe("late and rolled-back results", () => {
 		).toThrow("sink exploded");
 		expect(rows(env.db, "SELECT 1 FROM knowledge_documents")).toHaveLength(0);
 		expect(rows(env.db, "SELECT 1 FROM knowledge_scan_pages")).toHaveLength(0);
+		expect(getChainInTransaction(env.db).openSweep).toBeNull();
 		expect(readScanInSnapshot(env.db, scanId)).toMatchObject({
 			state: "running",
 			pagesSettled: 0,
@@ -690,143 +677,137 @@ describe("late and rolled-back results", () => {
 		});
 		// Re-running after the failure continues without duplicates.
 		env.sink.throwOn = null;
+		env.sink.calls = [];
 		env.sink.open = [];
+		// The rolled-back enqueues left nothing in the host queue, dedupe keys included.
+		env.sink.used.clear();
 		const again = await runJob(env.db, env.sync, payload);
 		expect(again.settled).toBe("applied");
 		expect(rows(env.db, "SELECT 1 FROM knowledge_documents")).toHaveLength(2);
-		expect(env.sink.open.map((j) => j.kind)).toContain("knowledge.sync-page");
+		expect(env.sink.open.map((j) => j.kind).sort()).toEqual([
+			"knowledge.ingest-next",
+			"knowledge.sync-page",
+		]);
 	});
 });
 
 describe("ingest retry counter", () => {
-	const payloadOf = (job: { payload: unknown }) =>
-		job.payload as {
-			retry: number;
-			generation: number;
-		};
+	const scanPage0 = (env: ReturnType<typeof makeEnv>) =>
+		runJob(env.db, env.sync, { scanId: randomUUID(), cursor: null, page: 0 });
 
-	test("a final failure moves the next scan to a new key; an unfinished one keeps the key", async () => {
+	test("a final failure advances the counter and the chain moves on; the next scan restarts a stopped chain", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "body"));
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		const first = env.sink.calls[0]!;
-		expect(payloadOf(first).retry).toBe(0);
+		await scanPage0(env);
+		expect(env.sink.calls[0]!.payload).toEqual({ sweep: 1 });
+		// A re-scan while the link is open adds nothing.
+		await scanPage0(env);
+		expect(env.sink.calls).toHaveLength(1);
 
-		// Re-scan while the ingest is still open: same payload, same key.
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		expect(env.sink.calls[1]!.dedupeKey).toBe(first.dedupeKey);
-		expect(env.sink.open).toHaveLength(1);
-
-		// The ingest fails for good.
+		// The ingest fails for good (a non-transient source error).
 		env.source.readErrors.set(docId(1), "invalid_response");
-		const { logs } = await drain(env);
-		expect(logs[0]!.error).toBeInstanceOf(SourceError);
-		expect(logs[0]!.settled).toBe("applied");
-		const row = getDocumentInTransaction(env.db, key(1))!;
+		const first = await runJob(
+			env.db,
+			env.ingest,
+			env.ingest.schema.parse(env.sink.open.shift()!.payload),
+		);
+		expect(first.error).toBeInstanceOf(SourceError);
+		expect(first.settled).toBe("applied");
+		let row = getDocumentInTransaction(env.db, key(1))!;
 		expect(row.ingestRetry).toBe(1);
 		expect(row.state).toBe("stale");
 		expect(row.generation).toBe(0);
+		// The document is below the limit, so the chain went on with the next number.
+		expect(env.sink.open.map((j) => j.payload)).toEqual([{ sweep: 2 }]);
+		// It fails until the limit; then nothing waits and the chain stops.
+		const rest = await drain(env);
+		expect(rest.logs.filter((l) => l.error !== undefined)).toHaveLength(2);
+		row = getDocumentInTransaction(env.db, key(1))!;
+		expect(row.ingestRetry).toBe(3);
+		expect(getChainInTransaction(env.db).openSweep).toBeNull();
 
-		// The next scan queues the same version under a new key.
+		// The limit is reached: further scans open no chain until the version changes.
+		const calls = env.sink.calls.length;
 		env.source.readErrors.clear();
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		const again = env.sink.calls.at(-1)!;
-		expect(payloadOf(again).retry).toBe(1);
-		expect(again.dedupeKey).not.toBe(first.dedupeKey);
-		await drain(env);
+		await scanPage0(env);
+		expect(env.sink.calls).toHaveLength(calls);
+		env.source.put(makeDoc(1, "body, edited"));
+		await syncAll(env);
 		expect(getDocumentInTransaction(env.db, key(1))!.state).toBe("current");
-	});
-
-	test("a job with an old counter is stale at prepare", async () => {
-		const env = makeEnv();
-		env.source.put(makeDoc(1, "body"));
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
-		const old = env.ingest.schema.parse(env.sink.open.shift()!.payload);
-		env.source.readErrors.set(docId(1), "invalid_response");
-		await runJob(env.db, env.ingest, old);
-		expect(getDocumentInTransaction(env.db, key(1))!.ingestRetry).toBe(1);
-		env.source.readErrors.clear();
-		const log = await runJob(env.db, env.ingest, old);
-		expect(log.prepared).toBe("stale");
-		expect(getDocumentInTransaction(env.db, key(1))!.state).toBe("stale");
 	});
 
 	test("a retry outcome does not advance the counter", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "body"));
-		await runJob(env.db, env.sync, {
-			scanId: randomUUID(),
-			cursor: null,
-			page: 0,
-		});
+		await scanPage0(env);
 		env.source.readErrors.set(docId(1), "unavailable");
-		await drain(env);
+		const { logs } = await drain(env);
+		expect(logs[0]!.settled).toBe("applied");
 		expect(getDocumentInTransaction(env.db, key(1))!.ingestRetry).toBe(0);
+		// No successor was queued: the host reruns the same job.
+		expect(env.sink.open).toHaveLength(0);
+		expect(getChainInTransaction(env.db).openSweep).toBe(1);
+		expect(env.sink.calls).toHaveLength(1);
 	});
 
-	for (const outcome of [
-		{ type: "expired" },
-		{ type: "interrupted", errorCode: "restart" },
-		{ type: "failed", errorCode: "boom" },
+	for (const [outcome, counted] of [
+		[{ type: "expired" }, false],
+		[{ type: "interrupted", errorCode: "restart" }, false],
+		[{ type: "failed", errorCode: "boom" }, false],
+		[{ type: "failed", errorCode: "digest_mismatch" }, true],
 	] as const) {
-		test(`${outcome.type} advances only while the row still matches`, async () => {
+		test(`${outcome.type}${"errorCode" in outcome ? ` (${outcome.errorCode})` : ""} ${counted ? "advances the counter" : "delays the document"} only while the row still matches`, async () => {
 			const env = makeEnv();
 			env.source.put(makeDoc(1, "body"));
-			await runJob(env.db, env.sync, {
-				scanId: randomUUID(),
-				cursor: null,
-				page: 0,
-			});
+			await scanPage0(env);
 			const payload = env.ingest.schema.parse(env.sink.open.shift()!.payload);
-			const claim = {
-				jobId: "i",
-				kind: "knowledge.ingest-document" as const,
-				payloadVersion: 1,
-				payload,
-				attempt: 1,
-				maxAttempts: 3,
-				deadlineAtMs: null,
-			};
-			const settle = () =>
-				env.db.transaction(() =>
-					env.ingest.settleInTransaction(env.db, claim, null, outcome),
-				)();
+			const claim = claimOf(env.ingest.kind, payload);
+			const prepared = env.db.transaction(() =>
+				env.ingest.prepareInTransaction(env.db, claim),
+			)();
+			if (prepared.status !== "ready") throw new Error("not ready");
 			// The version moved on first: nothing is counted.
 			env.source.put(makeDoc(1, "newer body"));
-			await runJob(env.db, env.sync, {
-				scanId: randomUUID(),
-				cursor: null,
-				page: 0,
+			await scanPage0(env);
+			expect(
+				env.db.transaction(() =>
+					env.ingest.settleInTransaction(
+						env.db,
+						claim,
+						prepared.input,
+						outcome,
+					),
+				)(),
+			).toBe("applied");
+			expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
+				ingestRetry: 0,
+				transientFailures: 0,
+				ingestNotBefore: 0,
 			});
-			expect(settle()).toBe("applied");
-			expect(getDocumentInTransaction(env.db, key(1))!.ingestRetry).toBe(0);
-			// A job for the current generation is counted.
-			const fresh = env.ingest.schema.parse(env.sink.open.at(-1)!.payload);
+
+			// A link prepared for the current generation is counted (the content's fault) or delayed.
+			const next = env.sink.open.shift()!;
+			const claim2 = claimOf(
+				env.ingest.kind,
+				env.ingest.schema.parse(next.payload),
+			);
+			const prepared2 = env.db.transaction(() =>
+				env.ingest.prepareInTransaction(env.db, claim2),
+			)();
+			if (prepared2.status !== "ready") throw new Error("not ready");
 			env.db.transaction(() =>
 				env.ingest.settleInTransaction(
 					env.db,
-					{ ...claim, payload: fresh },
-					null,
+					claim2,
+					prepared2.input,
 					outcome,
 				),
 			)();
-			expect(getDocumentInTransaction(env.db, key(1))!.ingestRetry).toBe(1);
+			expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
+				ingestRetry: counted ? 1 : 0,
+				transientFailures: counted ? 0 : 1,
+				ingestNotBefore: counted ? 0 : env.clock.t + 300_000,
+			});
 		});
 	}
 });
@@ -882,7 +863,7 @@ describe("superseding scans", () => {
 });
 
 describe("integration findings (p1.md §6 scenarios)", () => {
-	test("a cancelled ingest advances the retry counter, so the next scan can queue the version again", async () => {
+	test("a cancelled link delays the document and stops the chain; the first scan after the wait restarts it", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "# v1\n"));
 		await runJob(env.db, env.sync, {
@@ -891,16 +872,34 @@ describe("integration findings (p1.md §6 scenarios)", () => {
 			page: 0,
 		});
 		const queued = env.sink.calls.at(-1)!;
+		const payload = env.ingest.schema.parse(queued.payload);
+		env.db.transaction(() =>
+			env.ingest.prepareInTransaction(
+				env.db,
+				claimOf(env.ingest.kind, payload),
+			),
+		)();
 		env.db.transaction(() =>
 			env.ingest.cancelInTransaction(
 				env.db,
-				{ jobId: "job-1", payload: queued.payload as never },
+				{ jobId: "job-1", payload },
 				"user_cancelled",
 			),
 		)();
 		const row = getDocumentInTransaction(env.db, key(1))!;
 		expect(row.state).toBe("stale");
-		expect(row.ingestRetry).toBe(1);
+		expect(row.ingestRetry).toBe(0);
+		expect(row.transientFailures).toBe(1);
+		expect(getChainInTransaction(env.db).openSweep).toBeNull();
+		const calls = env.sink.calls.length;
+		await runJob(env.db, env.sync, {
+			scanId: randomUUID(),
+			cursor: null,
+			page: 0,
+		});
+		// Still waiting: the scan opens no chain.
+		expect(env.sink.calls).toHaveLength(calls);
+		env.clock.t += 5 * 60 * 1000;
 		await runJob(env.db, env.sync, {
 			scanId: randomUUID(),
 			cursor: null,
@@ -908,7 +907,7 @@ describe("integration findings (p1.md §6 scenarios)", () => {
 		});
 		const next = env.sink.calls.at(-1)!;
 		expect(next.dedupeKey).not.toBe(queued.dedupeKey);
-		expect((next.payload as { retry: number }).retry).toBe(1);
+		expect(next.payload).toEqual({ sweep: 2 });
 	});
 
 	test("documents in a namespace the listing no longer allows become unavailable, with a new generation", async () => {
@@ -929,6 +928,8 @@ describe("integration findings (p1.md §6 scenarios)", () => {
 		expect(moved.state).toBe("unavailable");
 		expect(moved.generation).toBe(generation + 1);
 		expect(moved.appliedMarkdownSha256).not.toBeNull();
+		// The published version is kept: unavailable is not a deletion.
+		expect(moved.publishedVersionId).not.toBeNull();
 
 		// Allowed again and listed again with the same version: current again.
 		env.source.namespaces = ["wiki", "other"];
@@ -938,84 +939,137 @@ describe("integration findings (p1.md §6 scenarios)", () => {
 	});
 });
 
-describe("an ingest that ends without applying moves the next scan to a new key", () => {
+describe("an ingest that ends without applying: counted, delayed or skipped", () => {
 	const scanPage0 = (env: ReturnType<typeof makeEnv>) =>
 		runJob(env.db, env.sync, { scanId: randomUUID(), cursor: null, page: 0 });
 	const takeIngest = (env: ReturnType<typeof makeEnv>) =>
 		env.ingest.schema.parse(env.sink.open.shift()!.payload);
 
 	test("a binding change at settle", async () => {
-		const env = makeEnv();
+		const env = makeEnv({ maxUnappliedAttempts: 1 });
 		env.source.put(makeDoc(1, "body"));
 		await scanPage0(env);
-		const first = env.sink.calls.at(-1)!;
-		const payload = takeIngest(env);
-		const log = await runJob(env.db, env.ingest, payload, () => {
+		const log = await runJob(env.db, env.ingest, takeIngest(env), () => {
 			env.source.currentBinding = "binding-2";
 		});
 		expect(log.settled).toBe("stale");
 		env.source.currentBinding = "binding-1";
+		// A changed connection is no fault of the content: delayed, not counted.
 		expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
 			state: "stale",
-			ingestRetry: 1,
+			ingestRetry: 0,
+			transientFailures: 1,
 			generation: 0,
 		});
-		await syncAll(env);
-		expect(env.sink.calls.at(-1)!.dedupeKey).not.toBe(first.dedupeKey);
-		expect(getDocumentInTransaction(env.db, key(1))!.state).toBe("current");
 	});
 
 	test("superseded: the source already holds a newer version, then the listing shows it", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "v1"));
 		await scanPage0(env);
-		const first = env.sink.calls.at(-1)!;
 		env.source.docs.set(docId(1), makeDoc(1, "v2 changed"));
-		const { logs } = await drain(env);
-		expect(logs[0]!.settled).toBe("stale");
-		expect(getDocumentInTransaction(env.db, key(1))!.ingestRetry).toBe(1);
+		const log = await runJob(env.db, env.ingest, takeIngest(env));
+		expect(log.settled).toBe("stale");
+		// Not an attempt that failed: nothing counted, but the document is marked and not picked.
+		expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
+			ingestRetry: 0,
+			transientFailures: 0,
+			supersededAt: env.clock.t,
+		});
+		expect(env.sink.open).toHaveLength(0);
+		expect(getChainInTransaction(env.db).openSweep).toBeNull();
 		// The listing now shows the new version.
 		env.source.put(makeDoc(1, "v2 changed"));
 		await syncAll(env);
-		expect(env.sink.calls.at(-1)!.dedupeKey).not.toBe(first.dedupeKey);
 		const row = getDocumentInTransaction(env.db, key(1))!;
 		expect(row.state).toBe("current");
 		expect(row.generation).toBe(1);
 	});
 
-	test("a document read from another namespace than the registry row", async () => {
-		const env = makeEnv();
+	test("a document that only moved to another namespace is current again after the next scan, however often it was superseded", async () => {
+		// With a limit of 1, the old rule (superseded counts) would have skipped it for good.
+		const env = makeEnv({ maxUnappliedAttempts: 1 });
 		env.source.namespaces = ["wiki", "other"];
 		env.source.put(makeDoc(1, "body"));
 		await scanPage0(env);
-		const first = env.sink.calls.at(-1)!;
+		// The source moves the document before the scan notices; the listing still says "wiki".
 		env.source.docs.set(docId(1), makeDoc(1, "body", { namespace: "other" }));
-		const log = await runJob(env.db, env.ingest, takeIngest(env));
-		expect(log.settled).toBe("stale");
-		expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
-			state: "stale",
-			namespace: "wiki",
-			ingestRetry: 1,
-		});
-		env.source.docs.set(docId(1), makeDoc(1, "body"));
+		for (let round = 0; round < 3; round++) {
+			const log = await runJob(env.db, env.ingest, takeIngest(env));
+			expect(log.settled).toBe("stale");
+			expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
+				state: "stale",
+				namespace: "wiki",
+				ingestRetry: 0,
+			});
+			// Nothing is picked until the next scan observes the document.
+			expect(env.sink.open).toHaveLength(0);
+			expect(getChainInTransaction(env.db).openSweep).toBeNull();
+			await scanPage0(env);
+			expect(env.sink.open).toHaveLength(1);
+		}
+		// The listing catches up: another namespace, same sha. The counter restarts from zero.
+		env.source.put(makeDoc(1, "body", { namespace: "other" }));
 		await syncAll(env);
-		expect(env.sink.calls.at(-1)!.dedupeKey).not.toBe(first.dedupeKey);
-		expect(getDocumentInTransaction(env.db, key(1))!.state).toBe("current");
+		expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
+			state: "current",
+			namespace: "other",
+			ingestRetry: 0,
+			supersededAt: null,
+		});
 	});
 
-	test("prepare is stale because the source is unconfigured while the row still matches", async () => {
+	test("observing another namespace resets the counter like observing another sha", () => {
+		const env = makeEnv();
+		const doc = makeDoc(1, "body");
+		const { markdown: _m, ...summary } = doc;
+		env.db.transaction(() =>
+			observeDocumentInTransaction(env.db, summary, ["wiki", "other"], 100),
+		)();
+		env.db
+			.query(
+				"UPDATE knowledge_documents SET ingest_retry = 2, transient_failures = 3, ingest_not_before = 999",
+			)
+			.run();
+		// The same version and namespace again: the counters stay.
+		const same = env.db.transaction(() =>
+			observeDocumentInTransaction(env.db, summary, ["wiki", "other"], 200),
+		)();
+		expect(same.retry).toBe(2);
+		expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
+			ingestRetry: 2,
+			transientFailures: 3,
+			ingestNotBefore: 999,
+		});
+		const moved = env.db.transaction(() =>
+			observeDocumentInTransaction(
+				env.db,
+				{ ...summary, namespace: "other" },
+				["wiki", "other"],
+				300,
+			),
+		)();
+		expect(moved.retry).toBe(0);
+		expect(getDocumentInTransaction(env.db, key(1))).toMatchObject({
+			namespace: "other",
+			ingestRetry: 0,
+			transientFailures: 0,
+			ingestNotBefore: 0,
+		});
+	});
+
+	test("prepare is stale because the source is unconfigured; the chain stops without counting", async () => {
 		const env = makeEnv();
 		env.source.put(makeDoc(1, "body"));
 		await scanPage0(env);
-		const first = env.sink.calls.at(-1)!;
 		const payload = takeIngest(env);
 		env.source.currentBinding = null;
 		const log = await runJob(env.db, env.ingest, payload);
 		expect(log.prepared).toBe("stale");
-		expect(getDocumentInTransaction(env.db, key(1))!.ingestRetry).toBe(1);
+		expect(getDocumentInTransaction(env.db, key(1))!.ingestRetry).toBe(0);
+		expect(getChainInTransaction(env.db).openSweep).toBeNull();
 		env.source.currentBinding = "binding-1";
 		await syncAll(env);
-		expect(env.sink.calls.at(-1)!.dedupeKey).not.toBe(first.dedupeKey);
 		expect(getDocumentInTransaction(env.db, key(1))!.state).toBe("current");
 	});
 
@@ -1036,8 +1090,7 @@ describe("an ingest that ends without applying moves the next scan to a new key"
 			generation: 1,
 			ingestRetry: 0,
 		});
-		// The old job's prepare is superseded and writes nothing either.
-		env.source.currentBinding = null;
+		// The old link is no longer the open one: its prepare is stale and writes nothing.
 		const again = await runJob(env.db, env.ingest, old);
 		expect(again.prepared).toBe("stale");
 		expect(getDocumentInTransaction(env.db, key(1))!.ingestRetry).toBe(0);

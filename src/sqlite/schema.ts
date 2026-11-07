@@ -44,4 +44,150 @@ CREATE TABLE knowledge_scan_pages (
  settled_at INTEGER NOT NULL,
  PRIMARY KEY (scan_id, page)
 );`,
+	// P2: versions, fragments, indexes, vectors, mentions, evidence and the ingest chain.
+	// Everything derived hangs off `version_id`; a document reads only its `published_version_id`.
+	`ALTER TABLE knowledge_documents ADD COLUMN published_version_id INTEGER;
+-- Not picked before this time (epoch ms): set after a temporary ingest failure (p2.md 3).
+ALTER TABLE knowledge_documents ADD COLUMN ingest_not_before INTEGER NOT NULL DEFAULT 0 CHECK (ingest_not_before >= 0);
+-- Consecutive temporary failures of the observed version; the next delay doubles with it.
+ALTER TABLE knowledge_documents ADD COLUMN transient_failures INTEGER NOT NULL DEFAULT 0 CHECK (transient_failures >= 0);
+-- An ingest read another version: not picked again until the next observation of the document.
+ALTER TABLE knowledge_documents ADD COLUMN superseded_at INTEGER;
+CREATE INDEX knowledge_documents_published ON knowledge_documents(published_version_id) WHERE published_version_id IS NOT NULL;
+CREATE INDEX knowledge_documents_pick ON knowledge_documents(state, ingest_retry, last_observed_at, document_id);
+CREATE TABLE knowledge_embedding_spaces (
+ space_key TEXT PRIMARY KEY,
+ model_id TEXT NOT NULL,
+ revision TEXT NOT NULL,
+ artifact_digest TEXT NOT NULL,
+ dimension INTEGER NOT NULL CHECK (dimension > 0),
+ query_prefix TEXT NOT NULL,
+ passage_prefix TEXT NOT NULL
+);
+CREATE TABLE knowledge_versions (
+ version_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ source_namespace TEXT NOT NULL,
+ document_id TEXT NOT NULL,
+ markdown_sha256 TEXT NOT NULL,
+ generation INTEGER NOT NULL CHECK (generation >= 0),
+ ingest_retry INTEGER NOT NULL CHECK (ingest_retry >= 0),
+ namespace TEXT NOT NULL,
+ byte_length INTEGER NOT NULL CHECK (byte_length >= 0),
+ state TEXT NOT NULL CHECK (state IN ('staging','published','retired','abandoned')),
+ expected_fragments INTEGER NOT NULL CHECK (expected_fragments >= 0),
+ fragments_written INTEGER NOT NULL DEFAULT 0 CHECK (fragments_written >= 0),
+ vectors_written INTEGER NOT NULL DEFAULT 0 CHECK (vectors_written >= 0),
+ extractions_written INTEGER NOT NULL DEFAULT 0 CHECK (extractions_written >= 0),
+ space_key TEXT REFERENCES knowledge_embedding_spaces(space_key),
+ instruction_digest TEXT NOT NULL,
+ extraction_partial INTEGER NOT NULL DEFAULT 0 CHECK (extraction_partial IN (0, 1)),
+ created_at INTEGER NOT NULL,
+ published_at INTEGER,
+ retired_at INTEGER
+);
+CREATE INDEX knowledge_versions_document ON knowledge_versions(source_namespace, document_id, state);
+CREATE INDEX knowledge_versions_state ON knowledge_versions(state, version_id);
+CREATE TABLE knowledge_fragments (
+ fragment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
+ ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
+ byte_start INTEGER NOT NULL CHECK (byte_start >= 0),
+ byte_end INTEGER NOT NULL,
+ heading_path TEXT NOT NULL,
+ text TEXT NOT NULL,
+ text_sha256 TEXT NOT NULL,
+ CHECK (byte_end > byte_start),
+ UNIQUE (version_id, ordinal)
+);
+CREATE VIRTUAL TABLE knowledge_fragment_fts USING fts5(
+ search_text,
+ version_id UNINDEXED,
+ ordinal UNINDEXED,
+ tokenize = 'trigram'
+);
+CREATE TABLE knowledge_vectors (
+ vector_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ space_key TEXT NOT NULL REFERENCES knowledge_embedding_spaces(space_key),
+ version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
+ ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
+ dimension INTEGER NOT NULL CHECK (dimension > 0),
+ vector BLOB NOT NULL,
+ CHECK (length(vector) = dimension * 4),
+ UNIQUE (space_key, version_id, ordinal)
+);
+CREATE INDEX knowledge_vectors_version ON knowledge_vectors(version_id);
+CREATE TABLE knowledge_extractions (
+ extraction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
+ ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
+ status TEXT NOT NULL CHECK (status IN ('ok','failed')),
+ error_code TEXT,
+ model TEXT,
+ dropped_count INTEGER NOT NULL DEFAULT 0 CHECK (dropped_count >= 0),
+ dropped_json TEXT NOT NULL DEFAULT '[]',
+ CHECK ((status = 'failed') = (error_code IS NOT NULL)),
+ UNIQUE (version_id, ordinal)
+);
+CREATE TABLE knowledge_entity_mentions (
+ entity_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
+ fragment_ordinal INTEGER NOT NULL CHECK (fragment_ordinal >= 0),
+ local_id TEXT NOT NULL,
+ name TEXT NOT NULL,
+ type TEXT NOT NULL,
+ description TEXT NOT NULL,
+ UNIQUE (version_id, fragment_ordinal, local_id)
+);
+CREATE TABLE knowledge_relation_mentions (
+ relation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
+ fragment_ordinal INTEGER NOT NULL CHECK (fragment_ordinal >= 0),
+ local_id TEXT NOT NULL,
+ source_local_id TEXT NOT NULL,
+ target_local_id TEXT NOT NULL,
+ directed INTEGER NOT NULL CHECK (directed IN (0, 1)),
+ relation TEXT NOT NULL,
+ description TEXT NOT NULL,
+ keywords_json TEXT NOT NULL,
+ qualifier_negated INTEGER NOT NULL CHECK (qualifier_negated IN (0, 1)),
+ qualifier_condition TEXT,
+ qualifier_certainty TEXT NOT NULL CHECK (qualifier_certainty IN ('stated','uncertain','hypothetical')),
+ UNIQUE (version_id, fragment_ordinal, local_id)
+);
+CREATE TABLE knowledge_evidence (
+ evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
+ subject_kind TEXT NOT NULL CHECK (subject_kind IN ('entity','relation')),
+ subject_id INTEGER NOT NULL,
+ position INTEGER NOT NULL CHECK (position >= 0),
+ fragment_ordinal INTEGER NOT NULL CHECK (fragment_ordinal >= 0),
+ byte_start INTEGER NOT NULL CHECK (byte_start >= 0),
+ byte_end INTEGER NOT NULL,
+ quote_sha256 TEXT NOT NULL,
+ ambiguous INTEGER NOT NULL CHECK (ambiguous IN (0, 1)),
+ CHECK (byte_end > byte_start),
+ UNIQUE (subject_kind, subject_id, position)
+);
+CREATE INDEX knowledge_evidence_version ON knowledge_evidence(version_id);
+CREATE TABLE knowledge_ingest_chain (
+ id INTEGER PRIMARY KEY CHECK (id = 1),
+ next_sweep INTEGER NOT NULL CHECK (next_sweep >= 1),
+ open_sweep INTEGER,
+ opened_at INTEGER,
+ advanced_at INTEGER,
+ active_source_namespace TEXT,
+ active_document_id TEXT,
+ active_markdown_sha256 TEXT,
+ active_generation INTEGER,
+ active_retry INTEGER,
+ active_namespace TEXT,
+ CHECK ((open_sweep IS NULL) = (advanced_at IS NULL)),
+ CHECK (open_sweep IS NOT NULL OR active_document_id IS NULL),
+ CHECK ((active_document_id IS NULL) = (active_source_namespace IS NULL)
+  AND (active_document_id IS NULL) = (active_markdown_sha256 IS NULL)
+  AND (active_document_id IS NULL) = (active_generation IS NULL)
+  AND (active_document_id IS NULL) = (active_retry IS NULL)
+  AND (active_document_id IS NULL) = (active_namespace IS NULL))
+);
+INSERT INTO knowledge_ingest_chain (id, next_sweep) VALUES (1, 1);`,
 ];

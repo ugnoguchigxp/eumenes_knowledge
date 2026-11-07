@@ -1,9 +1,4 @@
 import { z } from "zod";
-import {
-	doclingDocumentIdSchema,
-	sha256HexSchema,
-	sourceNamespaceSchema,
-} from "./documents.js";
 
 /**
  * Job definitions in the shape of Eumenes' queue `HandlerDefinition` (structural; nothing is
@@ -37,7 +32,8 @@ export interface Tx {
 
 export const KNOWLEDGE_JOB_KINDS = {
 	syncPage: "knowledge.sync-page",
-	ingestDocument: "knowledge.ingest-document",
+	/** P2: the single chain that ingests the registry's stale documents one by one (p2.md §3). */
+	ingestNext: "knowledge.ingest-next",
 } as const;
 export type KnowledgeJobKind =
 	(typeof KNOWLEDGE_JOB_KINDS)[keyof typeof KNOWLEDGE_JOB_KINDS];
@@ -87,6 +83,16 @@ export interface JobSink {
 	enqueueInTransaction(tx: Tx, job: FollowUpJob): void;
 }
 
+/**
+ * The host's serialized writer, for work that must not hold one long transaction (p0.md #13,
+ * p2.md §5). Each call is one short transaction on the host's single writer; the callback is
+ * synchronous and a thrown error rolls that call back. Only `execute` uses it, to stage a
+ * version in bounded batches; the transactional callbacks get their `tx` from the host.
+ */
+export interface HostWriter {
+	write<T>(operation: (tx: Tx) => T): Promise<T>;
+}
+
 export interface KnowledgeJobHandler<P, I, O> {
 	kind: KnowledgeJobKind;
 	payloadVersions: readonly number[];
@@ -126,23 +132,6 @@ export const syncPagePayloadSchema = z.strictObject({
 });
 export type SyncPagePayload = z.infer<typeof syncPagePayloadSchema>;
 
-/** Ingest one document version observed by a listing. */
-export const ingestDocumentPayloadSchema = z.strictObject({
-	sourceNamespace: sourceNamespaceSchema,
-	documentId: doclingDocumentIdSchema,
-	markdownSha256: sha256HexSchema,
-	/** The document's invalidation generation when the job was created (p0.md §2.2). */
-	generation: z.number().int().min(0),
-	/**
-	 * The document's ingest retry counter when the job was created. Eumenes keeps a dedupe key
-	 * unique for every job ever created (finished ones included), so a final failure of an
-	 * ingest job advances this counter: a later scan then queues a fresh job for the same
-	 * version, while a re-scan during a pending job still finds the same key.
-	 */
-	retry: z.number().int().min(0),
-});
-export type IngestDocumentPayload = z.infer<typeof ingestDocumentPayloadSchema>;
-
 /**
  * Dedupe keys are derived from the payload, so the same observation never queues twice. A host
  * must treat a key as used once any job carried it (the Eumenes queue's semantics).
@@ -150,8 +139,15 @@ export type IngestDocumentPayload = z.infer<typeof ingestDocumentPayloadSchema>;
 export function syncPageDedupeKey(payload: SyncPagePayload): string {
 	return `${KNOWLEDGE_JOB_KINDS.syncPage}:${payload.scanId}:${payload.page}`;
 }
-export function ingestDocumentDedupeKey(
-	payload: IngestDocumentPayload,
-): string {
-	return `${KNOWLEDGE_JOB_KINDS.ingestDocument}:${payload.sourceNamespace}:${payload.documentId}:${payload.markdownSha256}:${payload.generation}:${payload.retry}`;
+
+/**
+ * One link of the ingest chain (p2.md §3). The registry hands out the sweep numbers, strictly
+ * increasing, so every key is used once: at most one link is open at any time.
+ */
+export const ingestNextPayloadSchema = z.strictObject({
+	sweep: z.number().int().min(0),
+});
+export type IngestNextPayload = z.infer<typeof ingestNextPayloadSchema>;
+export function ingestNextDedupeKey(payload: IngestNextPayload): string {
+	return `${KNOWLEDGE_JOB_KINDS.ingestNext}:${payload.sweep}`;
 }

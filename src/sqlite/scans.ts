@@ -1,4 +1,5 @@
 import type { Tx } from "../contracts/index.js";
+import { SCAN_KEEP_LATEST, SCAN_RETENTION_MS } from "./defaults.js";
 
 export type ScanRow = {
 	scanId: string;
@@ -117,4 +118,59 @@ export function settleScanPageInTransaction(
  finished_at = CASE WHEN ? THEN ? ELSE finished_at END
 WHERE scan_id = ?`,
 	).run(queued, last ? 1 : 0, last ? 1 : 0, now, scanId);
+}
+
+/**
+ * Delete finished scans (`complete` or `failed`) that ended `retentionMs` ago or more, together
+ * with their page records, at most `maxRows` rows in all. Always kept: running scans, the
+ * newest `keepLatest` finished scans, and the newest complete scan of each binding (the status
+ * reads them). `more` tells whether another scan could still be deleted.
+ */
+export function pruneScansInTransaction(
+	db: Tx,
+	now: number,
+	maxRows: number,
+	options: { retentionMs?: number; keepLatest?: number } = {},
+): { deletedRows: number; more: boolean } {
+	if (!Number.isFinite(now) || !Number.isSafeInteger(maxRows) || maxRows < 0) {
+		return { deletedRows: 0, more: false };
+	}
+	const cutoff = now - (options.retentionMs ?? SCAN_RETENTION_MS);
+	const keep = options.keepLatest ?? SCAN_KEEP_LATEST;
+	const candidates = `SELECT scan_id FROM knowledge_scans
+WHERE state <> 'running' AND finished_at < ?1
+ AND scan_id NOT IN (SELECT scan_id FROM knowledge_scans WHERE state <> 'running'
+  ORDER BY finished_at DESC, rowid DESC LIMIT ?2)
+ AND scan_id NOT IN (SELECT scan_id FROM (SELECT scan_id, ROW_NUMBER() OVER (
+   PARTITION BY binding ORDER BY finished_at DESC, rowid DESC) AS rn
+  FROM knowledge_scans WHERE state = 'complete') WHERE rn = 1)`;
+	let remaining = maxRows;
+	if (remaining > 0) {
+		const victims = db
+			.query<{ scan_id: string }>(
+				`${candidates} ORDER BY finished_at, rowid LIMIT ?3`,
+			)
+			.all(cutoff, keep, remaining);
+		for (const { scan_id: id } of victims) {
+			if (remaining <= 0) break;
+			remaining -= db
+				.query(
+					"DELETE FROM knowledge_scan_pages WHERE rowid IN (SELECT rowid FROM knowledge_scan_pages WHERE scan_id = ? LIMIT ?)",
+				)
+				.run(id, remaining).changes;
+			if (remaining <= 0) break;
+			const left = db
+				.query(
+					"SELECT 1 AS x FROM knowledge_scan_pages WHERE scan_id = ? LIMIT 1",
+				)
+				.get(id);
+			if (left === null) {
+				remaining -= db
+					.query("DELETE FROM knowledge_scans WHERE scan_id = ?")
+					.run(id).changes;
+			}
+		}
+	}
+	const more = db.query(`${candidates} LIMIT 1`).get(cutoff, keep) !== null;
+	return { deletedRows: maxRows - remaining, more };
 }

@@ -3,13 +3,14 @@ import type { Database } from "bun:sqlite";
 import {
 	CONTRACT_VERSION,
 	KNOWLEDGE_JOB_KINDS,
+	ingestNextPayloadSchema,
 	SourceError,
 	syncPageDedupeKey,
 	syncPagePayloadSchema,
 	type AccessContext,
 	type DocumentSourcePort,
 	type FollowUpJob,
-	type HandlerDeps,
+	type IngestDeps,
 	type JobClaim,
 	type KnowledgeStatus,
 	type PrepareResult,
@@ -26,6 +27,8 @@ import {
 	type ExampleHostOptions,
 	type TestClock,
 } from "./index.js";
+import { createMeaninglessHashEmbedding } from "../mocks/embedding.js";
+import { createScriptedInference } from "../mocks/inference.js";
 import { removeExampleTempDir } from "./store.js";
 import type { AnyJobHandler } from "./runner.js";
 
@@ -91,7 +94,7 @@ export function newControl(): FakeControl {
 
 export function createFakeHandler(
 	control: FakeControl,
-	deps: HandlerDeps,
+	deps: IngestDeps,
 ): AnyJobHandler {
 	const handler = {
 		kind: KNOWLEDGE_JOB_KINDS.syncPage,
@@ -225,6 +228,36 @@ export const ALICE: AccessContext = {
 export const BOB: AccessContext = { principal: "bob", namespaces: ["other"] };
 export const TOKENS = { "token-alice": ALICE, "token-bob": BOB };
 
+/** 試験用の埋め込みの space（次元 4）。 */
+export const TEST_EMBEDDING_SPACE = {
+	modelId: "test-model",
+	revision: "1",
+	artifactDigest: "0".repeat(64),
+	dimension: 4,
+	queryPrefix: "q:",
+	passagePrefix: "p:",
+};
+
+/** 渡された `IngestDeps` を記録するだけの偽の `knowledge.ingest-next` handler。 */
+export function createFakeIngestNextHandler(
+	capture: (deps: IngestDeps) => void,
+	deps: IngestDeps,
+): AnyJobHandler {
+	capture(deps);
+	const handler = {
+		kind: KNOWLEDGE_JOB_KINDS.ingestNext,
+		payloadVersions: [1],
+		schema: ingestNextPayloadSchema,
+		recovery: "replay_safe",
+		prepareInTransaction: () => ({ status: "stale", reason: "fake" }),
+		execute: async () => null,
+		classify: () => "fail",
+		settleInTransaction: () => "stale",
+		cancelInTransaction: () => {},
+	};
+	return handler as unknown as AnyJobHandler;
+}
+
 export type TestHost = {
 	host: ExampleHost;
 	clock: TestClock;
@@ -243,6 +276,9 @@ export function makeHost(
 		source: fakeSource,
 		principals: TOKENS,
 		clock,
+		inference: createScriptedInference({ scenarios: {}, clock }).port,
+		embedding: createMeaninglessHashEmbedding({ space: TEST_EMBEDDING_SPACE })
+			.port,
 		handlerFactories: [(deps) => createFakeHandler(control, deps)],
 		readStatusInSnapshot: readFakeStatus,
 		readScanInSnapshot: readFakeScan,

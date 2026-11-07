@@ -227,3 +227,35 @@ describe("space change and hash vectors", () => {
 		]);
 	});
 });
+
+describe("hash embedding for many fragments", () => {
+	test("keeps the 64-text limit and the blank refusal, answers deterministically, and totals the texts", async () => {
+		const { port, control } = createMeaninglessHashEmbedding({
+			space,
+			checkResult: true,
+		});
+		const texts = Array.from({ length: 150 }, (_, i) => `fragment ${i}`);
+		const vectors: number[][] = [];
+		for (let i = 0; i < texts.length; i += MAX_EMBED_BATCH) {
+			const result = await port.embed(
+				texts.slice(i, i + MAX_EMBED_BATCH),
+				"passage",
+				signal(),
+			);
+			expect(result.space).toEqual(space);
+			vectors.push(...result.vectors);
+		}
+		expect(vectors).toHaveLength(150);
+		const again = await port.embed(texts.slice(0, 2), "passage", signal());
+		expect(again.vectors).toEqual(vectors.slice(0, 2));
+		expect(new Set(vectors.map((v) => v.join())).size).toBe(150);
+		await expect(
+			port.embed(texts.slice(0, 65), "passage", signal()),
+		).rejects.toThrow("invalid_embedding_input");
+		await expect(port.embed(["ok", " "], "passage", signal())).rejects.toThrow(
+			"invalid_embedding_input",
+		);
+		expect(control.calls().map((c) => c.count)).toEqual([64, 64, 22, 2, 65, 2]);
+		expect(control.totalTexts()).toBe(64 + 64 + 22 + 2 + 65 + 2);
+	});
+});

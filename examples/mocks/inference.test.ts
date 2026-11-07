@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import type { Clock, InferenceRequest } from "../../src/contracts/index.js";
-import { createScriptedInference, type ScriptedStep } from "./inference.js";
+import {
+	createScriptedInference,
+	repeatStep,
+	type ScriptedCallInfo,
+	type ScriptedScenario,
+	type ScriptedStep,
+} from "./inference.js";
 
 function manualClock(start = 1_000): Clock & { advance(ms: number): void } {
 	let now = start;
@@ -228,5 +234,167 @@ describe("scripted inference", () => {
 				clock: manualClock(),
 			}),
 		).toThrow("invalid_error_code");
+	});
+});
+
+describe("function scenarios (one call per fragment)", () => {
+	function build(scenario: ScriptedScenario) {
+		const clock = manualClock();
+		return createScriptedInference({
+			scenarios: { fn: scenario, other: [extractStep] },
+			scenarioId: "fn",
+			clock,
+			advanceClock: (ms) => clock.advance(ms),
+		});
+	}
+
+	test("the function gets the call number from 0 and only identifiers, never the prompt", async () => {
+		const seen: { index: number; info: ScriptedCallInfo }[] = [];
+		const { port, control } = build({
+			steps: (index, info) => {
+				seen.push({ index, info });
+				return {
+					...extractStep,
+					answer: { text: JSON.stringify({ index }) },
+				};
+			},
+		});
+		const a = await port.complete(request(), signal());
+		const b = await port.complete(
+			request({ prompt: "second", outputSchema: undefined }),
+			signal(),
+		);
+		expect(a).toMatchObject({ ok: true, text: '{"index":0}' });
+		// The second call carries no outputSchema, but the step expects one: refused.
+		expect(b).toMatchObject({ ok: false, error: "unexpected_call" });
+		expect(seen).toEqual([
+			{
+				index: 0,
+				info: {
+					purpose: "extract",
+					instructionId: "extract-entities",
+					instructionVersion: 1,
+					outputSchema: true,
+				},
+			},
+			{
+				index: 1,
+				info: {
+					purpose: "extract",
+					instructionId: "extract-entities",
+					instructionVersion: 1,
+					outputSchema: false,
+				},
+			},
+		]);
+		expect(JSON.stringify(seen)).not.toContain("PROMPT-TEXT-MARKER");
+		expect(control.calls().map((c) => [c.stepIndex, c.outcome])).toEqual([
+			[0, "answered"],
+			[null, "unexpected_call"],
+		]);
+		// A refused call does not consume the number.
+		const c = await port.complete(request(), signal());
+		expect(c).toMatchObject({ ok: true, text: '{"index":1}' });
+	});
+
+	test("a function that returns undefined means the script is exhausted", async () => {
+		const { port, control } = build({
+			steps: (index) => (index < 2 ? extractStep : undefined),
+		});
+		for (let i = 0; i < 2; i++)
+			expect(await port.complete(request(), signal())).toMatchObject({
+				ok: true,
+			});
+		expect(await port.complete(request(), signal())).toMatchObject({
+			ok: false,
+			error: "unexpected_call",
+		});
+		expect(control.calls()[2]).toMatchObject({
+			reason: "script_exhausted",
+			stepIndex: null,
+		});
+	});
+
+	test("repeatStep answers the same step a fixed number of times, or without limit", async () => {
+		const limited = build(repeatStep(extractStep, 3));
+		expect(limited.control.remaining()).toBe(3);
+		for (let i = 0; i < 3; i++)
+			await limited.port.complete(request(), signal());
+		expect(limited.control.remaining()).toBe(0);
+		expect(await limited.port.complete(request(), signal())).toMatchObject({
+			ok: false,
+			error: "unexpected_call",
+		});
+		expect(limited.control.calls()[3]?.reason).toBe("script_exhausted");
+
+		const unlimited = build(repeatStep(extractStep));
+		expect(unlimited.control.remaining()).toBe(Number.POSITIVE_INFINITY);
+		for (let i = 0; i < 200; i++)
+			expect(await unlimited.port.complete(request(), signal())).toMatchObject({
+				ok: true,
+			});
+		expect(unlimited.control.calls()).toHaveLength(200);
+	});
+
+	test("count bounds a function scenario, and useScenario restarts the number", async () => {
+		const { port, control } = build({
+			count: 1,
+			steps: (index) => ({
+				...extractStep,
+				answer: { text: String(index) },
+			}),
+		});
+		expect(await port.complete(request(), signal())).toMatchObject({
+			text: "0",
+		});
+		expect(await port.complete(request(), signal())).toMatchObject({
+			ok: false,
+		});
+		control.useScenario("fn");
+		expect(await port.complete(request(), signal())).toMatchObject({
+			text: "0",
+		});
+	});
+
+	test("the expectation, the deadline, abort and hold still apply to a function step", async () => {
+		const clock = manualClock();
+		const { port, control } = createScriptedInference({
+			scenarios: {
+				fn: repeatStep({ ...extractStep, hold: true, delayMs: 50 }),
+			},
+			scenarioId: "fn",
+			clock,
+			advanceClock: (ms) => clock.advance(ms),
+		});
+		// Mismatch on purpose.
+		expect(
+			await port.complete(request({ purpose: "summarize" }), signal()),
+		).toMatchObject({ ok: false, error: "unexpected_call" });
+		expect(control.calls()[0]?.reason).toBe("mismatch");
+		// Deadline.
+		expect(
+			await port.complete(request({ deadlineAtMs: 500 }), signal()),
+		).toMatchObject({ ok: false, error: "deadline_exceeded" });
+		// Hold, then release.
+		const pending = port.complete(request(), signal());
+		await control.whenHeld(1);
+		control.releaseHeld();
+		expect(await pending).toMatchObject({ ok: true, durationMs: 50 });
+		expect(clock.now()).toBe(1_050);
+		// Abort while held.
+		const controller = new AbortController();
+		const aborted = port.complete(request(), controller.signal);
+		await control.whenHeld(1);
+		controller.abort();
+		await expect(aborted).rejects.toMatchObject({ name: "AbortError" });
+	});
+
+	test("an unsafe error code from a function step is refused", async () => {
+		const { port } = build({
+			steps: () => ({ ...extractStep, answer: { error: "Bad Code" } }),
+		});
+		await expect(port.complete(request(), signal())).rejects.toThrow(
+			"invalid_error_code",
+		);
 	});
 });

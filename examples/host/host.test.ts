@@ -285,3 +285,22 @@ describe("後片付け", () => {
 		expect([...listing()].filter((name) => !before.has(name))).toEqual([]);
 	});
 });
+
+test("a handler factory that throws leaves no temporary directory behind", async () => {
+	const before = readdirSync(tmpdir()).filter((n) =>
+		n.startsWith("eumenes-knowledge-example-"),
+	).length;
+	expect(() =>
+		makeHost({
+			handlerFactories: [
+				() => {
+					throw new Error("factory_failed");
+				},
+			],
+		}),
+	).toThrow("factory_failed");
+	const after = readdirSync(tmpdir()).filter((n) =>
+		n.startsWith("eumenes-knowledge-example-"),
+	).length;
+	expect(after).toBe(before);
+});

@@ -48,6 +48,50 @@ export type ScriptedStep = {
 	delayMs?: number;
 };
 
+/**
+ * What a step function sees besides the call number: identifiers and whether an output schema
+ * is attached. The prompt and the system text are never passed (plan §7.1).
+ */
+export type ScriptedCallInfo = {
+	purpose: string;
+	instructionId: string;
+	instructionVersion: number;
+	outputSchema: boolean;
+};
+
+/**
+ * A step chosen from the call number alone, for a script whose length depends on the fixture
+ * (one call per fragment). `index` counts from 0 within the scenario. Return `undefined` when
+ * the script is exhausted. The returned step is still checked against its `expect`.
+ */
+export type ScriptedStepFunction = (
+	index: number,
+	info: ScriptedCallInfo,
+) => ScriptedStep | undefined;
+
+/** A scenario is a list of steps, or a function of the call number. */
+export type ScriptedScenario =
+	| readonly ScriptedStep[]
+	| {
+			steps: ScriptedStepFunction;
+			/** Calls the scenario accepts. Omit for no limit. */
+			count?: number;
+	  };
+
+/**
+ * The same step for `times` calls (all calls without `times`). Use as the `steps` of a function
+ * scenario.
+ */
+export function repeatStep(
+	step: ScriptedStep,
+	times = Number.POSITIVE_INFINITY,
+): ScriptedScenario {
+	return {
+		steps: (index) => (index < times ? step : undefined),
+		count: Number.isFinite(times) ? times : undefined,
+	};
+}
+
 export type InferenceCallOutcome =
 	| "pending"
 	| "answered"
@@ -74,7 +118,7 @@ export type InferenceCallRecord = {
 };
 
 export type ScriptedInferenceOptions = {
-	scenarios: Readonly<Record<string, readonly ScriptedStep[]>>;
+	scenarios: Readonly<Record<string, ScriptedScenario>>;
 	/** The scenario in force from the start. Otherwise call `control.useScenario`. */
 	scenarioId?: string;
 	clock: Clock;
@@ -86,7 +130,7 @@ export type ScriptedInferenceControl = {
 	/** Selects a scenario and restarts its script from the first step. */
 	useScenario(id: string): void;
 	calls(): readonly InferenceCallRecord[];
-	/** Steps of the current scenario not consumed yet. */
+	/** Steps of the current scenario not consumed yet (`Infinity` for a function scenario without `count`). */
 	remaining(): number;
 	releaseHeld(): number;
 	heldCount(): number;
@@ -102,6 +146,16 @@ const noUsage: InferenceUsage = {
 	calls: null,
 };
 
+function checkStep(step: ScriptedStep): void {
+	if ("error" in step.answer && !SAFE_CODE.test(step.answer.error))
+		throw new Error("invalid_error_code");
+}
+
+function scenarioLength(scenario: ScriptedScenario): number {
+	if (Array.isArray(scenario)) return scenario.length;
+	return (scenario as { count?: number }).count ?? Number.POSITIVE_INFINITY;
+}
+
 function failure(error: string, durationMs = 0): InferenceResult {
 	return { ok: false, error, model: null, usage: { ...noUsage }, durationMs };
 }
@@ -110,10 +164,8 @@ export function createScriptedInference(options: ScriptedInferenceOptions): {
 	port: InferencePort;
 	control: ScriptedInferenceControl;
 } {
-	for (const steps of Object.values(options.scenarios))
-		for (const step of steps)
-			if ("error" in step.answer && !SAFE_CODE.test(step.answer.error))
-				throw new Error("invalid_error_code");
+	for (const scenario of Object.values(options.scenarios))
+		if (Array.isArray(scenario)) for (const step of scenario) checkStep(step);
 
 	const calls: InferenceCallRecord[] = [];
 	const gate = createGate();
@@ -160,11 +212,22 @@ export function createScriptedInference(options: ScriptedInferenceOptions): {
 			return failure("deadline_exceeded");
 		}
 
-		const steps =
+		const scenario =
 			scenarioId === null ? undefined : options.scenarios[scenarioId];
-		const step = steps?.[position];
+		let step: ScriptedStep | undefined;
+		if (scenario !== undefined && position < scenarioLength(scenario)) {
+			step = Array.isArray(scenario)
+				? (scenario as readonly ScriptedStep[])[position]
+				: (scenario as { steps: ScriptedStepFunction }).steps(position, {
+						purpose: request.purpose,
+						instructionId: request.instructionId,
+						instructionVersion: request.instructionVersion,
+						outputSchema: record.hasOutputSchema,
+					});
+			if (step !== undefined) checkStep(step);
+		}
 		const reason: InferenceCallRecord["reason"] =
-			steps === undefined
+			scenario === undefined
 				? "no_scenario"
 				: step === undefined
 					? "script_exhausted"
@@ -216,9 +279,9 @@ export function createScriptedInference(options: ScriptedInferenceOptions): {
 			useScenario,
 			calls: () => calls,
 			remaining() {
-				const steps =
+				const scenario =
 					scenarioId === null ? undefined : options.scenarios[scenarioId];
-				return steps ? steps.length - position : 0;
+				return scenario ? scenarioLength(scenario) - position : 0;
 			},
 			releaseHeld: () => gate.release(),
 			heldCount: () => gate.count(),

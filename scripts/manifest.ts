@@ -22,18 +22,47 @@ import {
 export const MANIFEST_FILE = "distribution-manifest.json";
 export const MIGRATION_OWNER = "knowledge-package";
 
-/** The upstream commit p0/lightrag.md pinned as the design reference. No upstream code is shipped yet. */
+/** The upstream commit p0/lightrag.md pinned; the adapted files are listed in `PORTED_LIGHTRAG_FILES`. */
 export const LIGHTRAG_REFERENCE = {
 	upstream: "https://github.com/HKUDS/LightRAG",
 	referenceCommit: "aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a",
 	license: "MIT",
 } as const;
 
+/**
+ * The upstream files adapted into dist (p2.md §4, THIRD_PARTY_NOTICES.md). The blob sha256 is the
+ * one p0/lightrag.md §0 recorded at the pinned commit.
+ */
+export const PORTED_LIGHTRAG_FILES: readonly LightragFile[] = [
+	{
+		upstreamPath: "lightrag/prompt.py",
+		upstreamCommit: LIGHTRAG_REFERENCE.referenceCommit,
+		upstreamBlobSha256:
+			"db0cf2d0f5d420a8372fac2b33043d8b4f14c84ec0a60653862e4e53a27047e1",
+		upstreamLines: "175-295, 36-54",
+		portedTo: "dist/contexts/generated.js",
+		change: "adapted",
+		noticeId: "lightrag-prompt-extract-v1",
+	},
+	{
+		upstreamPath: "lightrag/prompt.py",
+		upstreamCommit: LIGHTRAG_REFERENCE.referenceCommit,
+		upstreamBlobSha256:
+			"db0cf2d0f5d420a8372fac2b33043d8b4f14c84ec0a60653862e4e53a27047e1",
+		upstreamLines: "255-269",
+		portedTo: "dist/core/extract/request.js",
+		change: "adapted",
+		noticeId: "lightrag-prompt-extract-v1",
+	},
+];
+
 /** One upstream file that was ported into dist (filled in from P2 on; see p0/distribution.md 7.1). */
 export type LightragFile = {
 	upstreamPath: string;
 	upstreamCommit: string;
 	upstreamBlobSha256: string;
+	/** Line ranges of the upstream file the adaptation is based on. */
+	upstreamLines?: string;
 	portedTo: string;
 	change: "adapted" | "copied";
 	noticeId: string;
@@ -311,6 +340,7 @@ export async function writeManifest(
 				.stdout.trim()
 				.replace(/^Version /, ""),
 		},
+		lightragFiles: PORTED_LIGHTRAG_FILES,
 	});
 	assertThirdPartyNotices(root, manifest.lightrag);
 	writeFileSync(join(root, MANIFEST_FILE), renderManifest(manifest));

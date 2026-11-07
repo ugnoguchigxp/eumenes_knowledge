@@ -39,6 +39,8 @@ export type EmbeddingControl = {
 	setSpace(space: EmbeddingSpace): void;
 	space(): EmbeddingSpace;
 	calls(): readonly EmbeddingCallRecord[];
+	/** Texts across all recorded calls (refused calls included), for tests with many fragments. */
+	totalTexts(): number;
 	releaseHeld(): number;
 	heldCount(): number;
 	whenHeld(n?: number): Promise<void>;
@@ -145,6 +147,7 @@ function createCore(options: CoreOptions): {
 			},
 			space: () => ({ ...space }),
 			calls: () => calls,
+			totalTexts: () => calls.reduce((sum, call) => sum + call.count, 0),
 			releaseHeld: () => gate.release(),
 			heldCount: () => gate.count(),
 			whenHeld: (n) => gate.whenHeld(n),

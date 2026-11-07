@@ -26,6 +26,10 @@ export const partialReasons = [
 	/** Current documents whose last verification is older than the host's limit. */
 	"unverified_documents",
 	"unavailable_documents",
+	/** Stale documents skipped after too many unapplied ingest attempts of their version (p2.md §3). */
+	"failed_documents",
+	/** Current documents whose published version has fragments whose extraction failed (p2.md §4). */
+	"extraction_incomplete",
 ] as const;
 
 /** GET status. Counts only the documents in the caller's namespaces. */

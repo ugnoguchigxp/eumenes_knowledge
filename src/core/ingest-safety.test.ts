@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { KnowledgeError, SourceError } from "../contracts/index.js";
 import { getDocumentInTransaction } from "../sqlite/index.js";
-import { sha256Hex, utf8Bytes } from "./index.js";
+import { DEFAULT_MAX_DOCUMENT_BYTES, sha256Hex, utf8Bytes } from "./index.js";
 import {
 	docId,
 	drain,
@@ -79,12 +79,13 @@ describe("refusing a body", () => {
 		expect(getDocumentInTransaction(ok.db, key(1))!.state).toBe("current");
 	});
 
-	test("the default limit is 8 MiB", async () => {
-		const env = makeEnv();
-		const exact = makeDoc(1, "a".repeat(8 * 1024 * 1024));
+	test("the default limit is 8 MiB, and the limit is inclusive", async () => {
+		expect(DEFAULT_MAX_DOCUMENT_BYTES).toBe(8 * 1024 * 1024);
+		const env = makeEnv({ maxDocumentBytes: 1024 });
+		const exact = makeDoc(1, "a".repeat(1024));
 		const ok = await ingestServing(env, exact, exact);
 		expect(ok.logs[0]!.settled).toBe("applied");
-		const over = makeDoc(2, "a".repeat(8 * 1024 * 1024 + 1));
+		const over = makeDoc(2, "a".repeat(1025));
 		const bad = await ingestServing(env, over, over);
 		expect(bad.logs[0]!.error).toMatchObject({ code: "document_too_large" });
 	});

@@ -29,13 +29,23 @@ test("the bundled set is consistent: ordered, hashes match the text, set digest 
 	expect(keys).toEqual([...keys].sort());
 });
 
-test("P1 ships no instruction, and asking for one fails with not_available", () => {
-	expect(instructions).toHaveLength(0);
-	expect(() => instruction("extract-entities")).toThrow(KnowledgeError);
-	try {
-		instruction("extract-entities", 1);
-	} catch (error) {
-		expect((error as KnowledgeError).code).toBe("not_available");
+test("P2 ships the extraction instruction v1; an unknown id or version fails with not_available", () => {
+	expect(instructions.map((i) => [i.id, i.version])).toEqual([["extract", 1]]);
+	expect(instruction("extract").version).toBe(1);
+	// The adaptation is traceable from the shipped text (THIRD_PARTY_NOTICES.md, manifest).
+	expect(instruction("extract", 1).text).toContain(
+		"aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a",
+	);
+	for (const call of [
+		() => instruction("extract-entities"),
+		() => instruction("extract", 2),
+	]) {
+		expect(call).toThrow(KnowledgeError);
+		try {
+			call();
+		} catch (error) {
+			expect((error as KnowledgeError).code).toBe("not_available");
+		}
 	}
 });
 

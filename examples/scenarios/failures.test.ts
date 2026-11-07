@@ -40,7 +40,29 @@ async function observeOnly(scenario: Scenario) {
 	}
 }
 
-test("実行中の取消: 遅れて返った結果を適用せず、次の同期で同じ版を取り込める", async () => {
+/** The default base delay before a temporarily failed document is picked again (p2.md §3). */
+const TRANSIENT_DELAY_MS = 5 * 60 * 1000;
+
+/** A temporary failure is not counted: the document waits, then the next sync ingests it. */
+async function expectWaitsThenIngests(scenario: Scenario, id: string) {
+	expect(scenario.documentRow(id)).toMatchObject({
+		state: "stale",
+		ingest_retry: 0,
+	});
+	// Before the delay the document is not picked again.
+	await scenario.sync();
+	expect(scenario.documentRow(id)?.state).toBe("stale");
+	scenario.clock.advance(TRANSIENT_DELAY_MS);
+	await scenario.sync();
+	expect(scenario.documentRow(id)).toMatchObject({
+		state: "current",
+		ingest_retry: 0,
+		applied_markdown_sha256:
+			scenario.docling.control.snapshot(id)!.markdownSha256,
+	});
+}
+
+test("実行中の取消: 遅れて返った結果を適用せず、待ち時間の後の同期で同じ版を取り込める", async () => {
 	const scenario = await open();
 	await scenario.sync();
 	const id = fixtureId("shop-log");
@@ -54,26 +76,19 @@ test("実行中の取消: 遅れて返った結果を適用せず、次の同期
 	const step = scenario.host.runner.step();
 	await scenario.docling.control.whenHeld(1);
 	const job = scenario
-		.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument)
+		.jobs(KNOWLEDGE_JOB_KINDS.ingestNext)
 		.find((j) => j.state === "running")!;
 	expect(await scenario.host.runner.cancel(job.id, "user_cancelled")).toBe(
 		"cancelled",
 	);
 	scenario.docling.control.releaseHeld();
 	expect(await step).toMatchObject({ result: "discarded" });
-	expect(scenario.documentRow(id)?.state).toBe("stale");
-
-	// The cancelled job's dedupe key is used for good (Eumenes semantics); the next sync must
+	// The cancelled job's dedupe key is used for good (Eumenes semantics); a later sync must
 	// still be able to ingest the same version.
-	await scenario.sync();
-	expect(scenario.documentRow(id)).toMatchObject({
-		state: "current",
-		applied_markdown_sha256:
-			scenario.docling.control.snapshot(id)!.markdownSha256,
-	});
+	await expectWaitsThenIngests(scenario, id);
 });
 
-test("期限切れ: 期限を過ぎた取り込みは適用されず、次の同期で取り込み直せる", async () => {
+test("期限切れ: 期限を過ぎた取り込みは適用されず、数えずに待ち時間の後で取り込み直す", async () => {
 	const scenario = await open({ deadlineMs: 60_000 });
 	const id = fixtureId("canal-guide");
 	scenario.docling.control.failNext(
@@ -87,61 +102,38 @@ test("期限切れ: 期限を過ぎた取り込みは適用されず、次の同
 	expect(scenario.host.runner.expireDue().length).toBe(1);
 	scenario.docling.control.releaseHeld();
 	await steps;
-	expect(scenario.documentRow(id)?.state).toBe("stale");
 	expect(
 		scenario
-			.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument)
+			.jobs(KNOWLEDGE_JOB_KINDS.ingestNext)
 			.some((j) => j.state === "expired"),
 	).toBe(true);
-
-	await scenario.sync();
-	expect(scenario.documentRow(id)?.state).toBe("current");
+	await expectWaitsThenIngests(scenario, id);
 });
 
-test("settle 中の例外（queue の上限）: 書込みが巻き戻り、再起動後の同期で重複なく継続できる", async () => {
-	const first = await open({
-		keep: true,
+test("未完了ジョブの上限が小さくても（scope 3）、取り込みは連鎖なので上限にかからず全件取り込める", async () => {
+	const scenario = await open({
 		queueLimits: { total: 1024, background: 768, scope: 3 },
 	});
-	const { finished } = await first.sync();
-	// The page's settle hit queue_full: the whole transaction rolled back, then (as in Eumenes'
-	// settle.ts) the handler was settled again as failed(settle_failed), which failed the scan.
-	expect(
-		first.jobs(KNOWLEDGE_JOB_KINDS.syncPage).map((j) => [j.state, j.errorCode]),
-	).toEqual([["failed", "settle_failed"]]);
-	expect(first.count("knowledge_documents")).toBe(0);
-	expect(finished).toMatchObject({
-		state: "failed",
-		complete: false,
-		errorCode: "settle_failed",
-	});
-	const dir = first.host.dir;
-	await first.close();
-	opened.splice(opened.indexOf(first), 1);
-
-	// Restart on the same database with the default limits.
-	const second = await open({ dir, docling: first.docling });
-	const again = await second.sync();
-	expect(again.finished.state).toBe("completed");
-	expectNoDuplicates(second);
-	expect(second.count("knowledge_documents")).toBe(fixtureNames.length);
-	const status = await second.client(ALICE).status();
+	const { finished } = await scenario.sync();
+	expect(finished.state).toBe("completed");
+	expect(scenario.jobs().every((j) => j.errorCode !== "settle_failed")).toBe(
+		true,
+	);
+	const status = await scenario.client(ALICE).status();
 	expect(status.documents.current).toBe(fixtureNames.length);
 	expect(status.complete).toBe(true);
-	await second.close();
-	opened.splice(opened.indexOf(second), 1);
 });
 
 /** Ingest keys must stay unique and the registry must hold each fixture once. */
 function expectNoDuplicates(scenario: Scenario) {
 	expect(scenario.count("knowledge_documents")).toBe(fixtureNames.length);
 	const keys = scenario
-		.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument)
+		.jobs(KNOWLEDGE_JOB_KINDS.ingestNext)
 		.map((j) => j.dedupeKey);
 	expect(new Set(keys).size).toBe(keys.length);
 }
 
-test("取り込み中の停止: 実行中の取り込みは中断として記録され、再起動後の同期で重複なく取り込める", async () => {
+test("取り込み中の停止: 実行中の取り込みは中断として記録され、再起動後に待ち時間の後で重複なく取り込める", async () => {
 	const first = await open({ keep: true, maxAttempts: 2 });
 	const id = fixtureId("reading-memo");
 	await observeOnly(first);
@@ -161,7 +153,12 @@ test("取り込み中の停止: 実行中の取り込みは中断として記録
 	opened.splice(opened.indexOf(first), 1);
 
 	const second = await open({ dir, docling: first.docling, maxAttempts: 2 });
-	expect(second.documentRow(id)?.state).toBe("stale");
+	// The shutdown ended the ingest as interrupted: temporary, not counted, picked after the delay.
+	expect(second.documentRow(id)).toMatchObject({
+		state: "stale",
+		ingest_retry: 0,
+	});
+	second.clock.advance(TRANSIENT_DELAY_MS);
 	await second.sync();
 	expect(second.documentRow(id)?.state).toBe("current");
 	expectNoDuplicates(second);
@@ -278,16 +275,14 @@ test("本文 digest の不一致: 改ざんされた応答を適用せず、適�
 		},
 	);
 	await scenario.host.runner.runUntilIdle({ maxSteps: 100 });
-	expect(scenario.documentRow(id)).toMatchObject({
-		state: "stale",
-		applied_markdown_sha256: before.applied_markdown_sha256,
-	});
-	// A later sync reads the genuine body and applies it.
-	await scenario.sync();
+	// The tampered read was refused (one unapplied attempt); the chain read the genuine body
+	// next and applied that version, never the tampered one.
 	expect(scenario.documentRow(id)).toMatchObject({
 		state: "current",
+		ingest_retry: 1,
 		applied_markdown_sha256: good.markdownSha256,
 	});
+	expect(good.markdownSha256).not.toBe(before.applied_markdown_sha256);
 });
 
 test("複数 principal: 同じホスト・同じ索引を使い、範囲外の文書と受付を返さない", async () => {
@@ -349,7 +344,7 @@ test("一覧より先に新版になった文書（superseded）: 次の同期�
 	});
 });
 
-test("取り込み中の資格情報の変更: 読取りは適用されず、次の同期で取り込める", async () => {
+test("取り込み中の資格情報の変更: 読取りは適用されず、数えずに待ち時間の後で取り込み直す", async () => {
 	const scenario = await open();
 	await scenario.sync();
 	const id = fixtureId("canal-guide");
@@ -366,9 +361,7 @@ test("取り込み中の資格情報の変更: 読取りは適用されず、次
 	scenario.source.reconfigure({ credential: rotated });
 	scenario.docling.control.releaseHeld();
 	await steps;
-	expect(scenario.documentRow(id)?.state).toBe("stale");
-	await scenario.sync();
-	expect(scenario.documentRow(id)?.state).toBe("current");
+	await expectWaitsThenIngests(scenario, id);
 });
 
 test("capabilities の 403: 文書の状態とは扱わず unavailable にしない", async () => {
@@ -377,14 +370,17 @@ test("capabilities の 403: 文書の状態とは扱わず unavailable にしな
 	const id = fixtureId("shop-log");
 	scenario.docling.control.setMarkdown(id, "# 版 2\n");
 	await observeOnly(scenario);
+	const generation = scenario.documentRow(id)!.generation;
 	scenario.docling.control.failNext(
 		{ route: "capabilities" },
 		{ kind: "status", status: 403, code: "forbidden" },
 	);
 	await scenario.host.runner.runUntilIdle({ maxSteps: 100 });
-	expect(scenario.documentRow(id)?.state).toBe("stale");
-	await scenario.sync();
-	expect(scenario.documentRow(id)?.state).toBe("current");
+	// Never unavailable (that would have advanced the generation): a refused capabilities read
+	// is the credential's problem, a temporary failure of the ingest.
+	expect(scenario.documentRow(id)?.generation).toBe(generation);
+	await expectWaitsThenIngests(scenario, id);
+	expect(scenario.documentRow(id)?.generation).toBe(generation);
 });
 
 test("100 件を超える一覧: 既定の queue の上限の下で、全件を重複なく取り込める", async () => {
@@ -395,12 +391,26 @@ test("100 件を超える一覧: 既定の queue の上限の下で、全件を�
 		markdown: `# 一括 ${i}\n\n合成の本文 ${i}。\n`,
 	}));
 	const scenario = await open({ documents });
-	const { finished } = await scenario.sync();
-	expect(finished.state).toBe("completed");
+	const requestId = crypto.randomUUID();
+	await scenario.client(ALICE).requestSync(requestId);
+	// Step by step: never more than one open link of the ingest chain (p2.md §3).
+	let maxOpen = 0;
+	for (let i = 0; i < 1000; i++) {
+		const report = await scenario.host.runner.step();
+		const open = scenario
+			.jobs(KNOWLEDGE_JOB_KINDS.ingestNext)
+			.filter((j) => j.state === "queued" || j.state === "running").length;
+		maxOpen = Math.max(maxOpen, open);
+		if (report.status === "idle") break;
+	}
+	expect(maxOpen).toBe(1);
+	expect((await scenario.client(ALICE).getSyncRequest(requestId)).state).toBe(
+		"completed",
+	);
 	const status = await scenario.client(BOB).status();
 	expect(status.documents.current).toBe(150);
 	const keys = scenario
-		.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument)
+		.jobs(KNOWLEDGE_JOB_KINDS.ingestNext)
 		.map((j) => j.dedupeKey);
 	expect(keys).toHaveLength(150);
 	expect(new Set(keys).size).toBe(150);

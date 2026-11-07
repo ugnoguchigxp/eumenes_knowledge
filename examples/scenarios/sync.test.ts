@@ -30,7 +30,7 @@ test("合成文書の同期: mock Docling → 2 つのジョブ → 登録簿 cu
 	// Counts are not part of the answer (they would cover other principals' namespaces).
 	expect(finished).not.toHaveProperty("documentsQueued");
 	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.syncPage)).toHaveLength(2);
-	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument)).toHaveLength(
+	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestNext)).toHaveLength(
 		fixtureNames.length,
 	);
 	const status = await scenario.client(ALICE).status();
@@ -76,15 +76,13 @@ test("日本語・BOM・CRLF・frontmatter: 適用した版と byte 長が、fix
 test("同じ版の再同期: 取り込みジョブ・登録簿の行・世代が増えない", async () => {
 	scenario = await createScenario();
 	await scenario.sync();
-	const ingestJobs = scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument).length;
+	const ingestJobs = scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestNext).length;
 	const rows = scenario.count("knowledge_documents");
 	const generation = scenario.documentRow(fixtureId("shop-log"))?.generation;
 
 	const again = await scenario.sync();
 	expect(again.finished.state).toBe("completed");
-	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument).length).toBe(
-		ingestJobs,
-	);
+	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestNext).length).toBe(ingestJobs);
 	expect(scenario.count("knowledge_documents")).toBe(rows);
 	expect(scenario.documentRow(fixtureId("shop-log"))?.generation).toBe(
 		generation,
@@ -131,12 +129,10 @@ test("recovery だけの変更: ETag・contentDigest が変わっても再取り
 	const etagBefore = scenario.docling.control.snapshot(id)!.etag;
 	scenario.docling.control.setRecovery(id, '{"editor":"changed-only"}');
 	expect(scenario.docling.control.snapshot(id)!.etag).not.toBe(etagBefore);
-	const ingestJobs = scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument).length;
+	const ingestJobs = scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestNext).length;
 
 	await scenario.sync();
-	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument).length).toBe(
-		ingestJobs,
-	);
+	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestNext).length).toBe(ingestJobs);
 	const after = scenario.documentRow(id)!;
 	expect(after.state).toBe("current");
 	expect(after.generation).toBe(before.generation);
@@ -154,12 +150,10 @@ test("path・title だけの変更: 本文を取り込み直さず、メタ情�
 		path: "memo/renamed.md",
 		title: "改題した読書メモ",
 	});
-	const ingestJobs = scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument).length;
+	const ingestJobs = scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestNext).length;
 
 	await scenario.sync();
-	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestDocument).length).toBe(
-		ingestJobs,
-	);
+	expect(scenario.jobs(KNOWLEDGE_JOB_KINDS.ingestNext).length).toBe(ingestJobs);
 	expect(scenario.documentRow(id)).toMatchObject({
 		state: "current",
 		path: "memo/renamed.md",

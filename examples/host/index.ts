@@ -4,9 +4,12 @@ import type {
 	AccessContext,
 	Clock,
 	DocumentSourcePort,
+	EmbeddingPort,
 	EventSink,
 	FollowUpJob,
-	HandlerDeps,
+	HostWriter,
+	InferencePort,
+	IngestDeps,
 	ReadScanInSnapshot,
 	ReadStatusInSnapshot,
 	StatusOptions,
@@ -33,7 +36,8 @@ import {
 	type SyncRequests,
 } from "./sync-requests.js";
 
-export type HandlerFactory = (deps: HandlerDeps) => AnyJobHandler;
+/** handler の生成関数。P1 の依存に推論・埋め込み・HostWriter を足した `IngestDeps` を受ける。 */
+export type HandlerFactory = (deps: IngestDeps) => AnyJobHandler;
 
 export type ExampleHostOptions = {
 	/** 指定すると、その中に DB を作る（host は消さない）。省略すると専用の一時ディレクトリを作る。 */
@@ -43,6 +47,10 @@ export type ExampleHostOptions = {
 	source: DocumentSourcePort;
 	principals: Readonly<Record<string, AccessContext>>;
 	clock: Clock;
+	/** 取り込みが使う推論。必須。 */
+	inference: InferencePort;
+	/** 取り込みが使う埋め込み。必須。 */
+	embedding: EmbeddingPort;
 	handlerFactories: readonly HandlerFactory[];
 	readStatusInSnapshot: ReadStatusInSnapshot;
 	readScanInSnapshot: ReadScanInSnapshot;
@@ -74,9 +82,38 @@ export type ExampleHost = {
 };
 
 export function createExampleHost(options: ExampleHostOptions): ExampleHost {
+	const { clock } = options;
+	const jobs = createHostJobs({
+		clock,
+		deadlineFor: options.deadlineFor,
+		maxAttempts: options.maxAttempts,
+		limits: options.queueLimits,
+	});
+	// The store is opened below; the writer reaches it only when a job runs.
+	let store: ExampleStore | undefined;
+	// 1 回の呼出しが store の直列 writer の 1 つの短い transaction。callback は同期のみで、
+	// Promise を返すと store が拒否して巻き戻す。
+	const writer: HostWriter = {
+		// store 側が Promise を返す callback を実行時に拒否する。型は T を素通しにする。
+		write: (operation) => {
+			if (!store) return Promise.reject(new Error("database_closing"));
+			return store.write((db) => operation(db) as never);
+		},
+	};
+	const deps: IngestDeps = {
+		source: options.source,
+		jobs: jobs.sink,
+		clock,
+		events: options.events,
+		inference: options.inference,
+		embedding: options.embedding,
+		writer,
+	};
+	// Build the handlers before creating anything on disk: a factory that throws leaves nothing.
+	const handlers = options.handlerFactories.map((create) => create(deps));
+
 	const ownsDir = options.dir === undefined;
 	const dir = options.dir ?? createExampleTempDir();
-	let store: ExampleStore | undefined;
 	try {
 		store = openExampleStore(dir, {
 			packageMigrations: options.packageMigrations,
@@ -87,26 +124,22 @@ export function createExampleHost(options: ExampleHostOptions): ExampleHost {
 		throw error;
 	}
 	const opened = store;
-	const { clock } = options;
-	const jobs = createHostJobs({
-		clock,
-		deadlineFor: options.deadlineFor,
-		maxAttempts: options.maxAttempts,
-		limits: options.queueLimits,
-	});
-	const deps: HandlerDeps = {
-		source: options.source,
-		jobs: jobs.sink,
-		clock,
-		events: options.events,
-	};
-	const runner = createJobRunner({
-		store: opened,
-		clock,
-		jobs,
-		handlers: options.handlerFactories.map((create) => create(deps)),
-		retryDelayMs: options.retryDelayMs,
-	});
+	let runner: JobRunner;
+	try {
+		runner = createJobRunner({
+			store: opened,
+			clock,
+			jobs,
+			handlers,
+			retryDelayMs: options.retryDelayMs,
+		});
+	} catch (error) {
+		// Nothing has run yet: close the store, then remove the directory this host created.
+		void opened.close().finally(() => {
+			if (ownsDir) removeExampleTempDir(dir);
+		});
+		throw error;
+	}
 	const requests = createSyncRequests({
 		store: opened,
 		clock,

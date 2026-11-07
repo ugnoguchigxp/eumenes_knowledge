@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
-import type { FollowUpJob } from "../../src/contracts/index.js";
+import {
+	KNOWLEDGE_JOB_KINDS,
+	type FollowUpJob,
+} from "../../src/contracts/index.js";
 import type { EnqueueOptions } from "./runner.js";
 import { createExampleTempDir, removeExampleTempDir } from "./store.js";
 import {
@@ -157,7 +160,7 @@ describe("prepare", () => {
 			await a.host.ready;
 			const foreign: FollowUpJob = {
 				...syncPageJob(),
-				kind: "knowledge.ingest-document",
+				kind: KNOWLEDGE_JOB_KINDS.ingestNext,
 			};
 			await expect(enqueue(a, foreign)).rejects.toThrow(
 				"invalid_unknown_job_kind",

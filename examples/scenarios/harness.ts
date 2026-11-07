@@ -1,14 +1,19 @@
 // Assembles the real package (core, sqlite, client) with the example host and the mocks, the way
 // Eumenes will run it: the same job definitions, a real SQLite file, the HTTP API and the client.
-// Only the external functions (Docling, time) are mocks. No network, no listening socket.
+// Only the external functions (Docling, inference, embedding, time) are mocks. No network, no
+// listening socket.
 import { randomUUID } from "node:crypto";
 import { createKnowledgeClient } from "../../src/client/index.js";
 import type {
 	AccessContext,
+	EmbeddingPort,
+	EmbeddingSpace,
+	IngestDeps,
+	IngestOptions,
 	StatusOptions,
 } from "../../src/contracts/index.js";
 import {
-	createIngestDocumentHandler,
+	createIngestNextHandler,
 	createSyncPageHandler,
 	sha256Hex,
 } from "../../src/core/index.js";
@@ -36,6 +41,33 @@ import {
 	type MockDocumentInput,
 } from "../mocks/docling.js";
 import { createDoclingSource } from "../mocks/docling-source.js";
+import { createMeaninglessHashEmbedding } from "../mocks/embedding.js";
+import {
+	createScriptedInference,
+	repeatStep,
+	type ScriptedScenario,
+} from "../mocks/inference.js";
+
+/** The vector space of the default embedding mock (synthetic; the vectors carry no meaning). */
+export const TEST_SPACE: EmbeddingSpace = {
+	modelId: "synthetic-embedding",
+	revision: "test-1",
+	artifactDigest: "0".repeat(64),
+	dimension: 8,
+	queryPrefix: "query: ",
+	passagePrefix: "passage: ",
+};
+
+/** What the extraction instruction v1 is called with (one call per fragment). */
+export const EXTRACT_CALL = {
+	purpose: "extract",
+	instructionId: "extract",
+	instructionVersion: 1,
+	outputSchema: true,
+} as const;
+
+/** An answer with nothing in it, for scenarios that do not look at the extraction. */
+export const EMPTY_EXTRACTION = JSON.stringify({ entities: [], relations: [] });
 
 export const DOCLING_CREDENTIAL = "docling-mock-credential-0123456789abcdef";
 export const START_MS = Date.parse("2026-11-07T09:00:00+09:00");
@@ -92,6 +124,10 @@ export type ScenarioOptions = {
 	maxAttempts?: number;
 	deadlineMs?: number;
 	docling?: ReturnType<typeof createDoclingMock>;
+	/** The extraction script, chosen by call order only. Default: an empty answer for every call. */
+	inference?: ScriptedScenario;
+	embedding?: EmbeddingPort;
+	ingestOptions?: IngestOptions;
 };
 
 export type Scenario = Awaited<ReturnType<typeof createScenario>>;
@@ -111,8 +147,24 @@ export async function createScenario(options: ScenarioOptions = {}) {
 		baseUrl: "http://docling.mock",
 		credential: DOCLING_CREDENTIAL,
 	});
+	const inference = createScriptedInference({
+		scenarios: {
+			script:
+				options.inference ??
+				repeatStep({
+					expect: EXTRACT_CALL,
+					answer: { text: EMPTY_EXTRACTION },
+				}),
+		},
+		scenarioId: "script",
+		clock,
+	});
+	const embedding =
+		options.embedding ??
+		createMeaninglessHashEmbedding({ space: TEST_SPACE }).port;
 	const statusOptions: StatusOptions = {
 		verifiedWithinMs: DAY_MS,
+		maxUnappliedAttempts: options.ingestOptions?.maxUnappliedAttempts ?? 3,
 		get binding() {
 			return source.binding();
 		},
@@ -123,7 +175,16 @@ export async function createScenario(options: ScenarioOptions = {}) {
 		source,
 		principals: PRINCIPALS,
 		clock,
-		handlerFactories: [createSyncPageHandler, createIngestDocumentHandler],
+		inference: inference.port,
+		embedding,
+		handlerFactories: [
+			(deps: IngestDeps) =>
+				createSyncPageHandler(deps, {
+					maxUnappliedAttempts: options.ingestOptions?.maxUnappliedAttempts,
+				}),
+			(deps: IngestDeps) =>
+				createIngestNextHandler(deps, options.ingestOptions),
+		],
 		readStatusInSnapshot,
 		readScanInSnapshot,
 		packageMigrations: migrations,
@@ -188,6 +249,7 @@ export async function createScenario(options: ScenarioOptions = {}) {
 	return {
 		clock,
 		docling,
+		inference: inference.control,
 		source,
 		host,
 		client,

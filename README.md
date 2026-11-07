@@ -4,30 +4,66 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 
 ## 現在の状態
 
-**計画段階です。ライブラリ本体、examples、CLI、MCP はまだ実装していません。**
+**開発中です。索引を作る部分（P0〜P2）まで実装し、合成資料と mock による検証を通しています。** 索引を読む検索・関連探索・根拠取得の API（P3）、CLI・MCP（P4）、Eumenes への導入（P6）はまだです。
 
-- 開発計画（[plan.md](plan.md)）を作成済みです。
-- P0（契約・採用範囲の確定）の判断書（[p0.md](p0.md)）は、受入値と判断事項が承認待ちです。
-- `p0/spikes/` にあるのは、方式を確かめるための検証用コードです。製品コードではなく、そのまま配布物には入れません。
-- Eumenes への導入は、examples（mock のホスト）と clean な tgz 導入で十分に検証した後に行います。
+| 段階 | 状態 | 文書 |
+| --- | --- | --- |
+| P0 契約・採用範囲 | 確定（利用者が承認） | [p0.md](p0.md) |
+| P1 配布骨格・examples ホスト | 実装済み・固定検証済み | [p1.md](p1.md) |
+| P2 分割・抽出・ベクトル・根拠・失効 | 実装済み・固定検証済み | [p2.md](p2.md) |
+| P3 検索・関連探索・根拠取得 | 未着手 | — |
+| P4 CLI・MCP | 未着手（入口のスタブだけ） | — |
+| P5 tgz 受入 | 配布の検査は通る。clean な commit からの受入は未実施 | — |
+| P6 Eumenes 統合 | 未着手。examples で十分に検証してから着手する | — |
 
-## 目指すもの
+検証はすべて合成資料と scripted mock によるもので、実 Docling・実 LARM・実モデルとの接続や、抽出・検索の意味の品質は確かめていません。
 
-以下は計画の内容で、実装済みの機能ではありません。
+## できること（P2 まで）
 
-- Docling Desk が正本として持つ Markdown 文書を取り込み、断片・対象・関係の索引を作ります。
-- 検索結果は、文書ID・版・本文 digest・UTF-8 の byte 範囲・引用 digest を返します。検索の完全性、未処理の範囲、失効の状態も返します。
-- 文書の新版、利用除外、権限の変更、取り下げに応じて、索引上の根拠を失効させます。古い推論結果は採用しません。
-- 意味の判断（対象の解釈、関係の分類、同一性）は LLM が行います。コードは schema、引用の一致、版、認可、transaction、実行制御を担います。
-- [LightRAG](https://github.com/HKUDS/LightRAG) の抽出指示と検索経路の一部を、TypeScript へ選んで移植します。そのまま梱包はしません。
+- Docling の一覧を観測し、文書の登録簿に版（`markdownSha256`）と状態を記録します。recovery だけの変更では取り込み直しません。404・403・許可領域外は `unavailable` で、削除とは扱いません。
+- 登録簿の `stale` の文書を 1 件ずつ取り込む連鎖ジョブで、次を行います。
+  - 本文を見出し・段落・行・書記素の境界で、2,048 UTF-8 byte 以下の断片に分けます（重なりなし、本文全体を覆う）。
+  - 断片ごとに LLM で対象・関係を抽出し、strict な schema で検証します。引用が断片の原文にそのまま現れるかを照合し、UTF-8 の byte 範囲と digest をコードが計算します。
+  - 断片を埋め込み、全文索引（FTS5 trigram）とベクトル（float32）を作ります。
+  - 見えない作業領域へ短い transaction で書き、再検査の後に公開版を切り替えます。旧版は片付けます。
+- 取消・期限切れ・再起動・新版・接続の変更では、古い結果を適用しません。一時的な障害は待ち時間の後で取り込み直し、内容の不正は 3 回で `failed_documents` にします。
+- ジョブは Eumenes の queue の `HandlerDefinition` と同じ形で export しています。examples のホストと、将来の Eumenes は同じ定義を実行します。
 
 ## Eumenes との関係
 
-- 本番の索引・グラフ・取り込み状態は Eumenes の SQLite が所有します。単一 writer、queue、認証、LARM の接続は Eumenes のものを再利用します。
-- Eumenes はこのパッケージをライブラリとして直接使います。CLI と MCP は、Eumenes の認証付き API を呼ぶクライアントです。別の DB や索引は持ちません。
+- 本番の索引・グラフ・取り込み状態は Eumenes の SQLite が所有します。単一 writer、queue、認証、LARM の接続は Eumenes のものを再利用します。パッケージは DB の接続や transaction を自分で作りません。
+- Docling Desk が Markdown の正本です。パッケージは派生データ（索引）だけを持ち、正本に書き込みません。
+- CLI と MCP は、Eumenes の認証付き API を呼ぶクライアントです。別の DB や索引は持ちません。
 - 配布は、実行用 JavaScript と型定義を含む tgz です。
 
-## 技術スタック（予定）
+## 構成
+
+| 場所 | 内容 |
+| --- | --- |
+| `src/contracts/` | 文書・認可・ホストの port・ジョブ・API・抽出結果の契約（Zod） |
+| `src/core/` | 分割（`text/`）、抽出の要求と検証（`extract/`）、ジョブ（`jobs/`） |
+| `src/sqlite/` | migration と transaction 内の操作、読み取り |
+| `src/contexts/` | 版付きの指示資源（抽出の指示 `extract` v1） |
+| `src/client/` | Eumenes の公開 API の client と接続設定 |
+| `src/cli/`、`src/mcp/` | P4 で実装する入口のスタブ |
+| `examples/` | Eumenes の実行環境のエミュレーター（[examples/README.md](examples/README.md)） |
+| `scripts/` | build・manifest・pack・検証のスクリプト |
+| `p0/` | P0 の調査資料と方式確認用の spike（製品コードではない） |
+
+## 開発
+
+```sh
+bun install
+bun run verify           # 指示資源の生成物・format・lint・型検査・全試験
+bun run examples:verify  # examples の全試験（待受・子プロセス・一時ディレクトリが残らないことも検査）
+bun run release          # build・manifest・tgz の作成（out/）
+bun run verify:imports   # import しただけで DB・ネットワーク・タイマーなどが動かないことの検査
+bun run verify:package   # tgz だけを clean な consumer に導入して検査
+```
+
+ネットワークの待受や外部サービスへの接続はしません。HTTP は in-process で呼び、一時 DB は OS の一時ディレクトリに作って片付けます。
+
+## 技術スタック
 
 | 分野 | 採用 |
 | --- | --- |
@@ -35,8 +71,8 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 | 言語 | TypeScript 7.0.2（ESM、`.d.ts` を同梱） |
 | 契約 | Zod 4.4.3 |
 | 保存・検索 | `bun:sqlite`（FTS5 trigram、float32 BLOB のベクトル）。native 拡張は使いません |
-| HTTP | Hono、標準の Request/Response・fetch |
-| MCP | `@modelcontextprotocol/server`（v2 系列、ローカル stdio） |
+| HTTP | Hono（examples のホスト）、標準の Request/Response・fetch |
+| MCP | `@modelcontextprotocol/server`（v2 系列、ローカル stdio。P4 で導入） |
 | 検査 | `bun test`、`bun check`、`bun fmt`、oxlint |
 
 ## 文書
@@ -44,32 +80,14 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 | ファイル | 内容 |
 | --- | --- |
 | [plan.md](plan.md) | 開発計画（目的、所有境界、段階 P0〜P6、受入条件） |
-| [p0.md](p0.md) | P0 判断書（確定事項、契約案、受入値の案、承認待ちの判断事項） |
+| [p0.md](p0.md) | P0 判断書（確定事項、契約、受入値、判断事項） |
+| [p1.md](p1.md) | P1 の設計、Eumenes の queue との整合、実施結果 |
+| [p2.md](p2.md) | P2 の設計（取り込みの連鎖、抽出、保存と失効）、実施結果 |
 | [p0/lightrag.md](p0/lightrag.md) | LightRAG の参照 commit の固定と移植範囲 |
 | [p0/mcp-cli.md](p0/mcp-cli.md) | MCP SDK の選定と CLI/MCP の接続方式 |
 | [p0/search-storage.md](p0/search-storage.md) | SQLite の全文・ベクトル検索、引用 byte 範囲、検証用 writer の測定 |
 | [p0/distribution.md](p0/distribution.md) | tgz 配布・build・manifest と Eumenes 側の導入接点 |
 
-## 検証用 spike の実行
-
-いずれも合成データだけを使い、ネットワークの待受や外部サービスへの接続はしません。結果は実モデル・実文書の品質を示しません。
-
-```sh
-# 全文・ベクトル検索、引用範囲、検証用 writer（依存なし）
-cd p0/spikes/search && bun test
-
-# MCP SDK（v2 / v1）
-cd p0/spikes/mcp/v2 && bun install && bun test
-cd p0/spikes/mcp/v1 && bun install && bun test
-
-# 配布構成（型検査・lint・試験・import 副作用の検査・tgz の作成）
-cd p0/spikes/package && bun install
-bun run typecheck && bun run lint && bun test && bun run verify:imports
-bun run release
-```
-
-配布構成の clean consumer への導入と照合の手順は、[p0/distribution.md](p0/distribution.md) §11 を参照してください。
-
 ## ライセンス
 
-[MIT](LICENSE)。LightRAG（MIT）に由来するコードや指示を移植する段階で、上流の著作権表示とライセンス全文を `THIRD_PARTY_NOTICES` として追加します。
+[MIT](LICENSE)。[LightRAG](https://github.com/HKUDS/LightRAG)（MIT）の抽出指示を翻案した部分を含みます。上流の著作権表示・ライセンス全文・翻案の対応は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) にあります。

@@ -5,6 +5,7 @@ import {
 	type ReadScanInSnapshot,
 	type ReadStatusInSnapshot,
 } from "../contracts/index.js";
+import { DEFAULT_MAX_UNAPPLIED_ATTEMPTS } from "./defaults.js";
 import { getScanInTransaction } from "./scans.js";
 
 type PartialReason = KnowledgeStatus["partialReasons"][number];
@@ -86,6 +87,23 @@ GROUP BY state`,
 	if (documents.stale > 0) partialReasons.push("stale_documents");
 	if (documents.unverified > 0) partialReasons.push("unverified_documents");
 	if (documents.unavailable > 0) partialReasons.push("unavailable_documents");
+
+	const extra = db
+		.query<{ failed: number; incomplete: number }>(
+			`SELECT
+ -- Only failures the content caused advance ingest_retry (temporary ones wait instead).
+ COALESCE(SUM(CASE WHEN d.state = 'stale' AND d.ingest_retry >= ?2 THEN 1 ELSE 0 END), 0) AS failed,
+ COALESCE(SUM(CASE WHEN d.state = 'current' AND v.extraction_partial = 1 THEN 1 ELSE 0 END), 0) AS incomplete
+FROM knowledge_documents d
+LEFT JOIN knowledge_versions v ON v.version_id = d.published_version_id AND v.state = 'published'
+WHERE d.namespace IN (SELECT value FROM json_each(?1))`,
+		)
+		.get(
+			JSON.stringify(access.namespaces),
+			options.maxUnappliedAttempts ?? DEFAULT_MAX_UNAPPLIED_ATTEMPTS,
+		) ?? { failed: 0, incomplete: 0 };
+	if (extra.failed > 0) partialReasons.push("failed_documents");
+	if (extra.incomplete > 0) partialReasons.push("extraction_incomplete");
 
 	return {
 		contractVersion: CONTRACT_VERSION,
