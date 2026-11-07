@@ -10,11 +10,17 @@ import type {
 	EmbeddingSpace,
 	IngestDeps,
 	IngestOptions,
+	LinkOptions,
 	StatusOptions,
 } from "../../src/contracts/index.js";
 import {
 	createIngestNextHandler,
+	createLinkNextHandler,
 	createSyncPageHandler,
+	createVectorIndex,
+	readEvidence,
+	readRelated,
+	search,
 	sha256Hex,
 } from "../../src/core/index.js";
 import {
@@ -44,8 +50,9 @@ import { createDoclingSource } from "../mocks/docling-source.js";
 import { createMeaninglessHashEmbedding } from "../mocks/embedding.js";
 import {
 	createScriptedInference,
-	repeatStep,
+	type ScriptedCallInfo,
 	type ScriptedScenario,
+	type ScriptedStep,
 } from "../mocks/inference.js";
 
 /** The vector space of the default embedding mock (synthetic; the vectors carry no meaning). */
@@ -68,6 +75,45 @@ export const EXTRACT_CALL = {
 
 /** An answer with nothing in it, for scenarios that do not look at the extraction. */
 export const EMPTY_EXTRACTION = JSON.stringify({ entities: [], relations: [] });
+
+/** A step answering the call it is given (purpose and instruction), with `text`. */
+export function answering(info: ScriptedCallInfo, text: string): ScriptedStep {
+	return {
+		expect: {
+			purpose: info.purpose,
+			instructionId: info.instructionId,
+			instructionVersion: info.instructionVersion,
+		},
+		answer: { text },
+	};
+}
+
+/** Identity and summary calls when a scenario scripts none: no decision (unsure), a fixed summary. */
+function defaultLinkStep(info: ScriptedCallInfo): ScriptedStep {
+	return answering(
+		info,
+		info.instructionId === "summarize"
+			? JSON.stringify({ summary: "合成の要約。" })
+			: JSON.stringify({ decisions: [] }),
+	);
+}
+
+function stepOf(
+	script: ScriptedScenario,
+	index: number,
+	info: ScriptedCallInfo,
+): ScriptedStep | undefined {
+	return Array.isArray(script)
+		? (script as readonly ScriptedStep[])[index]
+		: (
+				script as {
+					steps: (
+						i: number,
+						info: ScriptedCallInfo,
+					) => ScriptedStep | undefined;
+				}
+			).steps(index, info);
+}
 
 export const DOCLING_CREDENTIAL = "docling-mock-credential-0123456789abcdef";
 export const START_MS = Date.parse("2026-11-07T09:00:00+09:00");
@@ -124,8 +170,14 @@ export type ScenarioOptions = {
 	maxAttempts?: number;
 	deadlineMs?: number;
 	docling?: ReturnType<typeof createDoclingMock>;
-	/** The extraction script, chosen by call order only. Default: an empty answer for every call. */
+	/**
+	 * The extraction script, chosen by the order of the extraction calls only (identity and summary
+	 * calls do not consume it). Default: an empty answer for every call.
+	 */
 	inference?: ScriptedScenario;
+	/** The identity and summary script, by the order of those calls. Default: no decision, a fixed summary. */
+	linking?: ScriptedScenario;
+	linkOptions?: LinkOptions;
 	embedding?: EmbeddingPort;
 	ingestOptions?: IngestOptions;
 };
@@ -147,18 +199,29 @@ export async function createScenario(options: ScenarioOptions = {}) {
 		baseUrl: "http://docling.mock",
 		credential: DOCLING_CREDENTIAL,
 	});
+	// One scripted provider for every purpose; each purpose keeps its own call order, so the
+	// identity chain running between ingests does not shift the extraction script (plan §7.1: by
+	// order, never by the prompt).
+	let extractCalls = 0;
+	let linkCalls = 0;
 	const inference = createScriptedInference({
 		scenarios: {
-			script:
-				options.inference ??
-				repeatStep({
-					expect: EXTRACT_CALL,
-					answer: { text: EMPTY_EXTRACTION },
-				}),
+			script: {
+				steps: (_index, info) => {
+					if (info.purpose === "extract")
+						return options.inference
+							? stepOf(options.inference, extractCalls++, info)
+							: answering(info, EMPTY_EXTRACTION);
+					return options.linking
+						? stepOf(options.linking, linkCalls++, info)
+						: defaultLinkStep(info);
+				},
+			},
 		},
 		scenarioId: "script",
 		clock,
 	});
+	const linkOptions: LinkOptions = options.linkOptions ?? {};
 	const embedding =
 		options.embedding ??
 		createMeaninglessHashEmbedding({ space: TEST_SPACE }).port;
@@ -181,14 +244,24 @@ export async function createScenario(options: ScenarioOptions = {}) {
 			(deps: IngestDeps) =>
 				createSyncPageHandler(deps, {
 					maxUnappliedAttempts: options.ingestOptions?.maxUnappliedAttempts,
+					summaryMinMentions: linkOptions.summaryMinMentions,
 				}),
 			(deps: IngestDeps) =>
 				createIngestNextHandler(deps, options.ingestOptions),
+			(deps: IngestDeps) => createLinkNextHandler(deps, linkOptions),
 		],
 		readStatusInSnapshot,
 		readScanInSnapshot,
 		packageMigrations: migrations,
 		statusOptions,
+		search,
+		readEvidence,
+		readRelated,
+		createVectorIndex,
+		searchOptions: {
+			verifiedWithinMs: DAY_MS,
+			maxUnappliedAttempts: options.ingestOptions?.maxUnappliedAttempts ?? 3,
+		},
 		...(options.queueLimits ? { queueLimits: options.queueLimits } : {}),
 		...(options.maxAttempts ? { maxAttempts: options.maxAttempts } : {}),
 		...(options.deadlineMs

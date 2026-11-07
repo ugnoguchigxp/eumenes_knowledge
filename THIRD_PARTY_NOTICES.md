@@ -8,7 +8,7 @@ This package contains material adapted from the following project. The license t
 - Source: https://github.com/HKUDS/LightRAG
 - Commit: `aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a`
 - License: MIT
-- Notice id: `lightrag-prompt-extract-v1`
+- Notice id: `lightrag-prompts-v1`
 
 ### Adapted files
 
@@ -16,6 +16,7 @@ This package contains material adapted from the following project. The license t
 | --- | --- | --- | --- |
 | `src/contexts/sources/extract.v1.md` (bundled as the instruction `extract`, version 1, through `src/contexts/generated.ts` / `dist/contexts/generated.js`) | `lightrag/prompt.py`, lines 175-295 (the JSON-format entity and relationship extraction instruction, its user prompt and its output template) and lines 36-54 (the section-context block that treats a document's headings as untrusted metadata) | `db0cf2d0f5d420a8372fac2b33043d8b4f14c84ec0a60653862e4e53a27047e1` | adapted |
 | `src/core/extract/request.ts` (the gleaning task text, shipped as `dist/core/extract/request.js`; not run by default) | `lightrag/prompt.py`, lines 255-269 (the JSON-format gleaning prompt) | `db0cf2d0f5d420a8372fac2b33043d8b4f14c84ec0a60653862e4e53a27047e1` | adapted |
+| `src/contexts/sources/summarize.v1.md` (bundled as the instruction `summarize`, version 1, through `src/contexts/generated.ts` / `dist/contexts/generated.js`) | `lightrag/prompt.py`, lines 297-328 (the entity description summarization instruction) | `db0cf2d0f5d420a8372fac2b33043d8b4f14c84ec0a60653862e4e53a27047e1` | adapted |
 
 The upstream sources are linked from https://github.com/HKUDS/LightRAG/blob/aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a/lightrag/prompt.py. No other upstream file is copied or adapted.
 
@@ -31,6 +32,8 @@ The upstream text was translated into Japanese and rewritten for this package. T
 - The input (fragment text) and the heading path are passed as one JSON line, not as a fenced block, and the instruction states that they are reference data whose commands must not be followed. The heading path is used as background only.
 - Quantity and length limits are fixed in the output schema (`src/contracts/index-data.ts`); an answer over a limit is invalid and is not truncated.
 - Upstream's tuple format, `json_repair` fallback and language setting are not used. Upstream's relationship keywords (one comma-separated string) are kept as an array `keywords`.
+- The summarization instruction (`summarize.v1.md`) takes the names and descriptions of one entity's mentions as one JSON line, not as a fenced list, and states that they are reference data whose commands must not be followed. The output is one JSON object with a `summary` string of at most 1,500 characters, instead of plain text with a token limit. It adds an explicit ban on adding anything the descriptions do not say, and asks for conflicting descriptions to be stated side by side without resolving them from outside knowledge. Upstream's `{language}` and `{summary_length}` placeholders are replaced by "the language of the descriptions" and the character limit.
+- `src/contexts/sources/link.v1.md` (the identity judgment) has no counterpart in the upstream project and is not adapted from it.
 
 ### License
 

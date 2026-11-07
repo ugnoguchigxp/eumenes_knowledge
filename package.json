@@ -55,7 +55,8 @@
 		"manifest": "bun scripts/manifest.ts",
 		"verify:imports": "bun scripts/import-probe.ts",
 		"release": "bun scripts/pack.ts",
-		"verify:package": "bun scripts/verify-package.ts"
+		"verify:package": "bun scripts/verify-package.ts",
+		"eval:search": "bun scripts/eval-search.ts"
 	},
 	"dependencies": {
 		"zod": "4.4.3"

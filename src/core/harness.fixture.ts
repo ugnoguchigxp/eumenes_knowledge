@@ -439,10 +439,12 @@ export async function drain(
 		if (job.kind === "knowledge.sync-page") {
 			const p = env.sync.schema.parse(job.payload);
 			logs.push(await runJob(env.db, env.sync, p, undefined, jobOptions));
-		} else {
+		} else if (job.kind === "knowledge.ingest-next") {
 			const p = env.ingest.schema.parse(job.payload);
 			logs.push(await runJob(env.db, env.ingest, p, undefined, jobOptions));
 		}
+		// Identity-chain jobs (`knowledge.link-next`) are left out here: the ingest tests do not
+		// run them (see link.fixture.ts `drainAll` for the full chain).
 	}
 	return { ran, logs };
 }

@@ -1,0 +1,30 @@
+{
+ "corpus": {
+  "version": 1,
+  "digest": "9e4be400b9cbb14ec629c61866303592c8f79c8e4c5508a17408df369e9be918",
+  "seen": {
+   "count": 24,
+   "digest": "906dbd0d4a31a7615796807a20d1fde80eadb7536543eb379108f2e4ba54e113"
+  },
+  "unseen": {
+   "count": 8,
+   "digest": "f402a2d3d71cd1899586c09de2e8a0c6fc873f2dfb1129804410c3972cb964fc"
+  }
+ },
+ "extraction": {
+  "version": 1,
+  "digest": "d782cdf88fa41209707fb1d4f94dd6470b49ebfc978b9ed63d4e37c0b5aa044f"
+ },
+ "questions": {
+  "version": 1,
+  "digest": "bc2f1572cae7193f0e7e1ae51067b1e1f7dc399f25b291cbcbfb540025428cd9",
+  "seen": {
+   "count": 50,
+   "digest": "e20b643c7bd4bfe165646d4c4d2885db05f27be847f21b48dff5cd241217e119"
+  },
+  "unseen": {
+   "count": 21,
+   "digest": "8299d11e014b5ac2a936a05c04348014c86e9131785ae64ded2116ae55af222d"
+  }
+ }
+}

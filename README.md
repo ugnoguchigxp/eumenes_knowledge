@@ -4,21 +4,21 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 
 ## 現在の状態
 
-**開発中です。索引を作る部分（P0〜P2）まで実装し、合成資料と mock による検証を通しています。** 索引を読む検索・関連探索・根拠取得の API（P3）、CLI・MCP（P4）、Eumenes への導入（P6）はまだです。
+**開発中です。索引の作成と、検索・関連探索・根拠取得（P0〜P3）まで実装し、合成資料と mock による検証を通しています。** CLI・MCP（P4）と Eumenes への導入（P6）はまだです。
 
 | 段階 | 状態 | 文書 |
 | --- | --- | --- |
 | P0 契約・採用範囲 | 確定（利用者が承認） | [p0.md](p0.md) |
 | P1 配布骨格・examples ホスト | 実装済み・固定検証済み | [p1.md](p1.md) |
 | P2 分割・抽出・ベクトル・根拠・失効 | 実装済み・固定検証済み | [p2.md](p2.md) |
-| P3 検索・関連探索・根拠取得 | 未着手 | — |
+| P3 検索・関連探索・根拠取得 | 実装済み・固定検証済み | [p3.md](p3.md) |
 | P4 CLI・MCP | 未着手（入口のスタブだけ） | — |
 | P5 tgz 受入 | 配布の検査は通る。clean な commit からの受入は未実施 | — |
 | P6 Eumenes 統合 | 未着手。examples で十分に検証してから着手する | — |
 
 検証はすべて合成資料と scripted mock によるもので、実 Docling・実 LARM・実モデルとの接続や、抽出・検索の意味の品質は確かめていません。
 
-## できること（P2 まで）
+## できること（P3 まで）
 
 - Docling の一覧を観測し、文書の登録簿に版（`markdownSha256`）と状態を記録します。recovery だけの変更では取り込み直しません。404・403・許可領域外は `unavailable` で、削除とは扱いません。
 - 登録簿の `stale` の文書を 1 件ずつ取り込む連鎖ジョブで、次を行います。
@@ -27,6 +27,10 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
   - 断片を埋め込み、全文索引（FTS5 trigram）とベクトル（float32）を作ります。
   - 見えない作業領域へ短い transaction で書き、再検査の後に公開版を切り替えます。旧版は片付けます。
 - 取消・期限切れ・再起動・新版・接続の変更では、古い結果を適用しません。一時的な障害は待ち時間の後で取り込み直し、内容の不正は 3 回で `failed_documents` にします。
+- 検索は、断片の全文索引（2 文字の query は部分一致の走査）・ベクトル・対象の言及・関係の 4 経路の候補を、順位だけで統合します（RRF）。得点は返さず、文書 ID・版・byte 範囲・引用 digest と、どの経路で何位だったかを返します。未処理・失敗・予算の打切りがあれば `complete: false` と理由を返します。
+- 根拠取得で、回答に使う直前に引用の範囲が今も有効か（`valid`・`stale`・`unavailable`・`mismatch`・`not_available`）を確かめます。
+- 文書をまたぐ同一視は、候補を機械的に絞り、同じかどうかを LLM が判断して由来付きで保存します。関連文書は、共有する実体ごとに両方の根拠と判断の由来を返します。範囲外の言及を橋にせず、範囲外の言及を含む要約は返しません。
+- 検索・根拠取得・関連文書は、ホストが認証から束縛した namespace だけを読みます（fail-closed）。
 - ジョブは Eumenes の queue の `HandlerDefinition` と同じ形で export しています。examples のホストと、将来の Eumenes は同じ定義を実行します。
 
 ## Eumenes との関係
@@ -41,13 +45,14 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 | 場所 | 内容 |
 | --- | --- |
 | `src/contracts/` | 文書・認可・ホストの port・ジョブ・API・抽出結果の契約（Zod） |
-| `src/core/` | 分割（`text/`）、抽出の要求と検証（`extract/`）、ジョブ（`jobs/`） |
+| `src/core/` | 分割（`text/`）、抽出の要求と検証（`extract/`）、検索と根拠取得（`search/`）、同一視・要約・関連文書（`link/`）、ジョブ（`jobs/`） |
 | `src/sqlite/` | migration と transaction 内の操作、読み取り |
-| `src/contexts/` | 版付きの指示資源（抽出の指示 `extract` v1） |
+| `src/contexts/` | 版付きの指示資源（`extract`・`link`・`summarize` の各 v1） |
 | `src/client/` | Eumenes の公開 API の client と接続設定 |
 | `src/cli/`、`src/mcp/` | P4 で実装する入口のスタブ |
 | `examples/` | Eumenes の実行環境のエミュレーター（[examples/README.md](examples/README.md)） |
-| `scripts/` | build・manifest・pack・検証のスクリプト |
+| `scripts/` | build・manifest・pack・検証・比較評価（`eval:search`）のスクリプト |
+| `verification/` | 比較評価の記録（fixture の結果。意味の品質を示さない） |
 | `p0/` | P0 の調査資料と方式確認用の spike（製品コードではない） |
 
 ## 開発
@@ -59,6 +64,7 @@ bun run examples:verify  # examples の全試験（待受・子プロセス・�
 bun run release          # build・manifest・tgz の作成（out/）
 bun run verify:imports   # import しただけで DB・ネットワーク・タイマーなどが動かないことの検査
 bun run verify:package   # tgz だけを clean な consumer に導入して検査
+bun run eval:search      # 合成資料での検索の比較（本パッケージと 2 つの基準）を verification/ に記録
 ```
 
 ネットワークの待受や外部サービスへの接続はしません。HTTP は in-process で呼び、一時 DB は OS の一時ディレクトリに作って片付けます。
@@ -83,6 +89,7 @@ bun run verify:package   # tgz だけを clean な consumer に導入して検�
 | [p0.md](p0.md) | P0 判断書（確定事項、契約、受入値、判断事項） |
 | [p1.md](p1.md) | P1 の設計、Eumenes の queue との整合、実施結果 |
 | [p2.md](p2.md) | P2 の設計（取り込みの連鎖、抽出、保存と失効）、実施結果 |
+| [p3.md](p3.md) | P3 の設計（検索、根拠取得、比較評価、同一視・要約・関連文書）、実施結果 |
 | [p0/lightrag.md](p0/lightrag.md) | LightRAG の参照 commit の固定と移植範囲 |
 | [p0/mcp-cli.md](p0/mcp-cli.md) | MCP SDK の選定と CLI/MCP の接続方式 |
 | [p0/search-storage.md](p0/search-storage.md) | SQLite の全文・ベクトル検索、引用 byte 範囲、検証用 writer の測定 |
@@ -90,4 +97,4 @@ bun run verify:package   # tgz だけを clean な consumer に導入して検�
 
 ## ライセンス
 
-[MIT](LICENSE)。[LightRAG](https://github.com/HKUDS/LightRAG)（MIT）の抽出指示を翻案した部分を含みます。上流の著作権表示・ライセンス全文・翻案の対応は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) にあります。
+[MIT](LICENSE)。[LightRAG](https://github.com/HKUDS/LightRAG)（MIT）の抽出・要約の指示を翻案した部分を含みます。上流の著作権表示・ライセンス全文・翻案の対応は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) にあります。

@@ -29,8 +29,12 @@ test("the bundled set is consistent: ordered, hashes match the text, set digest 
 	expect(keys).toEqual([...keys].sort());
 });
 
-test("P2 ships the extraction instruction v1; an unknown id or version fails with not_available", () => {
-	expect(instructions.map((i) => [i.id, i.version])).toEqual([["extract", 1]]);
+test("the shipped instructions are extract, link and summarize v1; an unknown id or version fails with not_available", () => {
+	expect(instructions.map((i) => [i.id, i.version])).toEqual([
+		["extract", 1],
+		["link", 1],
+		["summarize", 1],
+	]);
 	expect(instruction("extract").version).toBe(1);
 	// The adaptation is traceable from the shipped text (THIRD_PARTY_NOTICES.md, manifest).
 	expect(instruction("extract", 1).text).toContain(

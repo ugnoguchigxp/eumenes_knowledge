@@ -10,9 +10,15 @@ import type {
 	HostWriter,
 	InferencePort,
 	IngestDeps,
+	ReadEvidence,
+	ReadRelated,
 	ReadScanInSnapshot,
 	ReadStatusInSnapshot,
+	Search,
+	SearchOptions,
+	SnapshotReader,
 	StatusOptions,
+	VectorIndex,
 } from "../../src/contracts/index.js";
 import { createExampleApp } from "./app.js";
 import {
@@ -57,6 +63,19 @@ export type ExampleHostOptions = {
 	packageMigrations: readonly string[];
 	statusOptions: StatusOptions;
 	events?: EventSink;
+	/**
+	 * 検索 API の実装（package の `search`）。省略すると `/search` を持たない。
+	 * 指定するときは `createVectorIndex` と `searchOptions` も要る。
+	 */
+	search?: Search;
+	/** 根拠確認 API の実装（package の `readEvidence`）。省略すると `/evidence` を持たない。 */
+	readEvidence?: ReadEvidence;
+	/** 関連文書 API の実装（package の `readRelated`）。省略すると `/related` を持たない。`searchOptions` が要る。 */
+	readRelated?: ReadRelated;
+	/** host 1 つにつき 1 回だけ呼んで `VectorIndex` を作る（package の `createVectorIndex`）。 */
+	createVectorIndex?: () => VectorIndex;
+	/** 検索・根拠確認・関連文書へ `options` として渡す。 */
+	searchOptions?: SearchOptions;
 	/** enqueue 時にホストが与える期限。既定なし。 */
 	deadlineFor?: (job: FollowUpJob, nowMs: number) => number | null;
 	retryDelayMs?: number;
@@ -83,6 +102,14 @@ export type ExampleHost = {
 
 export function createExampleHost(options: ExampleHostOptions): ExampleHost {
 	const { clock } = options;
+	const { search, readEvidence, readRelated, searchOptions } = options;
+	if (
+		(search || readEvidence || readRelated) &&
+		(searchOptions === undefined ||
+			(search && options.createVectorIndex === undefined))
+	) {
+		throw new Error("search_wiring_required");
+	}
 	const jobs = createHostJobs({
 		clock,
 		deadlineFor: options.deadlineFor,
@@ -146,6 +173,10 @@ export function createExampleHost(options: ExampleHostOptions): ExampleHost {
 		jobs: jobs.sink,
 		readScanInSnapshot: options.readScanInSnapshot,
 	});
+	// store 側が Promise を返す callback を実行時に拒否する。型は T を素通しにする。
+	const readSnapshot: SnapshotReader = (operation) =>
+		opened.readSnapshot((db) => operation(db) as never);
+	const vectors = search ? options.createVectorIndex?.() : undefined;
 	let starting = true;
 	const ready = runner.ready.then(() => {
 		starting = false;
@@ -166,6 +197,52 @@ export function createExampleHost(options: ExampleHostOptions): ExampleHost {
 			),
 		requestSync: requests.requestSync,
 		getSyncRequest: requests.getSyncRequest,
+		...(search && vectors && searchOptions
+			? {
+					search: (access, request, signal) =>
+						search(
+							{
+								read: readSnapshot,
+								embedding: options.embedding,
+								vectors,
+								clock,
+								events: options.events,
+								options: searchOptions,
+							},
+							access,
+							request,
+							signal,
+						),
+				}
+			: {}),
+		...(readEvidence && searchOptions
+			? {
+					readEvidence: (access, request) =>
+						readEvidence(
+							{
+								read: readSnapshot,
+								clock,
+								options: searchOptions,
+							},
+							access,
+							request,
+						),
+				}
+			: {}),
+		...(readRelated && searchOptions
+			? {
+					readRelated: (access, request) =>
+						readRelated(
+							{
+								read: readSnapshot,
+								clock,
+								options: searchOptions,
+							},
+							access,
+							request,
+						),
+				}
+			: {}),
 	});
 	let closed: Promise<void> | undefined;
 	return {

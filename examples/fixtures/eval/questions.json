@@ -1,0 +1,637 @@
+{
+ "version": 1,
+ "note": "Evaluation questions (fixture). `expected` are document keys (namespace/path); empty means the corpus has no answer. `seen` questions were written while looking at the seen documents; `unseen` ones use documents, terms and scenes the seen set does not.",
+ "questions": [
+  {
+   "id": "s01",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "極軸望遠鏡",
+   "expected": [
+    "notes/observing-procedure.md"
+   ]
+  },
+  {
+   "id": "s02",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "ネズミ避け",
+   "expected": [
+    "work/hygiene-check.md"
+   ]
+  },
+  {
+   "id": "s03",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "渋皮煮",
+   "expected": [
+    "work/new-product-plan.md"
+   ]
+  },
+  {
+   "id": "s04",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "Idempotency-Key",
+   "expected": [
+    "work/order-api-note.md"
+   ]
+  },
+  {
+   "id": "s05",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "E-4021",
+   "expected": [
+    "work/pos-incident-memo.md"
+   ]
+  },
+  {
+   "id": "s06",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "引き出物",
+   "expected": [
+    "work/estimate-wedding.md"
+   ]
+  },
+  {
+   "id": "s07",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "雲間荘",
+   "expected": [
+    "notes/minutes-2026-06.md"
+   ]
+  },
+  {
+   "id": "s08",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "給水を忘れた",
+   "expected": [
+    "personal/running-log.md"
+   ]
+  },
+  {
+   "id": "s09",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "指定席",
+   "expected": [
+    "personal/trip-plan-kirigahama.md"
+   ]
+  },
+  {
+   "id": "s10",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "弱火にかけ",
+   "expected": [
+    "personal/cooking-memo.md"
+   ]
+  },
+  {
+   "id": "s11",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "ボーナス月",
+   "expected": [
+    "personal/household-budget.md"
+   ]
+  },
+  {
+   "id": "s12",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "賞味期限",
+   "expected": [
+    "work/supplier-list.md"
+   ]
+  },
+  {
+   "id": "s13",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "校正係",
+   "expected": [
+    "notes/newsletter-policy.md",
+    "notes/minutes-2026-09.md"
+   ]
+  },
+  {
+   "id": "s14",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "貸出係",
+   "expected": [
+    "notes/observing-procedure.md",
+    "notes/equipment-loan.md",
+    "notes/minutes-2026-06.md"
+   ]
+  },
+  {
+   "id": "s15",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "店長の清水",
+   "expected": [
+    "work/hygiene-check.md",
+    "work/pos-incident-memo.md",
+    "work/complaint-handling.md"
+   ]
+  },
+  {
+   "id": "s16",
+   "set": "seen",
+   "kind": "verbatim",
+   "query": "栗山農園",
+   "expected": [
+    "work/supplier-list.md",
+    "work/new-product-plan.md"
+   ]
+  },
+  {
+   "id": "s17",
+   "set": "seen",
+   "kind": "variant_width",
+   "query": "ＰＯＳ－Ｘ７",
+   "expected": [
+    "work/pos-incident-memo.md"
+   ]
+  },
+  {
+   "id": "s18",
+   "set": "seen",
+   "kind": "variant_width",
+   "query": "pos-x7",
+   "expected": [
+    "work/pos-incident-memo.md"
+   ]
+  },
+  {
+   "id": "s19",
+   "set": "seen",
+   "kind": "variant_width",
+   "query": "9月19日",
+   "expected": [
+    "notes/observation-log-2026-09.md"
+   ]
+  },
+  {
+   "id": "s20",
+   "set": "seen",
+   "kind": "variant_width",
+   "query": "ＥＱ－３",
+   "expected": [
+    "notes/equipment-loan.md"
+   ]
+  },
+  {
+   "id": "s21",
+   "set": "seen",
+   "kind": "variant_width",
+   "query": "７ｘ５０",
+   "expected": [
+    "notes/equipment-loan.md"
+   ]
+  },
+  {
+   "id": "s22",
+   "set": "seen",
+   "kind": "variant_width",
+   "query": "ｖｅｒ ２.３.１",
+   "expected": [
+    "work/pos-incident-memo.md"
+   ]
+  },
+  {
+   "id": "s23",
+   "set": "seen",
+   "kind": "variant_orthography",
+   "query": "出汁",
+   "expected": [
+    "personal/cooking-memo.md"
+   ]
+  },
+  {
+   "id": "s24",
+   "set": "seen",
+   "kind": "variant_orthography",
+   "query": "転居",
+   "expected": [
+    "personal/moving-checklist.md"
+   ]
+  },
+  {
+   "id": "s25",
+   "set": "seen",
+   "kind": "entity_name",
+   "query": "源さん",
+   "expected": [
+    "personal/reading-memo-shiosai.md"
+   ]
+  },
+  {
+   "id": "s26",
+   "set": "seen",
+   "kind": "entity_name",
+   "query": "みなと荘",
+   "expected": [
+    "personal/trip-plan-kirigahama.md"
+   ]
+  },
+  {
+   "id": "s27",
+   "set": "seen",
+   "kind": "entity_name",
+   "query": "山野",
+   "expected": [
+    "work/supplier-list.md"
+   ]
+  },
+  {
+   "id": "s28",
+   "set": "seen",
+   "kind": "entity_name",
+   "query": "フィナンシェ",
+   "expected": [
+    "work/estimate-wedding.md"
+   ]
+  },
+  {
+   "id": "s29",
+   "set": "seen",
+   "kind": "relation",
+   "query": "返金を判断する",
+   "expected": [
+    "work/complaint-handling.md"
+   ]
+  },
+  {
+   "id": "s30",
+   "set": "seen",
+   "kind": "relation",
+   "query": "栗を供給する",
+   "expected": [
+    "work/supplier-list.md"
+   ]
+  },
+  {
+   "id": "s31",
+   "set": "seen",
+   "kind": "relation",
+   "query": "時刻のずれが原因",
+   "expected": [
+    "work/pos-incident-memo.md"
+   ]
+  },
+  {
+   "id": "s32",
+   "set": "seen",
+   "kind": "relation",
+   "query": "貸出を担当する",
+   "expected": [
+    "notes/equipment-loan.md"
+   ]
+  },
+  {
+   "id": "s33",
+   "set": "seen",
+   "kind": "relation",
+   "query": "北極星を目盛りに合わせる",
+   "expected": [
+    "notes/observing-procedure.md"
+   ]
+  },
+  {
+   "id": "s34",
+   "set": "seen",
+   "kind": "relation",
+   "query": "二重注文を防ぐ",
+   "expected": [
+    "work/order-api-note.md"
+   ]
+  },
+  {
+   "id": "s35",
+   "set": "seen",
+   "kind": "short2",
+   "query": "彗星",
+   "expected": [
+    "notes/glossary.md"
+   ]
+  },
+  {
+   "id": "s36",
+   "set": "seen",
+   "kind": "short2",
+   "query": "灯台",
+   "expected": [
+    "personal/trip-plan-kirigahama.md"
+   ]
+  },
+  {
+   "id": "s37",
+   "set": "seen",
+   "kind": "short2",
+   "query": "発酵",
+   "expected": [
+    "work/bread-recipe.md"
+   ]
+  },
+  {
+   "id": "s38",
+   "set": "seen",
+   "kind": "short2",
+   "query": "返金",
+   "expected": [
+    "work/complaint-handling.md"
+   ]
+  },
+  {
+   "id": "s39",
+   "set": "seen",
+   "kind": "short2",
+   "query": "木星",
+   "expected": [
+    "notes/observation-log-2026-09.md"
+   ]
+  },
+  {
+   "id": "s40",
+   "set": "seen",
+   "kind": "short2",
+   "query": "貯金",
+   "expected": [
+    "personal/household-budget.md"
+   ]
+  },
+  {
+   "id": "s41",
+   "set": "seen",
+   "kind": "short2",
+   "query": "昆布",
+   "expected": [
+    "personal/cooking-memo.md"
+   ]
+  },
+  {
+   "id": "s42",
+   "set": "seen",
+   "kind": "no_answer",
+   "query": "量子暗号の鍵配送",
+   "expected": []
+  },
+  {
+   "id": "s43",
+   "set": "seen",
+   "kind": "no_answer",
+   "query": "ゾウの飼育日誌",
+   "expected": []
+  },
+  {
+   "id": "s44",
+   "set": "seen",
+   "kind": "no_answer",
+   "query": "火星探査機の軌道",
+   "expected": []
+  },
+  {
+   "id": "s45",
+   "set": "seen",
+   "kind": "no_answer",
+   "query": "スキー場のリフト券",
+   "expected": []
+  },
+  {
+   "id": "s46",
+   "set": "seen",
+   "kind": "no_answer",
+   "query": "恐竜",
+   "expected": []
+  },
+  {
+   "id": "s47",
+   "set": "seen",
+   "kind": "semantic",
+   "query": "星を見る集まりの準備",
+   "expected": [
+    "notes/observing-procedure.md"
+   ]
+  },
+  {
+   "id": "s48",
+   "set": "seen",
+   "kind": "semantic",
+   "query": "レジが動かなくなった件",
+   "expected": [
+    "work/pos-incident-memo.md"
+   ]
+  },
+  {
+   "id": "s49",
+   "set": "seen",
+   "kind": "semantic",
+   "query": "お客さまの不満への対応",
+   "expected": [
+    "work/complaint-handling.md"
+   ]
+  },
+  {
+   "id": "s50",
+   "set": "seen",
+   "kind": "semantic",
+   "query": "秋に売る新しいお菓子",
+   "expected": [
+    "work/new-product-plan.md"
+   ]
+  },
+  {
+   "id": "u01",
+   "set": "unseen",
+   "kind": "verbatim",
+   "query": "定置網",
+   "expected": [
+    "notes/harbor-co-op.md"
+   ]
+  },
+  {
+   "id": "u02",
+   "set": "unseen",
+   "kind": "verbatim",
+   "query": "カイガラムシ",
+   "expected": [
+    "notes/botanical-garden.md"
+   ]
+  },
+  {
+   "id": "u03",
+   "set": "unseen",
+   "kind": "verbatim",
+   "query": "アカペラ",
+   "expected": [
+    "work/choir-schedule.md"
+   ]
+  },
+  {
+   "id": "u04",
+   "set": "unseen",
+   "kind": "verbatim",
+   "query": "ピンセット",
+   "expected": [
+    "work/model-shop-stock.md"
+   ]
+  },
+  {
+   "id": "u05",
+   "set": "unseen",
+   "kind": "verbatim",
+   "query": "非常持ち出し袋",
+   "expected": [
+    "personal/disaster-prep.md"
+   ]
+  },
+  {
+   "id": "u06",
+   "set": "unseen",
+   "kind": "verbatim",
+   "query": "タイヤレバー",
+   "expected": [
+    "personal/bike-repair.md"
+   ]
+  },
+  {
+   "id": "u07",
+   "set": "unseen",
+   "kind": "verbatim",
+   "query": "蒸らし",
+   "expected": [
+    "personal/tea-notes.md"
+   ]
+  },
+  {
+   "id": "u08",
+   "set": "unseen",
+   "kind": "variant_width",
+   "query": "km-123",
+   "expected": [
+    "work/model-shop-stock.md"
+   ]
+  },
+  {
+   "id": "u09",
+   "set": "unseen",
+   "kind": "variant_width",
+   "query": "ＫＭ－３１０",
+   "expected": [
+    "work/model-shop-stock.md"
+   ]
+  },
+  {
+   "id": "u10",
+   "set": "unseen",
+   "kind": "entity_name",
+   "query": "氷見丸",
+   "expected": [
+    "notes/harbor-co-op.md"
+   ]
+  },
+  {
+   "id": "u11",
+   "set": "unseen",
+   "kind": "entity_name",
+   "query": "長谷部",
+   "expected": [
+    "work/library-sorting.md"
+   ]
+  },
+  {
+   "id": "u12",
+   "set": "unseen",
+   "kind": "relation",
+   "query": "氷を融通する",
+   "expected": [
+    "notes/harbor-co-op.md"
+   ]
+  },
+  {
+   "id": "u13",
+   "set": "unseen",
+   "kind": "relation",
+   "query": "蔵書の除籍を取りまとめる",
+   "expected": [
+    "work/library-sorting.md"
+   ]
+  },
+  {
+   "id": "u14",
+   "set": "unseen",
+   "kind": "relation",
+   "query": "防災訓練を行う",
+   "expected": [
+    "personal/disaster-prep.md"
+   ]
+  },
+  {
+   "id": "u15",
+   "set": "unseen",
+   "kind": "short2",
+   "query": "除籍",
+   "expected": [
+    "work/library-sorting.md"
+   ]
+  },
+  {
+   "id": "u16",
+   "set": "unseen",
+   "kind": "short2",
+   "query": "急須",
+   "expected": [
+    "personal/tea-notes.md"
+   ]
+  },
+  {
+   "id": "u17",
+   "set": "unseen",
+   "kind": "short2",
+   "query": "温室",
+   "expected": [
+    "notes/botanical-garden.md"
+   ]
+  },
+  {
+   "id": "u18",
+   "set": "unseen",
+   "kind": "no_answer",
+   "query": "潜水艦の整備",
+   "expected": []
+  },
+  {
+   "id": "u19",
+   "set": "unseen",
+   "kind": "no_answer",
+   "query": "チェスの定跡",
+   "expected": []
+  },
+  {
+   "id": "u20",
+   "set": "unseen",
+   "kind": "semantic",
+   "query": "魚の水揚げの様子",
+   "expected": [
+    "notes/harbor-co-op.md"
+   ]
+  },
+  {
+   "id": "u21",
+   "set": "unseen",
+   "kind": "semantic",
+   "query": "水害のときの逃げ方",
+   "expected": [
+    "personal/disaster-prep.md"
+   ]
+  }
+ ]
+}

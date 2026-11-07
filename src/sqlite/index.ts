@@ -82,3 +82,42 @@ export type {
 	StoredRelationMention,
 	StoredVector,
 } from "./reads.js";
+// Search reads (p3.md 3, 4): every one takes the caller's namespaces and fails closed.
+export {
+	countSearchableFragmentsInSnapshot,
+	listSearchableVersionIdsInSnapshot,
+	readEvidenceTargetInSnapshot,
+	readSearchCoverageInSnapshot,
+	readSearchableFragmentsInSnapshot,
+	scanFragmentsInSnapshot,
+	scanMentionsInSnapshot,
+	searchMentionsInSnapshot,
+} from "./search.js";
+export type {
+	EvidenceTarget,
+	FragmentRef,
+	MentionHit,
+	MentionKind,
+	SearchCoverage,
+	SearchCoverageOptions,
+	SearchableFragment,
+} from "./search.js";
+// Identity chain and its work queries (p3.md 8). The reads of mentions, candidates, clusters and
+// summaries ignore a caller's namespaces, so they stay internal to `./links.js`.
+export {
+	advanceLinkChainInTransaction,
+	closeLinkChainInTransaction,
+	getActiveLinkInTransaction,
+	getLinkChainInTransaction,
+	isLinkChainLiveInTransaction,
+	openLinkChainInTransaction,
+	setActiveLinkInTransaction,
+	touchLinkChainInTransaction,
+} from "./link-chain.js";
+export type { LinkActive, LinkChainState } from "./link-chain.js";
+export {
+	MAX_SUMMARY_MEMBERS,
+	hasVersionToCompareInTransaction,
+	pickSummaryWorkInTransaction,
+} from "./links.js";
+export type { ClusterSummaryCandidate } from "./links.js";

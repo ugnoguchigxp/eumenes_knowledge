@@ -27,6 +27,10 @@ import {
 	supersedeRunningScansInTransaction,
 } from "../../sqlite/index.js";
 import {
+	DEFAULT_SUMMARY_MIN_MENTIONS,
+	startLinkChainIfWorkInTransaction,
+} from "./link-start.js";
+import {
 	CHAIN_STALE_AFTER_MS,
 	DEFAULT_MAX_UNAPPLIED_ATTEMPTS,
 	classifyJobError,
@@ -41,6 +45,8 @@ export type SyncPageOptions = {
 	 * failures the content caused) is not waiting. Default `DEFAULT_MAX_UNAPPLIED_ATTEMPTS`.
 	 */
 	maxUnappliedAttempts?: number;
+	/** Must equal `LinkOptions.summaryMinMentions`. Default 3. */
+	summaryMinMentions?: number;
 };
 
 /**
@@ -54,6 +60,8 @@ export function createSyncPageHandler(
 ): ReturnType<CreateSyncPageHandler> {
 	const maxUnappliedAttempts =
 		options.maxUnappliedAttempts ?? DEFAULT_MAX_UNAPPLIED_ATTEMPTS;
+	const summaryMinMentions =
+		options.summaryMinMentions ?? DEFAULT_SUMMARY_MIN_MENTIONS;
 	return {
 		kind: KNOWLEDGE_JOB_KINDS.syncPage,
 		payloadVersions: [1],
@@ -189,6 +197,12 @@ export function createSyncPageHandler(
 					});
 				}
 			}
+			// Published versions nobody compared yet (or entities without a summary, checked once per
+			// scan) start the identity chain, unless a live link is open (p3.md 8).
+			startLinkChainIfWorkInTransaction(tx, deps.jobs, now, {
+				checkSummaries: listing.nextCursor === null,
+				summaryMinMentions,
+			});
 			if (listing.nextCursor !== null) {
 				const next: SyncPagePayload = {
 					scanId,

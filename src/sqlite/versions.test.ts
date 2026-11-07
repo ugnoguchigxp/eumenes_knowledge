@@ -229,6 +229,8 @@ const DERIVED = [
 	"knowledge_extractions",
 	"knowledge_entity_mentions",
 	"knowledge_relation_mentions",
+	"knowledge_entity_fts",
+	"knowledge_relation_fts",
 	"knowledge_evidence",
 ];
 const derivedRows = (db: Database) =>

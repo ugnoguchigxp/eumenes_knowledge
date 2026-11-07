@@ -34,6 +34,8 @@ export const KNOWLEDGE_JOB_KINDS = {
 	syncPage: "knowledge.sync-page",
 	/** P2: the single chain that ingests the registry's stale documents one by one (p2.md §3). */
 	ingestNext: "knowledge.ingest-next",
+	/** P3: the single chain that compares newly published mentions for identity, then summarizes (p3.md §8). */
+	linkNext: "knowledge.link-next",
 } as const;
 export type KnowledgeJobKind =
 	(typeof KNOWLEDGE_JOB_KINDS)[keyof typeof KNOWLEDGE_JOB_KINDS];
@@ -150,4 +152,13 @@ export const ingestNextPayloadSchema = z.strictObject({
 export type IngestNextPayload = z.infer<typeof ingestNextPayloadSchema>;
 export function ingestNextDedupeKey(payload: IngestNextPayload): string {
 	return `${KNOWLEDGE_JOB_KINDS.ingestNext}:${payload.sweep}`;
+}
+
+/** One link of the identity chain (p3.md §8). Same numbering rule as the ingest chain. */
+export const linkNextPayloadSchema = z.strictObject({
+	sweep: z.number().int().min(0),
+});
+export type LinkNextPayload = z.infer<typeof linkNextPayloadSchema>;
+export function linkNextDedupeKey(payload: LinkNextPayload): string {
+	return `${KNOWLEDGE_JOB_KINDS.linkNext}:${payload.sweep}`;
 }

@@ -67,6 +67,7 @@ import {
 	safeEmit,
 } from "../support.js";
 import { chunkMarkdown, normalizeForSearch } from "../text/index.js";
+import { startLinkChainInTransaction } from "./link-start.js";
 
 export const DEFAULT_MAX_DOCUMENT_BYTES = 8 * 1024 * 1024;
 const DEFAULT_CLEANUP_BATCH_ROWS = 300;
@@ -674,6 +675,9 @@ function buildHandler(
 			if (open) delayRetry(tx, target, "stale_result");
 			return "stale";
 		}
+		// A new version has mentions nobody compared yet: open the identity chain (p3.md 8). A live
+		// link already open finds the version itself when it settles.
+		startLinkChainInTransaction(tx, deps.jobs, now);
 		safeEmit(deps.events, {
 			type: "knowledge.document.published",
 			level: "info",

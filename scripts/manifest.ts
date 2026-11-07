@@ -42,7 +42,7 @@ export const PORTED_LIGHTRAG_FILES: readonly LightragFile[] = [
 		upstreamLines: "175-295, 36-54",
 		portedTo: "dist/contexts/generated.js",
 		change: "adapted",
-		noticeId: "lightrag-prompt-extract-v1",
+		noticeId: "lightrag-prompts-v1",
 	},
 	{
 		upstreamPath: "lightrag/prompt.py",
@@ -52,7 +52,17 @@ export const PORTED_LIGHTRAG_FILES: readonly LightragFile[] = [
 		upstreamLines: "255-269",
 		portedTo: "dist/core/extract/request.js",
 		change: "adapted",
-		noticeId: "lightrag-prompt-extract-v1",
+		noticeId: "lightrag-prompts-v1",
+	},
+	{
+		upstreamPath: "lightrag/prompt.py",
+		upstreamCommit: LIGHTRAG_REFERENCE.referenceCommit,
+		upstreamBlobSha256:
+			"db0cf2d0f5d420a8372fac2b33043d8b4f14c84ec0a60653862e4e53a27047e1",
+		upstreamLines: "297-328",
+		portedTo: "dist/contexts/generated.js",
+		change: "adapted",
+		noticeId: "lightrag-prompts-v1",
 	},
 ];
 

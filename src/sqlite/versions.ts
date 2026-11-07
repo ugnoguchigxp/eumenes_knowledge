@@ -14,6 +14,10 @@ import {
 	type IngestExpectation,
 } from "./documents.js";
 import { DEFAULT_ORPHAN_STAGING_AFTER_MS } from "./defaults.js";
+import {
+	deleteLinkRowsInTransaction,
+	hasLinkRowsInTransaction,
+} from "./links.js";
 import { pruneScansInTransaction } from "./scans.js";
 
 /**
@@ -374,6 +378,14 @@ export function stageVectorsInTransaction(
 	).run(key, prepared.length, versionId);
 }
 
+/**
+ * The index text of a mention: its fields joined by a line break, NFKC then lower case (the
+ * rule `normalizeForSearch` of `src/core/text` states; this module imports no core).
+ */
+function mentionSearchText(fields: readonly string[]): string {
+	return fields.join("\n").normalize("NFKC").toLowerCase();
+}
+
 function checkEvidence(e: EvidenceRange, ordinal: number): void {
 	if (
 		e.fragmentOrdinal !== ordinal ||
@@ -466,14 +478,20 @@ export function stageExtractionsInTransaction(
 	);
 	const insertEntity = db.query(
 		`INSERT INTO knowledge_entity_mentions (
- version_id, fragment_ordinal, local_id, name, type, description
-) VALUES (?, ?, ?, ?, ?, ?)`,
+ version_id, fragment_ordinal, local_id, name, type, description, name_norm
+) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 	);
 	const insertRelation = db.query(
 		`INSERT INTO knowledge_relation_mentions (
  version_id, fragment_ordinal, local_id, source_local_id, target_local_id, directed, relation,
  description, keywords_json, qualifier_negated, qualifier_condition, qualifier_certainty
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	);
+	const indexEntity = db.query(
+		"INSERT INTO knowledge_entity_fts (rowid, search_text) VALUES (?, ?)",
+	);
+	const indexRelation = db.query(
+		"INSERT INTO knowledge_relation_fts (rowid, search_text) VALUES (?, ?)",
 	);
 	const insertEvidence = db.query(
 		`INSERT INTO knowledge_evidence (
@@ -530,6 +548,11 @@ export function stageExtractionsInTransaction(
 				e.name,
 				e.type,
 				e.description,
+				mentionSearchText([e.name]),
+			);
+			indexEntity.run(
+				r.lastInsertRowid,
+				mentionSearchText([e.name, e.type, e.description]),
 			);
 			evidence("entity", Number(r.lastInsertRowid), e.evidence);
 		}
@@ -547,6 +570,10 @@ export function stageExtractionsInTransaction(
 				rel.qualifiers.negated ? 1 : 0,
 				rel.qualifiers.condition,
 				rel.qualifiers.certainty,
+			);
+			indexRelation.run(
+				r.lastInsertRowid,
+				mentionSearchText([rel.relation, rel.description, ...rel.keywords]),
 			);
 			evidence("relation", Number(r.lastInsertRowid), rel.evidence);
 		}
@@ -663,14 +690,30 @@ WHERE source_namespace = ? AND document_id = ? AND markdown_sha256 = ? AND gener
 // Cleanup
 // ---------------------------------------------------------------------------
 
-/** Derived tables keyed by `version_id`, children first. Fragments and their index go last. */
-const DERIVED_TABLES = [
-	"knowledge_evidence",
-	"knowledge_relation_mentions",
-	"knowledge_entity_mentions",
-	"knowledge_extractions",
-	"knowledge_vectors",
-] as const;
+/**
+ * Derived tables keyed by `version_id`, children first. `fts` names the full-text table whose
+ * rowid is the row's id: those rows go first (see `deleteIndexed`).
+ */
+const DERIVED_STEPS: readonly {
+	table: string;
+	index?: { idColumn: string; fts: string };
+}[] = [
+	{ table: "knowledge_evidence" },
+	{
+		table: "knowledge_relation_mentions",
+		index: { idColumn: "relation_id", fts: "knowledge_relation_fts" },
+	},
+	{
+		table: "knowledge_entity_mentions",
+		index: { idColumn: "entity_id", fts: "knowledge_entity_fts" },
+	},
+	{ table: "knowledge_extractions" },
+	{ table: "knowledge_vectors" },
+	{
+		table: "knowledge_fragments",
+		index: { idColumn: "fragment_id", fts: "knowledge_fragment_fts" },
+	},
+];
 
 export function hasCleanupInTransaction(db: Tx): boolean {
 	return (
@@ -739,16 +782,19 @@ export function cleanupInTransaction(
 		.all(maxRows);
 	for (const { version_id: id } of versions) {
 		if (remaining <= 0) break;
-		for (const table of DERIVED_TABLES) {
+		// Links, comparison marks and summaries that name this version's mentions go first, so
+		// none of them outlives the mentions (p3.md 8).
+		remaining -= deleteLinkRowsInTransaction(db, id, remaining);
+		for (const step of DERIVED_STEPS) {
 			if (remaining <= 0) break;
-			const n = db
-				.query(
-					`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} WHERE version_id = ? LIMIT ?)`,
-				)
-				.run(id, remaining).changes;
-			remaining -= n;
+			remaining -= step.index
+				? deleteIndexed(db, id, step.table, step.index, remaining)
+				: db
+						.query(
+							`DELETE FROM ${step.table} WHERE rowid IN (SELECT rowid FROM ${step.table} WHERE version_id = ? LIMIT ?)`,
+						)
+						.run(id, remaining).changes;
 		}
-		if (remaining > 0) remaining -= deleteFragments(db, id, remaining);
 		if (remaining > 0 && !hasDerivedRows(db, id)) {
 			remaining -= db
 				.query(
@@ -790,36 +836,43 @@ WHERE state = 'staging' AND created_at <= ?2
 }
 
 /**
- * Delete fragments together with their full-text rows within `budget` rows. The index rows go
- * first (their rowid is the fragment id), then the fragment rows; a fragment whose index row is
- * already gone costs one row, so the budget is exact and every call makes progress.
+ * Delete rows of `table` together with their full-text rows within `budget` rows. The index
+ * rows go first (their rowid is the row's id), then the rows; a row whose index row is already
+ * gone costs one row, so the budget is exact and every call makes progress.
  */
-function deleteFragments(db: Tx, versionId: number, budget: number): number {
+function deleteIndexed(
+	db: Tx,
+	versionId: number,
+	table: string,
+	index: { idColumn: string; fts: string },
+	budget: number,
+): number {
 	const ids = db
-		.query<{ fragment_id: number }>(
-			"SELECT fragment_id FROM knowledge_fragments WHERE version_id = ? ORDER BY fragment_id LIMIT ?",
+		.query<Record<string, number>>(
+			`SELECT ${index.idColumn} AS id FROM ${table} WHERE version_id = ? ORDER BY ${index.idColumn} LIMIT ?`,
 		)
 		.all(versionId, Math.ceil(budget / 2))
-		.map((r) => r.fragment_id);
+		.map((r) => r.id);
 	if (ids.length === 0) return 0;
 	const list = JSON.stringify(ids);
 	const indexed = db
 		.query(
-			"DELETE FROM knowledge_fragment_fts WHERE rowid IN (SELECT value FROM json_each(?))",
+			`DELETE FROM ${index.fts} WHERE rowid IN (SELECT value FROM json_each(?))`,
 		)
 		.run(list).changes;
 	const left = budget - indexed;
 	if (left <= 0) return indexed;
 	const rows = db
 		.query(
-			"DELETE FROM knowledge_fragments WHERE fragment_id IN (SELECT value FROM json_each(?) ORDER BY value LIMIT ?)",
+			`DELETE FROM ${table} WHERE ${index.idColumn} IN (SELECT value FROM json_each(?) ORDER BY value LIMIT ?)`,
 		)
 		.run(list, left).changes;
 	return indexed + rows;
 }
 
 function hasDerivedRows(db: Tx, versionId: number): boolean {
-	for (const table of [...DERIVED_TABLES, "knowledge_fragments"]) {
+	if (hasLinkRowsInTransaction(db, versionId)) return true;
+	for (const { table } of DERIVED_STEPS) {
 		if (
 			db
 				.query(`SELECT 1 AS x FROM ${table} WHERE version_id = ? LIMIT 1`)

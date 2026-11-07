@@ -15,3 +15,15 @@ export type {
 	IngestNextOutput,
 	IngestTarget,
 } from "./jobs/ingest-next.js";
+export { createVectorIndex, readEvidence, search } from "./search/index.js";
+export type { VectorIndexOptions } from "./search/index.js";
+export {
+	createLinkNextHandler,
+	linkNextOutputSchema,
+} from "./jobs/link-next.js";
+export type {
+	LinkNextHandler,
+	LinkNextInput,
+	LinkNextOutput,
+} from "./jobs/link-next.js";
+export * from "./link/index.js";

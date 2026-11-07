@@ -140,3 +140,33 @@ export type FragmentExtraction =
 			errorCode: string;
 			model: string | null;
 	  };
+
+// ---------------------------------------------------------------------------
+// Identity links and summaries (p3.md §8; p0.md #2, #5). The code narrows candidates
+// mechanically; whether two mentions are the same entity is the model's judgment.
+// ---------------------------------------------------------------------------
+
+export const LINK_LIMITS = {
+	/** Candidates shown with one mention in one call. */
+	candidatesPerCall: 10,
+	summaryChars: 1500,
+} as const;
+
+/** The model's answer for one mention and its numbered candidates (`c1`, `c2`, ...). */
+export const linkAnswerSchema = z.strictObject({
+	decisions: z
+		.array(
+			z.strictObject({
+				candidate: z.string().regex(/^c[0-9]{1,3}$/),
+				decision: z.enum(["same", "different", "unsure"]),
+			}),
+		)
+		.max(LINK_LIMITS.candidatesPerCall),
+});
+export type LinkAnswer = z.infer<typeof linkAnswerSchema>;
+
+/** The model's summary of one entity's mentions (derived data, never a source). */
+export const summaryAnswerSchema = z.strictObject({
+	summary: z.string().min(1).max(LINK_LIMITS.summaryChars),
+});
+export type SummaryAnswer = z.infer<typeof summaryAnswerSchema>;

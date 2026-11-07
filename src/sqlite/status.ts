@@ -4,6 +4,8 @@ import {
 	type KnowledgeStatus,
 	type ReadScanInSnapshot,
 	type ReadStatusInSnapshot,
+	type StatusOptions,
+	type Tx,
 } from "../contracts/index.js";
 import { DEFAULT_MAX_UNAPPLIED_ATTEMPTS } from "./defaults.js";
 import { getScanInTransaction } from "./scans.js";
@@ -20,10 +22,18 @@ const iso = (ms: number | null): string | null =>
  */
 export const readStatusInSnapshot: ReadStatusInSnapshot = (
 	db,
-	access: AccessContext,
+	access,
 	now,
 	options,
-) => {
+) => readStatusDetailInSnapshot(db, access, now, options).status;
+
+/** The status plus the two counts behind its `failed_documents` / `extraction_incomplete` reasons. */
+export function readStatusDetailInSnapshot(
+	db: Tx,
+	access: AccessContext,
+	now: number,
+	options: StatusOptions,
+): { status: KnowledgeStatus; failed: number; extractionIncomplete: number } {
 	const rows = db
 		.query<{ state: string; n: number; old: number }>(
 			`SELECT state, COUNT(*) AS n,
@@ -106,14 +116,18 @@ WHERE d.namespace IN (SELECT value FROM json_each(?1))`,
 	if (extra.incomplete > 0) partialReasons.push("extraction_incomplete");
 
 	return {
-		contractVersion: CONTRACT_VERSION,
-		documents,
-		lastScanAt: iso(scan.last_scan),
-		lastCompleteScanAt: iso(scan.last_complete),
-		complete: partialReasons.length === 0,
-		partialReasons,
+		status: {
+			contractVersion: CONTRACT_VERSION,
+			documents,
+			lastScanAt: iso(scan.last_scan),
+			lastCompleteScanAt: iso(scan.last_complete),
+			complete: partialReasons.length === 0,
+			partialReasons,
+		},
+		failed: extra.failed,
+		extractionIncomplete: extra.incomplete,
 	};
-};
+}
 
 export const readScanInSnapshot: ReadScanInSnapshot = (db, scanId) => {
 	const s = getScanInTransaction(db, scanId);

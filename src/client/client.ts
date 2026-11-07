@@ -2,10 +2,22 @@ import type { ZodType, output } from "zod";
 import {
 	apiErrorSchema,
 	apiPaths,
+	evidenceRequestSchema,
+	evidenceResponseSchema,
 	knowledgeStatusSchema,
+	relatedRequestSchema,
+	relatedResponseSchema,
+	searchRequestSchema,
+	searchResponseSchema,
 	syncRequestInputSchema,
 	syncRequestSchema,
+	type EvidenceRequest,
+	type EvidenceResponse,
 	type KnowledgeStatus,
+	type RelatedRequest,
+	type RelatedResponse,
+	type SearchRequest,
+	type SearchResponse,
 	type SyncRequest,
 } from "../contracts/api.js";
 
@@ -88,6 +100,12 @@ export type KnowledgeClient = {
 	/** Asks the host to run a sync. Resending the same `requestId` is the same request. */
 	requestSync(requestId: string): Promise<SyncRequest>;
 	getSyncRequest(requestId: string): Promise<SyncRequest>;
+	/** Searches what the token's principal may read. The request is checked before it is sent. */
+	search(request: SearchRequest): Promise<SearchResponse>;
+	/** Checks a cited range. `not_available` is an answer (status), not an error. */
+	evidence(request: EvidenceRequest): Promise<EvidenceResponse>;
+	/** Documents sharing entities with one document. `not_available` and `stale` are answers (status). */
+	related(request: RelatedRequest): Promise<RelatedResponse>;
 };
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -223,7 +241,36 @@ export function createKnowledgeClient(
 			}
 			return sync;
 		},
+		search: async (request) =>
+			call(
+				searchResponseSchema,
+				"POST",
+				apiPaths.search,
+				parseInput(searchRequestSchema, request),
+			),
+		evidence: async (request) =>
+			call(
+				evidenceResponseSchema,
+				"POST",
+				apiPaths.evidence,
+				parseInput(evidenceRequestSchema, request),
+			),
+		related: async (request) =>
+			call(
+				relatedResponseSchema,
+				"POST",
+				apiPaths.related,
+				parseInput(relatedRequestSchema, request),
+			),
 	};
+}
+
+/** Checks the caller's input against the published schema before anything is sent. */
+function parseInput<S extends ZodType>(schema: S, input: unknown): output<S> {
+	const parsed = schema.safeParse(input);
+	if (!parsed.success)
+		throw new KnowledgeClientError("knowledge_invalid_input");
+	return parsed.data;
 }
 
 function parseOrigin(baseUrl: string): string {

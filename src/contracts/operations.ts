@@ -1,9 +1,18 @@
 import type { AccessContext } from "./access.js";
-import type { KnowledgeStatus } from "./api.js";
+import type {
+	EvidenceRequest,
+	EvidenceResponse,
+	KnowledgeStatus,
+	RelatedRequest,
+	RelatedResponse,
+	SearchRequest,
+	SearchResponse,
+} from "./api.js";
 import type { DocumentListPage } from "./documents.js";
 import type {
 	HostWriter,
 	IngestNextPayload,
+	LinkNextPayload,
 	JobSink,
 	KnowledgeJobHandler,
 	SyncPagePayload,
@@ -124,3 +133,86 @@ export type CreateIngestNextHandler = (
 	deps: IngestDeps,
 	options?: IngestOptions,
 ) => KnowledgeJobHandler<IngestNextPayload, unknown, unknown>;
+
+// ---------------------------------------------------------------------------
+// Search and evidence (p3.md §3, §4)
+// ---------------------------------------------------------------------------
+
+/** Runs a synchronous read on one committed snapshot of the host's database. */
+export type SnapshotReader = <T>(operation: (db: Tx) => T) => T;
+
+/**
+ * The resident vectors of the published fragments, per embedding space (p0.md #11). Created
+ * once per host process by the package (`createVectorIndex`); only versions published or
+ * retired since the last search are read again. Opaque to the host.
+ */
+export interface VectorIndex {
+	readonly kind: "knowledge.vector-index";
+}
+
+export type SearchOptions = {
+	/** Candidates each route may return. Default `SEARCH_LIMITS.candidatesPerRoute`. */
+	candidatesPerRoute?: number;
+	/** Limit of the query embedding. Default 2,500 ms. */
+	queryEmbeddingTimeoutMs?: number;
+	/** Upper bound of the answer's quotes in UTF-8 bytes. Default `SEARCH_LIMITS.responseBytes`. */
+	maxResponseBytes?: number;
+	/** Above this many searchable fragments a query under 3 characters is not scanned. Default 50,000. */
+	substringScanMaxFragments?: number;
+	/** Same meaning as in `StatusOptions`. */
+	verifiedWithinMs: number;
+	maxUnappliedAttempts?: number;
+};
+
+export type SearchDeps = {
+	read: SnapshotReader;
+	embedding: EmbeddingPort;
+	vectors: VectorIndex;
+	clock: Clock;
+	events?: EventSink;
+	options: SearchOptions;
+};
+
+/** Search what `access` may read. Validates `request` itself; never writes. */
+export type Search = (
+	deps: SearchDeps,
+	access: AccessContext,
+	request: SearchRequest,
+	signal: AbortSignal,
+) => Promise<SearchResponse>;
+
+/** Check a cited range against the current index (adoption-time check, plan §5.2 step 6). */
+export type ReadEvidence = (
+	deps: Pick<SearchDeps, "read" | "clock" | "options">,
+	access: AccessContext,
+	request: EvidenceRequest,
+) => EvidenceResponse;
+
+// ---------------------------------------------------------------------------
+// Identity links, summaries and related documents (p3.md §8)
+// ---------------------------------------------------------------------------
+
+export type LinkOptions = {
+	/** Candidates compared with one mention (several calls if above `LINK_LIMITS.candidatesPerCall`). Default 10. */
+	maxCandidatesPerMention?: number;
+	/** Mentions of one version compared per link of the chain. Default 200. */
+	maxMentionsPerVersion?: number;
+	/** An entity is summarized once this many current mentions from at least two documents are linked. Default 3. */
+	summaryMinMentions?: number;
+	/** Limit of one inference call, in milliseconds. Default 120,000. */
+	inferenceTimeoutMs?: number;
+	/** Same meaning as in `IngestOptions`. Default 5 minutes. */
+	transientRetryDelayMs?: number;
+};
+
+export type CreateLinkNextHandler = (
+	deps: IngestDeps,
+	options?: LinkOptions,
+) => KnowledgeJobHandler<LinkNextPayload, unknown, unknown>;
+
+/** Documents that share entities with one document, as far as `access` may read (never writes). */
+export type ReadRelated = (
+	deps: Pick<SearchDeps, "read" | "clock" | "options">,
+	access: AccessContext,
+	request: RelatedRequest,
+) => RelatedResponse;

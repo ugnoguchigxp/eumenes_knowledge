@@ -1,0 +1,2561 @@
+{
+ "version": 1,
+ "note": "scripted extraction answers (fixture). Entities and relations are authored from the documents, never from the prompt.",
+ "documents": {
+  "notes/observing-procedure.md": {
+   "entities": [
+    {
+     "name": "月鏡会",
+     "type": "団体",
+     "description": "架空の天文同好会。月に一度、観測会を開く",
+     "evidence": [
+      "月鏡会"
+     ]
+    },
+    {
+     "name": "設営係",
+     "type": "役割",
+     "description": "観測会で機材を設置する係",
+     "evidence": [
+      "設営係"
+     ]
+    },
+    {
+     "name": "赤道儀",
+     "type": "機材",
+     "description": "地球の自転に合わせて星を追う架台",
+     "evidence": [
+      "赤道儀"
+     ]
+    },
+    {
+     "name": "極軸望遠鏡",
+     "type": "機材",
+     "description": "極軸を北極星に合わせるために使う小さな望遠鏡",
+     "evidence": [
+      "極軸望遠鏡"
+     ]
+    },
+    {
+     "name": "北極星",
+     "type": "天体",
+     "description": "極軸合わせの目印にする星",
+     "evidence": [
+      "北極星"
+     ]
+    },
+    {
+     "name": "観測ノート",
+     "type": "記録",
+     "description": "日付・時刻・天気・見え方を書き残すノート",
+     "evidence": [
+      "観測ノート"
+     ]
+    },
+    {
+     "name": "貸出係",
+     "type": "役割",
+     "description": "機材の貸出と数量確認を受け持つ係",
+     "evidence": [
+      "貸出係"
+     ]
+    },
+    {
+     "name": "機材",
+     "type": "物",
+     "description": "観測会で使う共用の道具",
+     "evidence": [
+      "機材"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "設営係",
+     "target": "赤道儀",
+     "relation": "設置する",
+     "description": "設営係が赤道儀を水平な場所に置いて固定する",
+     "keywords": [
+      "設置",
+      "準備",
+      "機材"
+     ],
+     "evidence": [
+      "設営係が赤道儀を水平な場所に置き"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "極軸望遠鏡",
+     "target": "北極星",
+     "relation": "北極星を目盛りに合わせる",
+     "description": "極軸望遠鏡をのぞいて北極星を視野の目盛りに合わせる",
+     "keywords": [
+      "極軸",
+      "位置合わせ"
+     ],
+     "evidence": [
+      "北極星を視野の目盛りに合わせる"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "貸出係",
+     "target": "機材",
+     "relation": "数量を確認する",
+     "description": "解散前に貸出係が機材の数を数え直す",
+     "keywords": [
+      "点検",
+      "数え直し",
+      "棚卸し"
+     ],
+     "evidence": [
+      "機材の数を貸出係が数え直す"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/equipment-loan.md": {
+   "entities": [
+    {
+     "name": "貸出係",
+     "type": "役割",
+     "description": "共用機材の貸出の窓口を受け持つ係",
+     "evidence": [
+      "貸出係"
+     ]
+    },
+    {
+     "name": "共用機材",
+     "type": "物",
+     "description": "会員に貸し出す会の道具",
+     "evidence": [
+      "共用機材"
+     ]
+    },
+    {
+     "name": "双眼鏡",
+     "type": "機材",
+     "description": "7x50 の双眼鏡。貸出期間は 2 週間",
+     "evidence": [
+      "双眼鏡"
+     ]
+    },
+    {
+     "name": "MR-80",
+     "type": "機材",
+     "description": "小型望遠鏡の型番。貸出期間は 1 週間",
+     "evidence": [
+      "MR-80"
+     ]
+    },
+    {
+     "name": "EQ-3",
+     "type": "機材",
+     "description": "赤道儀の型番。貸出期間は 3 日",
+     "evidence": [
+      "EQ-3"
+     ]
+    },
+    {
+     "name": "会計係",
+     "type": "役割",
+     "description": "破損や紛失の報告を受け、費用を扱う係",
+     "evidence": [
+      "会計係"
+     ]
+    },
+    {
+     "name": "破損や紛失",
+     "type": "出来事",
+     "description": "貸出した機材の破損や紛失",
+     "evidence": [
+      "破損や紛失"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "貸出係",
+     "target": "共用機材",
+     "relation": "貸出を担当する",
+     "description": "共用機材を会員に貸し出す窓口を貸出係が受け持つ",
+     "keywords": [
+      "貸出",
+      "窓口",
+      "担当"
+     ],
+     "evidence": [
+      "貸出の窓口は貸出係が担当する"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "破損や紛失",
+     "target": "会計係",
+     "relation": "報告する",
+     "description": "破損や紛失があったときは会計係に報告する",
+     "keywords": [
+      "報告",
+      "弁償",
+      "修理"
+     ],
+     "evidence": [
+      "破損や紛失があったときは、会計係に報告し"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/observation-log-2026-09.md": {
+   "entities": [
+    {
+     "name": "土星",
+     "type": "天体",
+     "description": "環の隙間が見えた観測対象",
+     "evidence": [
+      "土星"
+     ]
+    },
+    {
+     "name": "木星",
+     "type": "天体",
+     "description": "縞模様が見えた観測対象",
+     "evidence": [
+      "木星"
+     ]
+    },
+    {
+     "name": "アンドロメダ銀河",
+     "type": "天体",
+     "description": "中心部が淡く広がって見えた観測対象",
+     "evidence": [
+      "アンドロメダ銀河"
+     ]
+    },
+    {
+     "name": "９月５日",
+     "type": "日付",
+     "description": "土星を観測した夜",
+     "evidence": [
+      "９月５日"
+     ]
+    },
+    {
+     "name": "９月１２日",
+     "type": "日付",
+     "description": "木星を観測した夜",
+     "evidence": [
+      "９月１２日"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "土星",
+     "target": "９月５日",
+     "relation": "観測された",
+     "description": "９月５日の観測会で土星の環の隙間がはっきり見えた",
+     "keywords": [
+      "観測",
+      "環",
+      "良い空"
+     ],
+     "evidence": [
+      "環の隙間がはっきり見えた"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "木星",
+     "target": "９月１２日",
+     "relation": "観測された",
+     "description": "９月１２日の観測会で薄雲ごしに木星の縞が見えた",
+     "keywords": [
+      "観測",
+      "縞",
+      "薄雲"
+     ],
+     "evidence": [
+      "縞模様が 2 本見えた"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/newsletter-policy.md": {
+   "entities": [
+    {
+     "name": "会報",
+     "type": "刊行物",
+     "description": "毎月 1 日に発行する月鏡会の会報「ほしだより」",
+     "evidence": [
+      "会報"
+     ]
+    },
+    {
+     "name": "編集長",
+     "type": "役割",
+     "description": "記事の割り振りと全体の構成を決める人",
+     "evidence": [
+      "編集長"
+     ]
+    },
+    {
+     "name": "校正係",
+     "type": "役割",
+     "description": "誤字と表記ゆれを直す係",
+     "evidence": [
+      "校正係"
+     ]
+    },
+    {
+     "name": "図版係",
+     "type": "役割",
+     "description": "写真と星図を紙面に合わせて整える係",
+     "evidence": [
+      "図版係"
+     ]
+    },
+    {
+     "name": "サーバー",
+     "type": "用語",
+     "description": "会報の表記ではサーバと書かずサーバーに統一する語",
+     "evidence": [
+      "サーバー"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "校正係",
+     "target": "サーバー",
+     "relation": "表記を統一する",
+     "description": "校正係はサーバをサーバーに統一する",
+     "keywords": [
+      "表記ゆれ",
+      "校正",
+      "統一"
+     ],
+     "evidence": [
+      "「サーバ」と「サーバー」は、会報では「サーバー」に統一する"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "編集長",
+     "target": "会報",
+     "relation": "構成を決める",
+     "description": "編集長が記事の割り振りと全体の構成を決める",
+     "keywords": [
+      "編集",
+      "割り振り"
+     ],
+     "evidence": [
+      "編集長は、記事の割り振りと全体の構成を決める"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/glossary.md": {
+   "entities": [
+    {
+     "name": "接眼レンズ",
+     "type": "用語",
+     "description": "望遠鏡ののぞき口に付けるレンズ。アイピースとも書く",
+     "evidence": [
+      "接眼レンズ",
+      "アイピース"
+     ]
+    },
+    {
+     "name": "赤道儀",
+     "type": "用語",
+     "description": "地球の自転に合わせて星を追う架台",
+     "evidence": [
+      "赤道儀"
+     ]
+    },
+    {
+     "name": "視直径",
+     "type": "用語",
+     "description": "天体が空で占める角度",
+     "evidence": [
+      "視直径"
+     ]
+    },
+    {
+     "name": "彗星",
+     "type": "用語",
+     "description": "尾をひいて見える小さな天体",
+     "evidence": [
+      "彗星"
+     ]
+    },
+    {
+     "name": "流星群",
+     "type": "用語",
+     "description": "同じ方向から流れて見える流れ星の群れ",
+     "evidence": [
+      "流星群"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "接眼レンズ",
+     "target": "赤道儀",
+     "relation": "別の機材",
+     "description": "接眼レンズは望遠鏡ののぞき口、赤道儀は架台で、役割が異なる",
+     "keywords": [
+      "機材",
+      "用語"
+     ],
+     "evidence": [
+      "望遠鏡ののぞき口に付けるレンズ"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/minutes-2026-06.md": {
+   "entities": [
+    {
+     "name": "夏の観測合宿",
+     "type": "行事",
+     "description": "8 月の第 2 週末に行う合宿",
+     "evidence": [
+      "夏の観測合宿"
+     ]
+    },
+    {
+     "name": "雲間荘",
+     "type": "場所",
+     "description": "山の宿。合宿の第一候補",
+     "evidence": [
+      "雲間荘"
+     ]
+    },
+    {
+     "name": "MR-80",
+     "type": "機材",
+     "description": "買い足す小型望遠鏡",
+     "evidence": [
+      "MR-80"
+     ]
+    },
+    {
+     "name": "望遠鏡",
+     "type": "機材",
+     "description": "買い足す小型望遠鏡の見積を取る",
+     "evidence": [
+      "望遠鏡"
+     ]
+    },
+    {
+     "name": "会計係",
+     "type": "役割",
+     "description": "望遠鏡の見積を取る係",
+     "evidence": [
+      "会計係"
+     ]
+    },
+    {
+     "name": "幹事",
+     "type": "役割",
+     "description": "宿への問い合わせを行う係",
+     "evidence": [
+      "幹事"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "夏の観測合宿",
+     "target": "雲間荘",
+     "relation": "宿泊先の候補",
+     "description": "合宿の宿は雲間荘を第一候補にする",
+     "keywords": [
+      "宿泊",
+      "合宿",
+      "候補"
+     ],
+     "evidence": [
+      "宿は山の宿「雲間荘」を第一候補にする"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "会計係",
+     "target": "望遠鏡",
+     "relation": "見積を取る",
+     "description": "買い足す望遠鏡の見積は会計係が取る",
+     "keywords": [
+      "見積",
+      "購入"
+     ],
+     "evidence": [
+      "買い足す望遠鏡の見積は会計係が取る"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/minutes-2026-09.md": {
+   "entities": [
+    {
+     "name": "合宿",
+     "type": "行事",
+     "description": "夏の合宿。1 日目は雨だった",
+     "evidence": [
+      "合宿"
+     ]
+    },
+    {
+     "name": "天の川",
+     "type": "天体",
+     "description": "2 日目に晴れてよく見えた",
+     "evidence": [
+      "天の川"
+     ]
+    },
+    {
+     "name": "会報",
+     "type": "刊行物",
+     "description": "表紙を会員の写真から選ぶ",
+     "evidence": [
+      "会報"
+     ]
+    },
+    {
+     "name": "図書室",
+     "type": "場所",
+     "description": "部会の会場の移動先の候補。飲食が禁止",
+     "evidence": [
+      "図書室"
+     ]
+    },
+    {
+     "name": "公民館",
+     "type": "場所",
+     "description": "今の部会の会場。使用料が値上がりする",
+     "evidence": [
+      "公民館"
+     ]
+    },
+    {
+     "name": "編集長",
+     "type": "役割",
+     "description": "初心者向けの案内書の担当",
+     "evidence": [
+      "編集長"
+     ]
+    },
+    {
+     "name": "校正係",
+     "type": "役割",
+     "description": "初心者向けの案内書の担当",
+     "evidence": [
+      "校正係"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "図書室",
+     "target": "公民館",
+     "relation": "会場の移転先の候補",
+     "description": "公民館の使用料の値上げに伴い、会場を図書室の会議スペースに移すか検討する",
+     "keywords": [
+      "会場",
+      "移転",
+      "使用料"
+     ],
+     "evidence": [
+      "部会の会場を図書室の会議スペースに移すか検討する"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/budget-2026.md": {
+   "entities": [
+    {
+     "name": "会計係",
+     "type": "役割",
+     "description": "中間報告をまとめる係",
+     "evidence": [
+      "会計係"
+     ]
+    },
+    {
+     "name": "寄付",
+     "type": "収入",
+     "description": "予算を上回った収入",
+     "evidence": [
+      "寄付"
+     ]
+    },
+    {
+     "name": "会報の印刷",
+     "type": "支出",
+     "description": "ページ数を減らしたため予算を下回った支出",
+     "evidence": [
+      "会報の印刷"
+     ]
+    },
+    {
+     "name": "会場の使用料",
+     "type": "支出",
+     "description": "下半期に値上げが見込まれる支出",
+     "evidence": [
+      "会場の使用料"
+     ]
+    },
+    {
+     "name": "予備費",
+     "type": "費目",
+     "description": "5,000 円を確保する費目",
+     "evidence": [
+      "予備費"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "会場の使用料",
+     "target": "予備費",
+     "relation": "値上げに備える",
+     "description": "会場の使用料の値上げに備えて予備費を確保する",
+     "keywords": [
+      "値上げ",
+      "備え",
+      "会場"
+     ],
+     "evidence": [
+      "下半期は、会場の使用料の値上げが見込まれる。予備費として 5,000 円を確保する"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/bread-recipe.md": {
+   "entities": [
+    {
+     "name": "風待ち堂",
+     "type": "店",
+     "description": "架空の菓子工房",
+     "evidence": [
+      "風待ち堂"
+     ]
+    },
+    {
+     "name": "強力粉",
+     "type": "材料",
+     "description": "食パンの主材料。3,000 g 使う",
+     "evidence": [
+      "強力粉",
+      "粉と砂糖"
+     ]
+    },
+    {
+     "name": "イースト",
+     "type": "材料",
+     "description": "30 g。予備発酵はしない",
+     "evidence": [
+      "イースト"
+     ]
+    },
+    {
+     "name": "一次発酵",
+     "type": "工程",
+     "description": "28 度で 60 分。2 倍にふくらむのが目安",
+     "evidence": [
+      "一次発酵"
+     ]
+    },
+    {
+     "name": "二次発酵",
+     "type": "工程",
+     "description": "型に入れて 45 分行う工程",
+     "evidence": [
+      "二次発酵"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "一次発酵",
+     "target": "二次発酵",
+     "relation": "次の工程",
+     "description": "一次発酵の後、ガス抜きをして分割し、型に入れて二次発酵を行う",
+     "keywords": [
+      "発酵",
+      "工程",
+      "順序"
+     ],
+     "evidence": [
+      "型に入れて二次発酵を 45 分行い"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "強力粉",
+     "target": "イースト",
+     "relation": "混ぜる",
+     "description": "粉と砂糖とイーストを大きなボウルに入れ、水を加える",
+     "keywords": [
+      "こね",
+      "材料",
+      "配合"
+     ],
+     "evidence": [
+      "粉と砂糖とイーストを大きなボウルに入れ"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/supplier-list.md": {
+   "entities": [
+    {
+     "name": "青波製粉",
+     "type": "仕入れ先",
+     "description": "強力粉・薄力粉を納める仕入れ先",
+     "evidence": [
+      "青波製粉"
+     ]
+    },
+    {
+     "name": "北原乳業",
+     "type": "仕入れ先",
+     "description": "牛乳・バターを納める仕入れ先",
+     "evidence": [
+      "北原乳業"
+     ]
+    },
+    {
+     "name": "栗山農園",
+     "type": "仕入れ先",
+     "description": "栗・さつまいもを納める仕入れ先。秋だけの取引",
+     "evidence": [
+      "栗山農園"
+     ]
+    },
+    {
+     "name": "丸三包装",
+     "type": "仕入れ先",
+     "description": "紙袋・箱を納める仕入れ先",
+     "evidence": [
+      "丸三包装"
+     ]
+    },
+    {
+     "name": "山野",
+     "type": "担当者",
+     "description": "仕入れ担当。連絡先の一覧を直す",
+     "evidence": [
+      "山野"
+     ]
+    },
+    {
+     "name": "栗",
+     "type": "品目",
+     "description": "9 月下旬から 11 月上旬まで入荷する",
+     "evidence": [
+      "栗"
+     ]
+    },
+    {
+     "name": "連絡先",
+     "type": "情報",
+     "description": "仕入れ先の連絡先の一覧",
+     "evidence": [
+      "連絡先"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "栗山農園",
+     "target": "栗",
+     "relation": "栗を供給する",
+     "description": "栗山農園が秋のあいだ栗を納める",
+     "keywords": [
+      "供給",
+      "納品",
+      "秋"
+     ],
+     "evidence": [
+      "栗山農園は秋だけの取引で、栗の入荷は 9 月下旬から 11 月上旬まで"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "山野",
+     "target": "連絡先",
+     "relation": "一覧を直す",
+     "description": "仕入れ担当の山野が仕入れ先の連絡先の一覧を直す",
+     "keywords": [
+      "仕入れ",
+      "連絡先"
+     ],
+     "evidence": [
+      "連絡先の変更は、仕入れ担当の山野が一覧を直す"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/hygiene-check.md": {
+   "entities": [
+    {
+     "name": "衛生点検",
+     "type": "手順",
+     "description": "店を開ける前と閉めた後に行う点検",
+     "evidence": [
+      "衛生点検"
+     ]
+    },
+    {
+     "name": "点検表",
+     "type": "記録",
+     "description": "毎日つけ、1 年間保管する記録",
+     "evidence": [
+      "点検表"
+     ]
+    },
+    {
+     "name": "冷蔵庫",
+     "type": "設備",
+     "description": "温度が 5 度以下であることを確かめる設備",
+     "evidence": [
+      "冷蔵庫"
+     ]
+    },
+    {
+     "name": "店長の清水",
+     "type": "担当者",
+     "description": "点検表の記入漏れを月に一度確認する人",
+     "evidence": [
+      "店長の清水"
+     ]
+    },
+    {
+     "name": "ネズミ避けの箱",
+     "type": "設備",
+     "description": "異常の有無を点検する箱",
+     "evidence": [
+      "ネズミ避けの箱"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "店長の清水",
+     "target": "点検表",
+     "relation": "記入漏れを確認する",
+     "description": "店長の清水が月に一度、点検表の記入漏れを確認する",
+     "keywords": [
+      "確認",
+      "月次",
+      "記入漏れ"
+     ],
+     "evidence": [
+      "店長の清水が、月に一度、点検表の記入漏れを確認する"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "冷蔵庫",
+     "target": "店長の清水",
+     "relation": "異常を連絡する",
+     "description": "冷蔵庫の温度が 5 度を超えたら店長に連絡する",
+     "keywords": [
+      "温度",
+      "異常",
+      "連絡"
+     ],
+     "evidence": [
+      "冷蔵庫の温度が 5 度を超えたら、中の乳製品を確認し、店長に連絡する"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/shift-rule.md": {
+   "entities": [
+    {
+     "name": "シフト",
+     "type": "計画",
+     "description": "2 週間単位で組む勤務の割り振り",
+     "evidence": [
+      "シフト"
+     ]
+    },
+    {
+     "name": "早番",
+     "type": "勤務",
+     "description": "5:00〜13:00 の勤務",
+     "evidence": [
+      "早番"
+     ]
+    },
+    {
+     "name": "遅番",
+     "type": "勤務",
+     "description": "12:00〜20:00 の勤務",
+     "evidence": [
+      "遅番"
+     ]
+    },
+    {
+     "name": "店長",
+     "type": "役割",
+     "description": "交代を了承する人",
+     "evidence": [
+      "店長"
+     ]
+    },
+    {
+     "name": "新人",
+     "type": "役割",
+     "description": "最初の 2 週間、経験者と同じ時間帯に入る人",
+     "evidence": [
+      "新人"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "店長",
+     "target": "シフト",
+     "relation": "交代を了承する",
+     "description": "交代したいときは店長に連絡し、了承が出るまでは元のシフトのまま",
+     "keywords": [
+      "交代",
+      "了承",
+      "変更"
+     ],
+     "evidence": [
+      "店長の了承が出るまでは、元のシフトのままとする"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "新人",
+     "target": "早番",
+     "relation": "経験者と組む",
+     "description": "新人は最初の 2 週間、経験者と同じ時間帯に入る",
+     "keywords": [
+      "研修",
+      "新人",
+      "同行"
+     ],
+     "evidence": [
+      "新人は、最初の 2 週間、必ず経験者と同じ時間帯に入る"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/pos-incident-memo.md": {
+   "entities": [
+    {
+     "name": "POS-X7",
+     "type": "機器",
+     "description": "障害を起こしたレジ",
+     "evidence": [
+      "POS-X7"
+     ]
+    },
+    {
+     "name": "E-4021",
+     "type": "エラー",
+     "description": "時刻の不一致を示すエラー番号",
+     "evidence": [
+      "E-4021"
+     ]
+    },
+    {
+     "name": "ver 2.3.1",
+     "type": "版",
+     "description": "復旧のために更新したファームウェアの版",
+     "evidence": [
+      "ver 2.3.1"
+     ]
+    },
+    {
+     "name": "更新プログラム",
+     "type": "原因",
+     "description": "夜間に半端な状態で止まったプログラム",
+     "evidence": [
+      "更新プログラム"
+     ]
+    },
+    {
+     "name": "店長の清水",
+     "type": "担当者",
+     "description": "売上の手入力分を打ち直した人",
+     "evidence": [
+      "店長の清水"
+     ]
+    },
+    {
+     "name": "保守窓口",
+     "type": "連絡先",
+     "description": "障害時に連絡する窓口",
+     "evidence": [
+      "保守窓口"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "更新プログラム",
+     "target": "E-4021",
+     "relation": "時刻のずれが原因",
+     "description": "更新プログラムが止まって時刻がずれ、E-4021 が出た",
+     "keywords": [
+      "原因",
+      "時刻のずれ",
+      "更新"
+     ],
+     "evidence": [
+      "E-4021 は「時刻の不一致」を示す"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "保守窓口",
+     "target": "POS-X7",
+     "relation": "ファームウェアを更新した",
+     "description": "保守窓口へ連絡し POS-X7 のファームウェアを更新して復旧した",
+     "keywords": [
+      "復旧",
+      "更新",
+      "保守"
+     ],
+     "evidence": [
+      "ファームウェアを ver 2.3.1 に更新して復旧した"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/order-api-note.md": {
+   "entities": [
+    {
+     "name": "/v2/orders",
+     "type": "API",
+     "description": "注文を作成するエンドポイント",
+     "evidence": [
+      "/v2/orders"
+     ]
+    },
+    {
+     "name": "/v2/orders/{id}",
+     "type": "API",
+     "description": "注文の状態確認と取消しのエンドポイント",
+     "evidence": [
+      "/v2/orders/{id}"
+     ]
+    },
+    {
+     "name": "Bearer トークン",
+     "type": "認証",
+     "description": "有効期間は 24 時間",
+     "evidence": [
+      "Bearer トークン"
+     ]
+    },
+    {
+     "name": "Idempotency-Key",
+     "type": "ヘッダー",
+     "description": "再送のときに同じ値を使うヘッダー",
+     "evidence": [
+      "Idempotency-Key"
+     ]
+    },
+    {
+     "name": "タイムアウト",
+     "type": "設定",
+     "description": "30 s。再送の目安になる",
+     "evidence": [
+      "タイムアウト"
+     ]
+    },
+    {
+     "name": "quantity",
+     "type": "項目",
+     "description": "整数で送る数量。小数は 422 になる",
+     "evidence": [
+      "quantity"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "タイムアウト",
+     "target": "Idempotency-Key",
+     "relation": "再送のとき同じキーを使う",
+     "description": "タイムアウトの後に再送するときは同じ Idempotency-Key を使って二重注文を防ぐ",
+     "keywords": [
+      "再送",
+      "冪等",
+      "二重注文"
+     ],
+     "evidence": [
+      "再送するときは、同じ `Idempotency-Key` を使う"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/estimate-wedding.md": {
+   "entities": [
+    {
+     "name": "式場",
+     "type": "取引先",
+     "description": "引き出物の焼き菓子を注文する架空の式場",
+     "evidence": [
+      "式場"
+     ]
+    },
+    {
+     "name": "フィナンシェ",
+     "type": "品名",
+     "description": "2 個入り。単価 380 円",
+     "evidence": [
+      "フィナンシェ"
+     ]
+    },
+    {
+     "name": "栗のパウンドケーキ",
+     "type": "品名",
+     "description": "単価 1,200 円。40 個",
+     "evidence": [
+      "栗のパウンドケーキ"
+     ]
+    },
+    {
+     "name": "見積",
+     "type": "書類",
+     "description": "合計 83,200 円（税別）。有効期限は発行日から 30 日",
+     "evidence": [
+      "焼き菓子の見積"
+     ]
+    },
+    {
+     "name": "納品",
+     "type": "条件",
+     "description": "式の前日の午後。保冷は不要",
+     "evidence": [
+      "納品は式の前日の午後"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "式場",
+     "target": "見積",
+     "relation": "注文する",
+     "description": "式場が引き出物用の焼き菓子を風待ち堂に注文する",
+     "keywords": [
+      "注文",
+      "引き出物"
+     ],
+     "evidence": [
+      "取引先の式場（架空）に出す、引き出物用の焼き菓子の見積"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/ordering-rule.md": {
+   "entities": [
+    {
+     "name": "仕入れ担当",
+     "type": "役割",
+     "description": "材料の発注を行う人",
+     "evidence": [
+      "仕入れ担当"
+     ]
+    },
+    {
+     "name": "在庫",
+     "type": "物",
+     "description": "発注点を下回ったら発注する対象",
+     "evidence": [
+      "在庫が発注点"
+     ]
+    },
+    {
+     "name": "発注点",
+     "type": "基準",
+     "description": "在庫がこれを下回ったら発注する",
+     "evidence": [
+      "発注点"
+     ]
+    },
+    {
+     "name": "強力粉",
+     "type": "品目",
+     "description": "発注点は 10 袋",
+     "evidence": [
+      "強力粉"
+     ]
+    },
+    {
+     "name": "バター",
+     "type": "品目",
+     "description": "発注点は 6 箱",
+     "evidence": [
+      "バター"
+     ]
+    },
+    {
+     "name": "期間限定の商品",
+     "type": "品目",
+     "description": "予定数の 120 % を目安に一度に注文する",
+     "evidence": [
+      "期間限定の商品"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "在庫",
+     "target": "発注点",
+     "relation": "発注点を下回ったら発注する",
+     "description": "在庫が発注点を下回ったらその日のうちに発注する",
+     "keywords": [
+      "発注",
+      "在庫",
+      "基準"
+     ],
+     "evidence": [
+      "在庫が発注点を下回ったら、その日のうちに発注する"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "強力粉",
+     "target": "バター",
+     "relation": "発注点の違い",
+     "description": "強力粉は 10 袋、バターは 6 箱が発注点",
+     "keywords": [
+      "在庫",
+      "基準"
+     ],
+     "evidence": [
+      "強力粉の発注点は 10 袋、バターは 6 箱"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/complaint-handling.md": {
+   "entities": [
+    {
+     "name": "店長の清水",
+     "type": "担当者",
+     "description": "解決できない苦情を引き継ぐ相手",
+     "evidence": [
+      "店長の清水"
+     ]
+    },
+    {
+     "name": "対応記録",
+     "type": "記録",
+     "description": "日時・商品・状況・お客さまの希望を書く記録",
+     "evidence": [
+      "対応記録"
+     ]
+    },
+    {
+     "name": "返金",
+     "type": "対応",
+     "description": "3,000 円までは担当者の判断でできる",
+     "evidence": [
+      "返金"
+     ]
+    },
+    {
+     "name": "店長",
+     "type": "役割",
+     "description": "3,000 円を超える返金を判断する人",
+     "evidence": [
+      "店長"
+     ]
+    },
+    {
+     "name": "朝礼",
+     "type": "会合",
+     "description": "毎週金曜に苦情の記録を共有する場",
+     "evidence": [
+      "朝礼"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "店長",
+     "target": "返金",
+     "relation": "返金を判断する",
+     "description": "3,000 円を超える返金は店長が判断する",
+     "keywords": [
+      "返金",
+      "判断",
+      "金額"
+     ],
+     "evidence": [
+      "それを超える場合は店長が判断する"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "店長の清水",
+     "target": "対応記録",
+     "relation": "苦情を引き継ぐ",
+     "description": "その場で解決できない苦情は店長の清水に引き継ぐ",
+     "keywords": [
+      "引き継ぎ",
+      "苦情",
+      "エスカレーション"
+     ],
+     "evidence": [
+      "その場で解決できないときは、店長の清水に引き継ぐ"
+     ],
+     "directed": true,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/new-product-plan.md": {
+   "entities": [
+    {
+     "name": "栗のモンブランタルト",
+     "type": "新商品",
+     "description": "渋皮煮をのせた小型のタルト。520 円",
+     "evidence": [
+      "栗のモンブランタルト"
+     ]
+    },
+    {
+     "name": "栗あんぱん",
+     "type": "新商品",
+     "description": "栗のあんを包んだ食事パン。280 円",
+     "evidence": [
+      "栗あんぱん"
+     ]
+    },
+    {
+     "name": "焼き栗プリン",
+     "type": "新商品",
+     "description": "瓶入りで日持ちが 3 日。450 円",
+     "evidence": [
+      "焼き栗プリン"
+     ]
+    },
+    {
+     "name": "栗山農園",
+     "type": "仕入れ先",
+     "description": "栗の入荷量を確認する相手",
+     "evidence": [
+      "栗山農園"
+     ]
+    },
+    {
+     "name": "試作",
+     "type": "工程",
+     "description": "10 月の第 1 週に行い、スタッフで試食する",
+     "evidence": [
+      "試作"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "栗山農園",
+     "target": "試作",
+     "relation": "入荷量を確認する",
+     "description": "試作の後、栗山農園に栗の入荷量を確認する",
+     "keywords": [
+      "確認",
+      "入荷",
+      "準備"
+     ],
+     "evidence": [
+      "栗山農園に、栗の入荷量を確認する"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "栗のモンブランタルト",
+     "target": "栗あんぱん",
+     "relation": "別の案",
+     "description": "モンブランタルトと栗あんぱんは別の新商品の案",
+     "keywords": [
+      "案",
+      "新商品"
+     ],
+     "evidence": [
+      "栗のあんを包んだ食事パン"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/trip-plan-kirigahama.md": {
+   "entities": [
+    {
+     "name": "霧ヶ浜",
+     "type": "場所",
+     "description": "架空の海辺の町",
+     "evidence": [
+      "霧ヶ浜"
+     ]
+    },
+    {
+     "name": "灯台",
+     "type": "場所",
+     "description": "14:00 に歩いて行く場所。往復 50 分",
+     "evidence": [
+      "灯台"
+     ]
+    },
+    {
+     "name": "みなと荘",
+     "type": "宿",
+     "description": "港のそばの宿。素泊まり",
+     "evidence": [
+      "みなと荘"
+     ]
+    },
+    {
+     "name": "特急",
+     "type": "乗り物",
+     "description": "行きは 8:10 発。帰りは 15:40 発",
+     "evidence": [
+      "特急"
+     ]
+    },
+    {
+     "name": "港",
+     "type": "場所",
+     "description": "宿のそばにある港",
+     "evidence": [
+      "港のそば"
+     ]
+    },
+    {
+     "name": "指定席",
+     "type": "予約",
+     "description": "帰りの指定席は早めに押さえる",
+     "evidence": [
+      "指定席"
+     ]
+    },
+    {
+     "name": "『潮騒の地図』",
+     "type": "本",
+     "description": "旅に持っていく文庫本",
+     "evidence": [
+      "『潮騒の地図』"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "みなと荘",
+     "target": "港",
+     "relation": "宿泊する",
+     "description": "港のそばのみなと荘に泊まる",
+     "keywords": [
+      "宿泊",
+      "素泊まり"
+     ],
+     "evidence": [
+      "宿は港のそばの「みなと荘」"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "特急",
+     "target": "指定席",
+     "relation": "席を押さえる",
+     "description": "連休の帰りの特急の指定席は早めに押さえる",
+     "keywords": [
+      "移動",
+      "帰り",
+      "予約"
+     ],
+     "evidence": [
+      "帰りの指定席は早めに押さえる"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/reading-memo-shiosai.md": {
+   "entities": [
+    {
+     "name": "航",
+     "type": "人物",
+     "description": "測量技師の見習いの主人公。慎重な性格",
+     "evidence": [
+      "航"
+     ]
+    },
+    {
+     "name": "漁師の老人",
+     "type": "人物",
+     "description": "古い海図を航に預ける老人",
+     "evidence": [
+      "漁師の老人"
+     ]
+    },
+    {
+     "name": "澪",
+     "type": "人物",
+     "description": "航の幼なじみ。港の食堂の娘",
+     "evidence": [
+      "澪"
+     ]
+    },
+    {
+     "name": "源さん",
+     "type": "人物",
+     "description": "海図の持ち主の老漁師。入り江のことを語らない",
+     "evidence": [
+      "老漁師の源さん"
+     ]
+    },
+    {
+     "name": "海図",
+     "type": "物",
+     "description": "実際にはない入り江が描かれた古い海図",
+     "evidence": [
+      "海図"
+     ]
+    },
+    {
+     "name": "入り江",
+     "type": "場所",
+     "description": "海図にだけ描かれた入り江。「帰る場所」の比喩",
+     "evidence": [
+      "入り江"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "漁師の老人",
+     "target": "航",
+     "relation": "海図を預ける",
+     "description": "漁師の老人が航に古い海図を預ける",
+     "keywords": [
+      "預ける",
+      "海図",
+      "老人"
+     ],
+     "evidence": [
+      "航は、漁師の老人から古い海図を預かる"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "航",
+     "target": "澪",
+     "relation": "入り江を探す",
+     "description": "航は幼なじみの澪と一緒に入り江を探す旅に出る",
+     "keywords": [
+      "旅",
+      "探す",
+      "幼なじみ"
+     ],
+     "evidence": [
+      "航は幼なじみの澪と一緒に、その入り江を探す旅に出る"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/household-budget.md": {
+   "entities": [
+    {
+     "name": "食費",
+     "type": "費目",
+     "description": "予算 35,000 円に対し実績 38,200 円",
+     "evidence": [
+      "食費"
+     ]
+    },
+    {
+     "name": "光熱費",
+     "type": "費目",
+     "description": "暖房を使い始める前なので低い",
+     "evidence": [
+      "光熱費"
+     ]
+    },
+    {
+     "name": "交通費",
+     "type": "費目",
+     "description": "連休の旅行の特急代が入っている",
+     "evidence": [
+      "交通費"
+     ]
+    },
+    {
+     "name": "特急代",
+     "type": "費目",
+     "description": "連休の旅行の特急の費用",
+     "evidence": [
+      "特急代"
+     ]
+    },
+    {
+     "name": "貯金",
+     "type": "目標",
+     "description": "毎月 20,000 円",
+     "evidence": [
+      "貯金"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "交通費",
+     "target": "特急代",
+     "relation": "旅行の特急代を含む",
+     "description": "交通費に連休の旅行の特急代が入っている",
+     "keywords": [
+      "旅行",
+      "特急代",
+      "交通"
+     ],
+     "evidence": [
+      "交通費は、連休の旅行の特急代が入っている"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/moving-checklist.md": {
+   "entities": [
+    {
+     "name": "引越し",
+     "type": "行事",
+     "description": "来春の転居。ひっこし。3 月の最終週を考えている",
+     "evidence": [
+      "引越し"
+     ]
+    },
+    {
+     "name": "引越し業者",
+     "type": "業者",
+     "description": "見積を 3 社から取る相手",
+     "evidence": [
+      "引越し業者"
+     ]
+    },
+    {
+     "name": "今の部屋",
+     "type": "場所",
+     "description": "1 か月前までに解約の連絡が必要",
+     "evidence": [
+      "今の部屋"
+     ]
+    },
+    {
+     "name": "冷蔵庫",
+     "type": "家電",
+     "description": "前日の夜に電源を切る",
+     "evidence": [
+      "冷蔵庫"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "引越し業者",
+     "target": "引越し",
+     "relation": "見積を取る",
+     "description": "引越し業者の見積を 3 社から取る",
+     "keywords": [
+      "見積",
+      "比較"
+     ],
+     "evidence": [
+      "引越し業者の見積を 3 社から取る"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/cooking-memo.md": {
+   "entities": [
+    {
+     "name": "だし",
+     "type": "料理",
+     "description": "昆布と鰹節でとる出汁。ダシとも書く",
+     "evidence": [
+      "だし"
+     ]
+    },
+    {
+     "name": "昆布",
+     "type": "材料",
+     "description": "水に 30 分置いてから弱火にかける",
+     "evidence": [
+      "昆布"
+     ]
+    },
+    {
+     "name": "鰹節",
+     "type": "材料",
+     "description": "火を止めて入れ、2 分待って漉す",
+     "evidence": [
+      "鰹節"
+     ]
+    },
+    {
+     "name": "味噌",
+     "type": "材料",
+     "description": "沸騰させない。火を止めてから溶く",
+     "evidence": [
+      "味噌"
+     ]
+    },
+    {
+     "name": "煮物",
+     "type": "料理",
+     "description": "一度冷ますと味がしみる",
+     "evidence": [
+      "煮物"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "昆布",
+     "target": "鰹節",
+     "relation": "順に使う",
+     "description": "昆布で出汁をとり、沸騰直前に昆布を出してから鰹節を入れる",
+     "keywords": [
+      "出汁",
+      "手順"
+     ],
+     "evidence": [
+      "火を止めて鰹節を入れ、2 分待って漉す"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/running-log.md": {
+   "entities": [
+    {
+     "name": "河川敷",
+     "type": "場所",
+     "description": "週 3 回走る場所",
+     "evidence": [
+      "河川敷"
+     ]
+    },
+    {
+     "name": "10/18 の 8 km",
+     "type": "走行",
+     "description": "後半に足が重くなった",
+     "evidence": [
+      "10/18 の 8 km"
+     ]
+    },
+    {
+     "name": "給水",
+     "type": "対策",
+     "description": "忘れたのが足が重くなった原因",
+     "evidence": [
+      "給水"
+     ]
+    },
+    {
+     "name": "靴",
+     "type": "用具",
+     "description": "底がすり減り、11 月に買い替える",
+     "evidence": [
+      "靴"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "給水",
+     "target": "10/18 の 8 km",
+     "relation": "不足が原因",
+     "description": "給水を忘れたため 10/18 の 8 km は後半に足が重くなった",
+     "keywords": [
+      "原因",
+      "疲労",
+      "水分"
+     ],
+     "evidence": [
+      "10/18 の 8 km は後半に足が重くなった。給水を忘れたのが原因"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/harbor-co-op.md": {
+   "entities": [
+    {
+     "name": "浜辺漁協",
+     "type": "団体",
+     "description": "架空の港町の漁協",
+     "evidence": [
+      "漁協"
+     ]
+    },
+    {
+     "name": "氷見丸",
+     "type": "船",
+     "description": "定置網の網の見回りを担当する船",
+     "evidence": [
+      "氷見丸"
+     ]
+    },
+    {
+     "name": "定置網",
+     "type": "漁具",
+     "description": "網の見回りが必要な漁具",
+     "evidence": [
+      "定置網"
+     ]
+    },
+    {
+     "name": "製氷所",
+     "type": "施設",
+     "description": "氷の出荷を午前 4 時から始める施設",
+     "evidence": [
+      "製氷所"
+     ]
+    },
+    {
+     "name": "隣町の冷蔵庫",
+     "type": "施設",
+     "description": "氷が不足したときに融通を受ける先",
+     "evidence": [
+      "隣町の冷蔵庫"
+     ]
+    },
+    {
+     "name": "鯖",
+     "type": "魚種",
+     "description": "今週 320 箱の水揚げ",
+     "evidence": [
+      "鯖"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "氷見丸",
+     "target": "定置網",
+     "relation": "網の見回りを担当する",
+     "description": "定置網の網の見回りは氷見丸の乗組員が担当する",
+     "keywords": [
+      "見回り",
+      "定置網",
+      "担当"
+     ],
+     "evidence": [
+      "網の見回りは氷見丸の乗組員が担当する"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "製氷所",
+     "target": "隣町の冷蔵庫",
+     "relation": "氷を融通する",
+     "description": "氷が不足した場合は隣町の冷蔵庫から氷の融通を受ける",
+     "keywords": [
+      "融通",
+      "不足",
+      "氷"
+     ],
+     "evidence": [
+      "氷が不足した場合は、隣町の冷蔵庫から融通を受ける"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "notes/botanical-garden.md": {
+   "entities": [
+    {
+     "name": "若葉植物園",
+     "type": "施設",
+     "description": "架空の植物園",
+     "evidence": [
+      "若葉植物園"
+     ]
+    },
+    {
+     "name": "洋ラン室",
+     "type": "区画",
+     "description": "18〜25 度、湿度 60〜70 % の区画",
+     "evidence": [
+      "洋ラン室"
+     ]
+    },
+    {
+     "name": "カイガラムシ",
+     "type": "害虫",
+     "description": "見つけたら鉢を隔離して綿棒で取り除く",
+     "evidence": [
+      "カイガラムシ"
+     ]
+    },
+    {
+     "name": "蘭",
+     "type": "植物",
+     "description": "葉に黒い斑点が出ることがある",
+     "evidence": [
+      "蘭の葉"
+     ]
+    },
+    {
+     "name": "園芸係長",
+     "type": "役割",
+     "description": "蘭の葉の黒い斑点について判断する人",
+     "evidence": [
+      "園芸係長"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "園芸係長",
+     "target": "蘭",
+     "relation": "病変を判断する",
+     "description": "蘭の葉に黒い斑点が出たとき園芸係長が判断する",
+     "keywords": [
+      "判断",
+      "斑点",
+      "病気"
+     ],
+     "evidence": [
+      "蘭の葉に黒い斑点が出たときは、園芸係長の判断を仰ぐ"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/library-sorting.md": {
+   "entities": [
+    {
+     "name": "ひだまり図書館",
+     "type": "施設",
+     "description": "架空の図書館",
+     "evidence": [
+      "ひだまり図書館"
+     ]
+    },
+    {
+     "name": "蔵書台帳",
+     "type": "記録",
+     "description": "棚番号と照らし合わせる台帳",
+     "evidence": [
+      "蔵書台帳"
+     ]
+    },
+    {
+     "name": "除籍",
+     "type": "手続き",
+     "description": "破損した本や古い実用書を蔵書から外す手続き",
+     "evidence": [
+      "除籍"
+     ]
+    },
+    {
+     "name": "長谷部",
+     "type": "担当者",
+     "description": "司書。作業を取りまとめる",
+     "evidence": [
+      "司書の長谷部"
+     ]
+    },
+    {
+     "name": "リサイクル市",
+     "type": "行事",
+     "description": "除籍した本を配る場",
+     "evidence": [
+      "リサイクル市"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "長谷部",
+     "target": "除籍",
+     "relation": "蔵書の除籍を取りまとめる",
+     "description": "司書の長谷部が蔵書の除籍作業を取りまとめる",
+     "keywords": [
+      "取りまとめ",
+      "司書",
+      "除籍"
+     ],
+     "evidence": [
+      "作業は司書の長谷部が取りまとめ"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    },
+    {
+     "source": "除籍",
+     "target": "リサイクル市",
+     "relation": "本を配る",
+     "description": "除籍した本はリサイクル市で配る",
+     "keywords": [
+      "配布",
+      "再利用"
+     ],
+     "evidence": [
+      "除籍する本は、リサイクル市で配る"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/choir-schedule.md": {
+   "entities": [
+    {
+     "name": "さざなみ合唱団",
+     "type": "団体",
+     "description": "架空の合唱団",
+     "evidence": [
+      "さざなみ合唱団"
+     ]
+    },
+    {
+     "name": "指揮者",
+     "type": "役割",
+     "description": "練習会場の鍵を開ける人",
+     "evidence": [
+      "指揮者"
+     ]
+    },
+    {
+     "name": "パートリーダー",
+     "type": "役割",
+     "description": "欠席の連絡を受ける人",
+     "evidence": [
+      "パートリーダー"
+     ]
+    },
+    {
+     "name": "テノール",
+     "type": "パート",
+     "description": "5 名。団員を募集している",
+     "evidence": [
+      "テノール"
+     ]
+    },
+    {
+     "name": "バス",
+     "type": "パート",
+     "description": "4 名。団員を募集している",
+     "evidence": [
+      "バス"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "パートリーダー",
+     "target": "指揮者",
+     "relation": "欠席を連絡する",
+     "description": "欠席の連絡はパートリーダーに前日までに入れる",
+     "keywords": [
+      "欠席",
+      "連絡"
+     ],
+     "evidence": [
+      "欠席の連絡は、パートリーダーに前日までに入れる"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "work/model-shop-stock.md": {
+   "entities": [
+    {
+     "name": "ひこうき堂",
+     "type": "店",
+     "description": "架空の模型店",
+     "evidence": [
+      "ひこうき堂"
+     ]
+    },
+    {
+     "name": "KM-310",
+     "type": "商品",
+     "description": "帆船の模型。在庫 0、予約 4 件",
+     "evidence": [
+      "帆船 KM-310"
+     ]
+    },
+    {
+     "name": "ＫＭ－１２３",
+     "type": "商品",
+     "description": "複葉機の模型。在庫 5",
+     "evidence": [
+      "ＫＭ－１２３"
+     ]
+    },
+    {
+     "name": "三浦",
+     "type": "担当者",
+     "description": "展示棚の模型を週に一度拭く店番",
+     "evidence": [
+      "三浦"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "三浦",
+     "target": "KM-310",
+     "relation": "展示棚を拭く",
+     "description": "店番の三浦が展示棚の模型を週に一度拭く",
+     "keywords": [
+      "清掃",
+      "展示",
+      "店番"
+     ],
+     "evidence": [
+      "店番の三浦が拭く"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/disaster-prep.md": {
+   "entities": [
+    {
+     "name": "避難所",
+     "type": "場所",
+     "description": "近くの小学校の体育館",
+     "evidence": [
+      "避難所"
+     ]
+    },
+    {
+     "name": "高台の道",
+     "type": "経路",
+     "description": "川沿いの道が冠水しやすいときに通る道",
+     "evidence": [
+      "高台の道"
+     ]
+    },
+    {
+     "name": "非常持ち出し袋",
+     "type": "備え",
+     "description": "玄関の収納に置く",
+     "evidence": [
+      "非常持ち出し袋"
+     ]
+    },
+    {
+     "name": "町内会",
+     "type": "団体",
+     "description": "毎年 9 月の第 1 日曜に防災訓練を行う",
+     "evidence": [
+      "町内会"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "町内会",
+     "target": "避難所",
+     "relation": "防災訓練を行う",
+     "description": "町内会が毎年 9 月の第 1 日曜に防災訓練を行う",
+     "keywords": [
+      "訓練",
+      "防災",
+      "毎年"
+     ],
+     "evidence": [
+      "町内会の防災訓練は、毎年 9 月の第 1 日曜に行われる"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/bike-repair.md": {
+   "entities": [
+    {
+     "name": "パンクの修理",
+     "type": "作業",
+     "description": "チューブの穴にパッチを貼った",
+     "evidence": [
+      "パンクの修理"
+     ]
+    },
+    {
+     "name": "ブレーキシュー",
+     "type": "部品",
+     "description": "右がすり減って交換した",
+     "evidence": [
+      "ブレーキシュー"
+     ]
+    },
+    {
+     "name": "六角レンチ 5 mm",
+     "type": "工具",
+     "description": "サドルとブレーキの固定に使う",
+     "evidence": [
+      "六角レンチ 5 mm"
+     ]
+    },
+    {
+     "name": "制動距離",
+     "type": "用語",
+     "description": "雨の日は伸びる",
+     "evidence": [
+      "制動距離"
+     ]
+    },
+    {
+     "name": "速度",
+     "type": "注意",
+     "description": "雨の日は落とす",
+     "evidence": [
+      "速度を落とす"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "制動距離",
+     "target": "速度",
+     "relation": "雨で伸びる",
+     "description": "雨の日は制動距離が伸びるので速度を落とす",
+     "keywords": [
+      "雨",
+      "安全"
+     ],
+     "evidence": [
+      "雨の日は制動距離が伸びるので、速度を落とす"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  },
+  "personal/tea-notes.md": {
+   "entities": [
+    {
+     "name": "煎茶",
+     "type": "茶葉",
+     "description": "南の山あい産。70 度で 60 秒蒸らす",
+     "evidence": [
+      "煎茶"
+     ]
+    },
+    {
+     "name": "ほうじ茶",
+     "type": "茶葉",
+     "description": "北の里産。95 度で 30 秒蒸らす",
+     "evidence": [
+      "ほうじ茶"
+     ]
+    },
+    {
+     "name": "玄米茶",
+     "type": "茶葉",
+     "description": "東の谷産。90 度で 45 秒蒸らす",
+     "evidence": [
+      "玄米茶"
+     ]
+    },
+    {
+     "name": "急須",
+     "type": "道具",
+     "description": "先に湯を入れて温めておく道具",
+     "evidence": [
+      "急須"
+     ]
+    }
+   ],
+   "relations": [
+    {
+     "source": "煎茶",
+     "target": "ほうじ茶",
+     "relation": "向く時間帯が違う",
+     "description": "ほうじ茶は夕食のあと、煎茶は朝の一杯に向いている",
+     "keywords": [
+      "時間帯",
+      "好み"
+     ],
+     "evidence": [
+      "煎茶は朝の一杯に向いている"
+     ],
+     "directed": false,
+     "qualifiers": {
+      "negated": false,
+      "condition": null,
+      "certainty": "stated"
+     }
+    }
+   ]
+  }
+ }
+}

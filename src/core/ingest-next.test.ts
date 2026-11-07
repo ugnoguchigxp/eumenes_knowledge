@@ -118,6 +118,11 @@ const sections = (n: number) =>
 		(_, i) => `## 節${i}\n\n本文${i}。${"あ".repeat(40)}\n\n`,
 	).join("");
 
+/** Open ingest-chain jobs only: a publication also queues the identity chain (p3.md §8). */
+const ingestOpen = (env: {
+	sink: { open: { kind: string; payload: unknown }[] };
+}) => env.sink.open.filter((j) => j.kind === "knowledge.ingest-next");
+
 describe("ingest to publish", () => {
 	test("fragments cover the body; evidence returns the original text and its sha256", async () => {
 		const env = makeEnv({ maxFragmentBytes: 200 });
@@ -932,7 +937,7 @@ describe("cancel, expiry, interruption and settle failures", () => {
 		expect(env.sink.open).toHaveLength(0);
 		env.clock.t += 5 * 60 * 1000;
 		await scanPage0(env);
-		expect(env.sink.open.map((j) => j.payload)).toEqual([{ sweep: 3 }]);
+		expect(ingestOpen(env).map((j) => j.payload)).toEqual([{ sweep: 3 }]);
 	});
 
 	test("a cancel while execute is still writing makes its next write fail", async () => {
@@ -984,7 +989,7 @@ describe("cancel, expiry, interruption and settle failures", () => {
 			transientFailures: 1,
 		});
 		expect(stateOfVersions(env)).toEqual([]);
-		expect(env.sink.open.map((j) => j.payload)).toEqual([{ sweep: 2 }]);
+		expect(ingestOpen(env).map((j) => j.payload)).toEqual([{ sweep: 2 }]);
 		// Document 2 goes first; document 1 waits, so the chain closes after it.
 		await drain(env);
 		expect(getDocumentInTransaction(env.db, key(2))!.state).toBe("current");
@@ -1025,6 +1030,8 @@ describe("the chain", () => {
 				expect(chainJobs().length).toBeLessThanOrEqual(1);
 				continue;
 			}
+			// The identity chain (queued by each publication) is not under test here.
+			if (job.kind !== "knowledge.ingest-next") continue;
 			// While a link runs no other chain job is open.
 			expect(chainJobs()).toHaveLength(0);
 			await runJob(env.db, env.ingest, env.ingest.schema.parse(job.payload));
@@ -1089,13 +1096,13 @@ describe("the chain", () => {
 		// The link ran long; a scan an hour later takes it for lost and starts sweep 2.
 		env.clock.t += 60 * 60 * 1000;
 		await scanPage0(env);
-		expect(env.sink.open.map((j) => j.payload)).toEqual([{ sweep: 2 }]);
+		expect(ingestOpen(env).map((j) => j.payload)).toEqual([{ sweep: 2 }]);
 		expect(settle(env, p, { type: "success", result: out as never })).toBe(
 			"applied",
 		);
 		// The valid result was published, but the old link did not queue a second job.
 		expect(getDocumentInTransaction(env.db, key(1))!.state).toBe("current");
-		expect(env.sink.open.map((j) => j.payload)).toEqual([{ sweep: 2 }]);
+		expect(ingestOpen(env).map((j) => j.payload)).toEqual([{ sweep: 2 }]);
 		expect(getChainInTransaction(env.db).openSweep).toBe(2);
 		// The new link has nothing left to do and stops the chain.
 		const log = await runJob(env.db, env.ingest, { sweep: 2 });
@@ -1140,7 +1147,7 @@ describe("the chain", () => {
 		expect(env.sink.open).toHaveLength(0);
 		env.clock.t += 2 * 60 * 1000;
 		await scanPage0(env);
-		expect(env.sink.open.map((j) => j.payload)).toEqual([{ sweep: 2 }]);
+		expect(ingestOpen(env).map((j) => j.payload)).toEqual([{ sweep: 2 }]);
 		await drain(env);
 		expect(getDocumentInTransaction(env.db, key(1))!.state).toBe("current");
 	});

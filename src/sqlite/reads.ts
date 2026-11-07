@@ -73,7 +73,7 @@ export type StoredFragment = {
 	textSha256: string;
 };
 
-type RawFragment = {
+export type RawFragment = {
 	version_id: number;
 	ordinal: number;
 	byte_start: number;
@@ -83,7 +83,7 @@ type RawFragment = {
 	text_sha256: string;
 };
 
-const toFragment = (r: RawFragment): StoredFragment => ({
+export const toFragment = (r: RawFragment): StoredFragment => ({
 	versionId: r.version_id,
 	ordinal: r.ordinal,
 	byteStart: r.byte_start,
@@ -406,4 +406,78 @@ LIMIT ?3`,
 			lastVerifiedAt: r.last_verified_at,
 			bm25: r.score,
 		}));
+}
+
+// ---------------------------------------------------------------------------
+// P3: reads for the resident vector index and the evidence check. Internal, like the other
+// reads by version id: the callers check the document's state and the caller's namespaces.
+// ---------------------------------------------------------------------------
+
+/**
+ * Ids of every published version that has vectors in `spaceKey`, with their fragment counts,
+ * in ascending order. Ids and counts only (no document data); the resident vector index diffs it
+ * against what it holds. Who may see a version is decided by `listSearchableVersionIdsInSnapshot`.
+ */
+export function listPublishedVersionsOfSpaceInSnapshot(
+	db: Tx,
+	spaceKey: string,
+): { versionId: number; fragments: number }[] {
+	return db
+		.query<{ version_id: number; vectors_written: number }>(
+			`SELECT version_id, vectors_written FROM knowledge_versions
+WHERE state = 'published' AND space_key = ? ORDER BY version_id`,
+		)
+		.all(spaceKey)
+		.map((r) => ({ versionId: r.version_id, fragments: r.vectors_written }));
+}
+
+export type VectorMatrix = {
+	/** Fragment ordinal of each row. */
+	ordinals: Int32Array;
+	/** `ordinals.length * dimension` float32 values, row by row. */
+	matrix: Float32Array;
+};
+
+/** The vectors of one version in one space as one packed matrix (ordinal order). */
+export function readVersionVectorMatrixInSnapshot(
+	db: Tx,
+	versionId: number,
+	spaceKey: string,
+	dimension: number,
+	rows: number,
+): VectorMatrix {
+	const ordinals = new Int32Array(rows);
+	const matrix = new Float32Array(rows * dimension);
+	let i = 0;
+	for (const r of db
+		.query<{ ordinal: number; vector: Uint8Array }>(
+			"SELECT ordinal, vector FROM knowledge_vectors WHERE space_key = ? AND version_id = ? ORDER BY ordinal",
+		)
+		.all(spaceKey, versionId)) {
+		const v = decodeVector(r.vector);
+		if (i >= rows || v.length !== dimension) {
+			throw new KnowledgeError("contract_mismatch");
+		}
+		ordinals[i] = r.ordinal;
+		matrix.set(v, i * dimension);
+		i++;
+	}
+	if (i !== rows) throw new KnowledgeError("contract_mismatch");
+	return { ordinals, matrix };
+}
+
+/** Fragments of a version whose byte range overlaps `[byteStart, byteEnd)`, in ordinal order. */
+export function readFragmentsOverlappingInSnapshot(
+	db: Tx,
+	versionId: number,
+	byteStart: number,
+	byteEnd: number,
+): StoredFragment[] {
+	return db
+		.query<RawFragment>(
+			`SELECT version_id, ordinal, byte_start, byte_end, heading_path, text, text_sha256
+FROM knowledge_fragments WHERE version_id = ? AND byte_end > ? AND byte_start < ? ORDER BY ordinal`,
+		)
+		.all(versionId, byteStart, byteEnd)
+		.map(toFragment);
 }

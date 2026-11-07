@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+	doclingDocumentIdSchema,
+	sha256HexSchema,
+	sourceNamespaceSchema,
+} from "./documents.js";
 import { CONTRACT_VERSION } from "./version.js";
 
 /**
@@ -12,6 +17,9 @@ export const apiPaths = {
 	syncRequests: `${API_BASE_PATH}/sync-requests`,
 	syncRequest: (requestId: string) =>
 		`${API_BASE_PATH}/sync-requests/${encodeURIComponent(requestId)}`,
+	search: `${API_BASE_PATH}/search`,
+	evidence: `${API_BASE_PATH}/evidence`,
+	related: `${API_BASE_PATH}/related`,
 } as const;
 
 const count = z.number().int().min(0);
@@ -93,6 +101,241 @@ export const apiErrorSchema = z.strictObject({
 	error: z.string().regex(/^[a-z][a-z0-9_]*$/),
 });
 export type ApiError = z.infer<typeof apiErrorSchema>;
+
+// ---------------------------------------------------------------------------
+// Search (p3.md §3)
+// ---------------------------------------------------------------------------
+
+export const searchRoutes = ["text", "vector", "entity", "relation"] as const;
+export type SearchRoute = (typeof searchRoutes)[number];
+
+export const SEARCH_LIMITS = {
+	queryChars: 1000,
+	maxResults: 50,
+	defaultResults: 10,
+	candidatesPerRoute: 200,
+	responseBytes: 100 * 1024,
+} as const;
+
+export const searchRequestSchema = z.strictObject({
+	query: z.string().min(1).max(SEARCH_LIMITS.queryChars),
+	limit: z
+		.number()
+		.int()
+		.min(1)
+		.max(SEARCH_LIMITS.maxResults)
+		.default(SEARCH_LIMITS.defaultResults),
+	/** Routes to use. Default: every route. */
+	routes: z
+		.array(z.enum(searchRoutes))
+		.min(1)
+		.max(searchRoutes.length)
+		.optional(),
+	/** Narrows the caller's namespaces; never widens them. */
+	namespaces: z.array(z.string().min(1).max(512)).max(100).optional(),
+});
+export type SearchRequest = z.input<typeof searchRequestSchema>;
+export type ParsedSearchRequest = z.output<typeof searchRequestSchema>;
+
+const byteRange = {
+	byteStart: count,
+	byteEnd: count,
+};
+
+/** Where a matched mention's quotation sits (entity and relation routes). */
+export const searchMentionSchema = z.strictObject({
+	kind: z.enum(["entity", "relation"]),
+	/** The entity's name, or the relation's short description, as the model wrote it. */
+	label: z.string(),
+	evidence: z.array(
+		z.strictObject({ ...byteRange, quoteSha256: sha256HexSchema }),
+	),
+});
+
+export const searchHitSchema = z.strictObject({
+	/** 1-based rank after fusion. Ranks only: no score is returned as a measure of truth. */
+	rank: z.number().int().min(1),
+	sourceNamespace: sourceNamespaceSchema,
+	documentId: doclingDocumentIdSchema,
+	namespace: z.string(),
+	path: z.string(),
+	title: z.string(),
+	markdownSha256: sha256HexSchema,
+	state: z.enum(["current", "unverified"]),
+	fragment: z.strictObject({
+		ordinal: count,
+		...byteRange,
+		headingPath: z.array(z.string()),
+	}),
+	/** The fragment's original text (at most one fragment) and its sha256. */
+	quote: z.string(),
+	quoteSha256: sha256HexSchema,
+	matchedBy: z.array(
+		z.strictObject({
+			route: z.enum(searchRoutes),
+			rank: z.number().int().min(1),
+		}),
+	),
+	mentions: z.array(searchMentionSchema),
+});
+export type SearchHit = z.infer<typeof searchHitSchema>;
+
+export const searchPartialReasons = [
+	...partialReasons,
+	/** The vector route could not run (embedding failed or timed out, no vectors in the space). */
+	"vector_unavailable",
+	/** A route stopped at its candidate limit. */
+	"route_budget_exhausted",
+	/** A requested route could not run for this query (for example a query under 3 characters above the scan limit). */
+	"route_skipped",
+	/** Results were dropped to keep the answer within its byte budget. */
+	"response_truncated",
+	"deadline_exceeded",
+] as const;
+
+export const searchResponseSchema = z.strictObject({
+	contractVersion: z.literal(CONTRACT_VERSION),
+	results: z.array(searchHitSchema),
+	/** How the text route matched: the trigram index, a substring scan (query under 3 characters), or not run. */
+	lexicalMode: z.enum(["trigram", "substring_scan", "none"]),
+	routes: z.array(
+		z.strictObject({
+			route: z.enum(searchRoutes),
+			status: z.enum(["ok", "skipped", "failed"]),
+			reason: z
+				.string()
+				.regex(/^[a-z][a-z0-9_]*$/)
+				.nullable(),
+			candidates: count,
+		}),
+	),
+	/** Documents in the caller's (narrowed) namespaces, by what the search could use. */
+	coverage: z.strictObject({
+		documents: count,
+		searchable: count,
+		stale: count,
+		unavailable: count,
+		failed: count,
+		extractionIncomplete: count,
+	}),
+	complete: z.boolean(),
+	partialReasons: z.array(z.enum(searchPartialReasons)),
+});
+export type SearchResponse = z.infer<typeof searchResponseSchema>;
+
+// ---------------------------------------------------------------------------
+// Evidence check (p3.md §4)
+// ---------------------------------------------------------------------------
+
+export const evidenceRequestSchema = z
+	.strictObject({
+		documentId: doclingDocumentIdSchema,
+		markdownSha256: sha256HexSchema,
+		...byteRange,
+		quoteSha256: sha256HexSchema,
+	})
+	.refine((v) => v.byteEnd > v.byteStart, { message: "empty_range" });
+export type EvidenceRequest = z.infer<typeof evidenceRequestSchema>;
+
+export const evidenceResponseSchema = z.discriminatedUnion("status", [
+	z.strictObject({
+		status: z.literal("valid"),
+		quote: z.string(),
+		state: z.enum(["current", "unverified"]),
+	}),
+	/** A newer version exists (applied or not yet): the reference must not be adopted. */
+	z.strictObject({
+		status: z.literal("stale"),
+		currentMarkdownSha256: sha256HexSchema.nullable(),
+	}),
+	z.strictObject({ status: z.literal("unavailable") }),
+	/** Same version, but the range is outside the body or the quote digest differs. */
+	z.strictObject({ status: z.literal("mismatch") }),
+	/** Unknown, or outside the caller's namespaces: the two are not told apart (p0.md §4). */
+	z.strictObject({ status: z.literal("not_available") }),
+]);
+export type EvidenceResponse = z.infer<typeof evidenceResponseSchema>;
+
+// ---------------------------------------------------------------------------
+// Related documents (p3.md §8)
+// ---------------------------------------------------------------------------
+
+export const relatedRequestSchema = z.strictObject({
+	documentId: doclingDocumentIdSchema,
+	limit: z
+		.number()
+		.int()
+		.min(1)
+		.max(SEARCH_LIMITS.maxResults)
+		.default(SEARCH_LIMITS.defaultResults),
+	namespaces: z.array(z.string().min(1).max(512)).max(100).optional(),
+});
+export type RelatedRequest = z.input<typeof relatedRequestSchema>;
+
+const evidencePoint = z.strictObject({
+	fragmentOrdinal: count,
+	...byteRange,
+	quoteSha256: sha256HexSchema,
+});
+
+export const relatedPartialReasons = [
+	...partialReasons,
+	/** Some current documents in scope were not compared for identity yet. */
+	"linking_pending",
+	/** The model was unsure for some candidate pairs; they are not counted as the same entity. */
+	"linking_unsure",
+	"response_truncated",
+] as const;
+
+export const relatedResponseSchema = z.strictObject({
+	contractVersion: z.literal(CONTRACT_VERSION),
+	/** `not_available`: unknown or outside the caller's namespaces (not told apart). `stale`: the document is not current. */
+	status: z.enum(["ok", "stale", "not_available"]),
+	document: z
+		.strictObject({
+			documentId: doclingDocumentIdSchema,
+			markdownSha256: sha256HexSchema,
+		})
+		.nullable(),
+	results: z.array(
+		z.strictObject({
+			/** By the number of shared entities (a count, not a measure of truth). */
+			rank: z.number().int().min(1),
+			documentId: doclingDocumentIdSchema,
+			namespace: z.string(),
+			path: z.string(),
+			title: z.string(),
+			markdownSha256: sha256HexSchema,
+			state: z.enum(["current", "unverified"]),
+			shared: z.array(
+				z.strictObject({
+					/** The entity's name in the requested document and in this one, as written. */
+					label: z.string(),
+					relatedLabel: z.string(),
+					/** Quotations of the two mentions the model judged to be the same entity. */
+					evidence: z.strictObject({
+						document: z.array(evidencePoint),
+						related: z.array(evidencePoint),
+					}),
+					/** Who decided it: the link is a model judgment with its provenance (p0.md #2). */
+					decidedBy: z.strictObject({
+						model: z.string().nullable(),
+						instructionId: z.string(),
+						instructionVersion: z.number().int().min(1),
+					}),
+					/**
+					 * The entity's derived summary (p0.md #5), only when every mention it was made from is
+					 * current and inside the caller's namespaces; otherwise null.
+					 */
+					summary: z.string().nullable(),
+				}),
+			),
+		}),
+	),
+	complete: z.boolean(),
+	partialReasons: z.array(z.enum(relatedPartialReasons)),
+});
+export type RelatedResponse = z.infer<typeof relatedResponseSchema>;
 
 /** HTTP status of each error code the API answers with. */
 export const API_ERROR_STATUS = {

@@ -28,4 +28,5 @@ ignorePatterns = [
 	"p0/**",
 	"src/contexts/generated.ts",
 	"examples/fixtures/**",
+	"verification/**",
 ]

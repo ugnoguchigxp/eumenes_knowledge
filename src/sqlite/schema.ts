@@ -87,6 +87,7 @@ CREATE TABLE knowledge_versions (
 );
 CREATE INDEX knowledge_versions_document ON knowledge_versions(source_namespace, document_id, state);
 CREATE INDEX knowledge_versions_state ON knowledge_versions(state, version_id);
+CREATE INDEX knowledge_versions_published_space ON knowledge_versions(space_key, version_id) WHERE state = 'published';
 CREATE TABLE knowledge_fragments (
  fragment_id INTEGER PRIMARY KEY AUTOINCREMENT,
  version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
@@ -136,8 +137,11 @@ CREATE TABLE knowledge_entity_mentions (
  name TEXT NOT NULL,
  type TEXT NOT NULL,
  description TEXT NOT NULL,
+ -- NFKC + lower case of name: the string the identity candidates are matched on (p3.md 8).
+ name_norm TEXT NOT NULL DEFAULT '',
  UNIQUE (version_id, fragment_ordinal, local_id)
 );
+CREATE INDEX knowledge_entity_mentions_name_norm ON knowledge_entity_mentions(name_norm);
 CREATE TABLE knowledge_relation_mentions (
  relation_id INTEGER PRIMARY KEY AUTOINCREMENT,
  version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
@@ -153,6 +157,16 @@ CREATE TABLE knowledge_relation_mentions (
  qualifier_condition TEXT,
  qualifier_certainty TEXT NOT NULL CHECK (qualifier_certainty IN ('stated','uncertain','hypothetical')),
  UNIQUE (version_id, fragment_ordinal, local_id)
+);
+-- Full-text indexes of the mentions (p3.md 3). rowid = entity_id / relation_id of the mention;
+-- search_text is NFKC + lower case, like the fragment index.
+CREATE VIRTUAL TABLE knowledge_entity_fts USING fts5(
+ search_text,
+ tokenize = 'trigram'
+);
+CREATE VIRTUAL TABLE knowledge_relation_fts USING fts5(
+ search_text,
+ tokenize = 'trigram'
 );
 CREATE TABLE knowledge_evidence (
  evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -189,5 +203,78 @@ CREATE TABLE knowledge_ingest_chain (
   AND (active_document_id IS NULL) = (active_retry IS NULL)
   AND (active_document_id IS NULL) = (active_namespace IS NULL))
 );
-INSERT INTO knowledge_ingest_chain (id, next_sweep) VALUES (1, 1);`,
+INSERT INTO knowledge_ingest_chain (id, next_sweep) VALUES (1, 1);
+-- P3 wave 2 (p3.md 8): identity judgments, their progress, summaries and the identity chain.
+-- Links name two entity mentions in canonical order (entity_a < entity_b). A link lives and dies
+-- with the two versions its mentions belong to: cleanup deletes it with either version.
+CREATE TABLE knowledge_entity_links (
+ entity_a INTEGER NOT NULL,
+ entity_b INTEGER NOT NULL,
+ version_a INTEGER NOT NULL,
+ version_b INTEGER NOT NULL,
+ decision TEXT NOT NULL CHECK (decision IN ('same','different','unsure')),
+ model TEXT,
+ instruction_id TEXT NOT NULL,
+ instruction_version INTEGER NOT NULL CHECK (instruction_version >= 1),
+ decided_at INTEGER NOT NULL,
+ PRIMARY KEY (entity_a, entity_b),
+ CHECK (entity_a < entity_b)
+) WITHOUT ROWID;
+CREATE INDEX knowledge_entity_links_b ON knowledge_entity_links(entity_b);
+CREATE INDEX knowledge_entity_links_version_a ON knowledge_entity_links(version_a);
+CREATE INDEX knowledge_entity_links_version_b ON knowledge_entity_links(version_b);
+-- Per published version: how far its mentions were compared (in entity_id order). 'done' is the
+-- mark "compared": every mention of the version was handled. A temporary failure sets not_before.
+CREATE TABLE knowledge_link_versions (
+ version_id INTEGER PRIMARY KEY,
+ state TEXT NOT NULL CHECK (state IN ('partial','done')),
+ cursor_entity_id INTEGER NOT NULL DEFAULT 0 CHECK (cursor_entity_id >= 0),
+ failed_mentions INTEGER NOT NULL DEFAULT 0 CHECK (failed_mentions >= 0),
+ not_before INTEGER NOT NULL DEFAULT 0 CHECK (not_before >= 0),
+ transient_failures INTEGER NOT NULL DEFAULT 0 CHECK (transient_failures >= 0),
+ -- Counts every recorded step of the comparison (a link that made progress is not made to wait).
+ steps INTEGER NOT NULL DEFAULT 0 CHECK (steps >= 0),
+ instruction_id TEXT NOT NULL,
+ instruction_version INTEGER NOT NULL CHECK (instruction_version >= 1),
+ updated_at INTEGER NOT NULL
+);
+-- One row per cluster anchor (the smallest entity id of the cluster). members_digest is the
+-- digest of the sorted member ids the summary was made for; a different cluster never uses it.
+-- 'failed': the answer was invalid (not retried for the same digest); 'waiting': a temporary failure.
+CREATE TABLE knowledge_entity_summaries (
+ anchor_entity_id INTEGER PRIMARY KEY,
+ anchor_version_id INTEGER NOT NULL,
+ members_digest TEXT NOT NULL,
+ status TEXT NOT NULL CHECK (status IN ('ok','failed','waiting')),
+ summary TEXT,
+ model TEXT,
+ instruction_id TEXT NOT NULL,
+ instruction_version INTEGER NOT NULL CHECK (instruction_version >= 1),
+ not_before INTEGER NOT NULL DEFAULT 0 CHECK (not_before >= 0),
+ transient_failures INTEGER NOT NULL DEFAULT 0 CHECK (transient_failures >= 0),
+ created_at INTEGER NOT NULL,
+ CHECK ((status = 'ok') = (summary IS NOT NULL))
+);
+CREATE INDEX knowledge_entity_summaries_version ON knowledge_entity_summaries(anchor_version_id);
+CREATE TABLE knowledge_link_chain (
+ id INTEGER PRIMARY KEY CHECK (id = 1),
+ next_sweep INTEGER NOT NULL CHECK (next_sweep >= 1),
+ open_sweep INTEGER,
+ opened_at INTEGER,
+ advanced_at INTEGER,
+ active_kind TEXT CHECK (active_kind IS NULL OR active_kind IN ('version','summary')),
+ active_id INTEGER,
+ active_digest TEXT,
+ -- Advances whenever the set of current mentions or of 'same' links may have changed. The
+ -- summary search (a read of every link of the host) is skipped while it is unchanged since the
+ -- last search that found nothing (summary_checked_key = generation and the search's limits;
+ -- summary_recheck_at = when a waiting summary comes due, null: never).
+ link_generation INTEGER NOT NULL DEFAULT 0 CHECK (link_generation >= 0),
+ summary_checked_key TEXT,
+ summary_recheck_at INTEGER,
+ CHECK ((open_sweep IS NULL) = (advanced_at IS NULL)),
+ CHECK (open_sweep IS NOT NULL OR active_kind IS NULL),
+ CHECK ((active_kind IS NULL) = (active_id IS NULL))
+);
+INSERT INTO knowledge_link_chain (id, next_sweep) VALUES (1, 1);`,
 ];

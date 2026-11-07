@@ -4,6 +4,8 @@ import {
 	type Tx,
 } from "../contracts/index.js";
 import { MAX_TRANSIENT_RETRY_DELAY_MS } from "./defaults.js";
+import { bumpLinkGenerationInTransaction } from "./link-chain.js";
+import { reopenLinkVersionInTransaction } from "./links.js";
 
 /** States the registry stores. `unverified` is derived when a read is made (p0.md §2.3). */
 export type StoredDocumentState =
@@ -218,6 +220,14 @@ WHERE source_namespace = ?12 AND document_id = ?13`,
 		key.sourceNamespace,
 		key.documentId,
 	);
+	if (state !== row.state) {
+		bumpLinkGenerationInTransaction(db);
+		// Back to `current` with the version it had: versions compared while it was away could
+		// not name its mentions, so its own comparison is made again (decided pairs are skipped).
+		if (state === "current" && row.publishedVersionId !== null) {
+			reopenLinkVersionInTransaction(db, row.publishedVersionId, now);
+		}
+	}
 	return {
 		generation,
 		// A new version, or the same one in another namespace, starts counting from zero.
@@ -267,6 +277,7 @@ WHERE source_namespace = ? AND document_id = ? AND state = 'stale' AND generatio
 			expected.markdownSha256,
 			expected.namespace,
 		);
+	if (r.changes === 1) bumpLinkGenerationInTransaction(db);
 	return r.changes === 1;
 }
 
@@ -316,6 +327,7 @@ WHERE source_namespace = ? AND state IN ('current', 'stale')
  AND namespace NOT IN (SELECT value FROM json_each(?))`,
 		)
 		.run(now, sourceNamespace, JSON.stringify(allowedNamespaces));
+	if (r.changes > 0) bumpLinkGenerationInTransaction(db);
 	return r.changes;
 }
 
@@ -455,6 +467,7 @@ WHERE source_namespace = ?3 AND document_id = ?4`,
 		)
 		.run(state, now, key.sourceNamespace, key.documentId);
 	if (r.changes !== 1) return false;
+	bumpLinkGenerationInTransaction(db);
 	db.query(
 		`UPDATE knowledge_versions SET state = 'retired', retired_at = ?
 WHERE source_namespace = ? AND document_id = ? AND state = 'published'`,
