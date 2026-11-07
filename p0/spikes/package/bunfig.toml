@@ -1,0 +1,24 @@
+[install]
+peer = false
+minimumReleaseAge = 604800
+
+# Same [fmt] settings as Eumenes (bunfig.toml), so `bun fmt` output is identical.
+[fmt]
+useTabs = true
+tabWidth = 2
+printWidth = 80
+singleQuote = false
+jsxSingleQuote = false
+quoteProps = "as-needed"
+trailingComma = "all"
+semi = true
+arrowParens = "always"
+bracketSameLine = false
+bracketSpacing = true
+sortPackageJson = false
+ignorePatterns = [
+	"**/*.md",
+	"node_modules/**",
+	"dist/**",
+	"src/contexts/generated.ts",
+]

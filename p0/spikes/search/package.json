@@ -1,0 +1,13 @@
+{
+  "name": "p0-search-spike",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "P0 spike: SQLite FTS5 / vector brute-force / citation byte ranges / verification writer. Synthetic data only. Not product code.",
+  "scripts": {
+    "test": "bun test",
+    "fts": "bun run src/fts-matrix.ts",
+    "fts:scale": "bun run src/fts-scale.ts",
+    "vector": "bun run src/vector-bench.ts"
+  }
+}

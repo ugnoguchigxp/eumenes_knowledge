@@ -1,0 +1,106 @@
+{
+	"kind": "eumenes-knowledge-distribution",
+	"manifestVersion": 1,
+	"package": {
+		"name": "eumenes_knowledge",
+		"version": "0.0.0-spike.1",
+		"license": "SEE LICENSE IN LICENSE"
+	},
+	"contract": {
+		"version": 1
+	},
+	"instructions": {
+		"setDigest": "12fc5c99f5496ebf314ecd32f4d6871cb6fb29b5ad8ed7fec16fef7bac829035",
+		"entries": [
+			{
+				"id": "extract-entities",
+				"version": 1,
+				"sha256": "cc6f45b2537d1d6f424a945afe2cdddbd5986c2900cac0043ae3ff0a6f5f12f2"
+			}
+		]
+	},
+	"schema": {
+		"migrationCount": 2,
+		"migrations": [
+			{
+				"ordinal": 1,
+				"id": "0001",
+				"sha256": "068c23093efde61e3f4e759b1ba56e959537948a61112eb22688145548deb53a"
+			},
+			{
+				"ordinal": 2,
+				"id": "0002",
+				"sha256": "ae860379871d1bcc00ec0ba29e17b4246a8be22ed00770189dd75f60c633fad2"
+			}
+		]
+	},
+	"exports": [
+		".",
+		"./sqlite",
+		"./client",
+		"./cli",
+		"./mcp",
+		"./distribution-manifest.json",
+		"./package.json"
+	],
+	"bin": {
+		"eumenes-knowledge": "./dist/cli/bin.js",
+		"eumenes-knowledge-mcp": "./dist/mcp/bin.js"
+	},
+	"dependencies": {
+		"zod": "4.4.3"
+	},
+	"source": {
+		"gitCommit": null,
+		"dirty": null,
+		"note": "spike directory is not a git repository",
+		"digest": "5ff1a780b961f49d758d2a9cead9d53dcc8e294326532044891936b2cd2f7934",
+		"digestScope": "src/**, scripts/**, package.json, bun.lock, bunfig.toml, tsconfig*.json (sorted path+sha256)",
+		"fileCount": 31
+	},
+	"distribution": {
+		"digest": "448ee8a082eb0034d6e1495013b68785128bb7f5ae7373e6b714476a0b3cd7c8",
+		"digestScope": "dist/**, package.json, LICENSE, THIRD_PARTY_NOTICES.md (this manifest excluded)",
+		"files": {
+			"LICENSE": "3e625e94f8f34301d240473123e7f454acea795c484ee67878301774b31a09d7",
+			"THIRD_PARTY_NOTICES.md": "b86d7ae03adf76f29e78d36ef51b352de3dd9e16a0e06c8606384e564072af4c",
+			"dist/cli/bin.d.ts": "f3b2989724efbf7b154b10283b87780d53ee348055b20c76f86634ee512a2f93",
+			"dist/cli/bin.js": "2d8b8c4a4ef5af82336e8e9a9e9255930d4d0952d3d173eac4dde1052473eeec",
+			"dist/cli/index.d.ts": "f050e0feab4cd9c953f2b15909a08e26fc01d0c066f3fdc87ab34d0f7a5a84f1",
+			"dist/cli/index.js": "75ee7f927ff911ba89ec47d45cbf01f14ce7acd3e61c9c864b28f51f53e978c4",
+			"dist/client/index.d.ts": "f3f6ab4d77c06d4d9d98c51e27f868e7f2ef3915e75170bd58cb0992a33013d0",
+			"dist/client/index.js": "952326acf3de079d66900d158c2f96969537f2535330daf39705b2db1877d221",
+			"dist/contexts/generated.d.ts": "8050e0ce0f3c40c6a4ad7029f50eb876d1da7f5df42af43775230c8b21b3a537",
+			"dist/contexts/generated.js": "6f27f9c0d0a4d251e0aec0a4a633b8fb7b31360d9f3a1d451c50dee4bcef34f5",
+			"dist/contexts/index.d.ts": "ce8d0e5bf49d9882c904ee437201134c62e4a3c8f9dfbcddb676a79d37a652de",
+			"dist/contexts/index.js": "7efccf9d78042b5417f53a5ea665a6be18c469a6dac07f615b485feb7557ec82",
+			"dist/contracts/index.d.ts": "203465129a9f16dfdde71cdac920b8f25f7740d99d169e66f98f67c90aad9fe3",
+			"dist/contracts/index.js": "3f2f91d345f341a77e8b6f23ab6508e1cd2daeb0d41b2148d88cfd7f8d9d833a",
+			"dist/core/index.d.ts": "4a66e65de5d7086c0ec7e51760d2a98440c003b8c7ff056df3c23ed071fedeb2",
+			"dist/core/index.js": "fbed6319036cac44791b48b4ba34702e7d93e7947f7c7d61b75c30f6ca07eafe",
+			"dist/index.d.ts": "73422595d20107c789a604e5d76cb4a4058ecb4de59aa6f705c57756cdbfc4f9",
+			"dist/index.js": "2965803dec786c3e404dca74747ef7754886547adfc5df2e84c354456b002ed9",
+			"dist/mcp/bin.d.ts": "f3b2989724efbf7b154b10283b87780d53ee348055b20c76f86634ee512a2f93",
+			"dist/mcp/bin.js": "0c8801dcd32abc58b50b27a0d60f9f591109004621dad0dbb83c36677e451962",
+			"dist/mcp/index.d.ts": "f853f80fd295304f10919c9bb4bfcac488e95fcf229699fb18bb198324d9e2f0",
+			"dist/mcp/index.js": "7c1b2b5440bfd15a45f054984c8fa44a4094475d8ae37f969d1c86166da6c8e9",
+			"dist/sqlite/index.d.ts": "c8418ff0d6ac5d0276bd4a5d6d35a411681889985de64200be4df1902f8bdbd3",
+			"dist/sqlite/index.js": "0885bb992f18efaea46127af441a3f2508b35d3112d2ddf11b93c1d6ee853764",
+			"dist/version.d.ts": "b5141095675e604f97ce3cacdf066413deeef9ebc4a4714a081d002b5cefcc3f",
+			"dist/version.js": "5e343b49297bff4c302abd263f1b0b34081063092bb7601a24d3067ed155916c",
+			"package.json": "e8b8120870d2000afd44c7694feb3a123b8ba36173e0430ad4f325f878cae652"
+		}
+	},
+	"toolchain": {
+		"bun": "1.4.4",
+		"typescript": "7.0.2"
+	},
+	"lightrag": {
+		"status": "unfilled",
+		"upstream": "https://github.com/HKUDS/LightRAG",
+		"commit": null,
+		"license": "MIT",
+		"files": [],
+		"note": "filled when the first port lands (P2)"
+	}
+}

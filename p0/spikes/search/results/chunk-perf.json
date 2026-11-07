@@ -1,0 +1,23 @@
+[
+ {
+  "bytesMiB": 1,
+  "maxBytes": 2048,
+  "headings": 3162,
+  "fragments": 3162,
+  "ms": 7
+ },
+ {
+  "bytesMiB": 8,
+  "maxBytes": 2048,
+  "headings": 25225,
+  "fragments": 25225,
+  "ms": 28
+ },
+ {
+  "bytesMiB": 8,
+  "maxBytes": 256,
+  "headings": 25225,
+  "fragments": 50450,
+  "ms": 90
+ }
+]

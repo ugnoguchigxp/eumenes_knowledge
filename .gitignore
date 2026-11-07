@@ -1,0 +1,12 @@
+# 依存と生成物（いずれも再生成できる）
+node_modules/
+dist/
+out/
+*.tgz
+*.tgz.sha256
+
+# 利用者ごとの Claude Code 設定
+.claude/settings.local.json
+
+# OS
+.DS_Store

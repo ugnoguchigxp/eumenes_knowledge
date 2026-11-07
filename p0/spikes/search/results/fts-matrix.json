@@ -1,0 +1,1092 @@
+{
+ "docs": {
+  "d1": "東京都の天気予報：晴れ時々くもり",
+  "d2": "とうきょうタワーに行く",
+  "d3": "トウキョウ駅 カタカナ表記",
+  "d4": "ＡＢＣ　全角英数ＡＢＣ１２３",
+  "d5": "ABC abc half-width 123",
+  "d6": "ﾄｳｷｮｳ 半角カナの表記",
+  "d7": "Hello World: C++ and C# programming, foo_bar, foo-bar, user@example.com",
+  "d8": "京都府の観光と東京への移動",
+  "d9": "ガイドライン（NFC・全角）",
+  "d10": "データベース設計と機械学習",
+  "d11": "Résumé and café (accented only)",
+  "d12": "東 京 都 (空白区切りの1文字語)",
+  "d13": "ガイドライン（NFD分解形）",
+  "d14": "ONLY UPPER CASE: HELLO",
+  "d15": "resume and cafe (plain only)",
+  "d16": "ｶﾞｲﾄﾞﾗｲﾝ（半角カナ濁点つき）"
+ },
+ "out": {
+  "1字 漢字": {
+   "tri MATCH": [],
+   "tri MATCH 両側NFKC": [],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [],
+   "tri LIKE(FTS表)": [
+    "d1",
+    "d8",
+    "d12"
+   ],
+   "unicode61 MATCH": [
+    "d12"
+   ],
+   "unicode61 prefix*": [
+    "d1",
+    "d12"
+   ],
+   "unicode61 両側NFKC": [
+    "d12"
+   ],
+   "LIKE": [
+    "d1",
+    "d8",
+    "d12"
+   ],
+   "instr": [
+    "d1",
+    "d8",
+    "d12"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d1",
+    "d8",
+    "d12"
+   ]
+  },
+  "1字 かな": {
+   "tri MATCH": [],
+   "tri MATCH 両側NFKC": [],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [],
+   "tri LIKE(FTS表)": [
+    "d2"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d2"
+   ],
+   "instr": [
+    "d2"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d2"
+   ]
+  },
+  "1字 ASCII": {
+   "tri MATCH": [],
+   "tri MATCH 両側NFKC": [],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [],
+   "tri LIKE(FTS表)": [
+    "d5",
+    "d7",
+    "d11",
+    "d14",
+    "d15"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [
+    "d5",
+    "d7",
+    "d11",
+    "d15"
+   ],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d5",
+    "d7",
+    "d11",
+    "d14",
+    "d15"
+   ],
+   "instr": [
+    "d5",
+    "d14"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d4",
+    "d5",
+    "d7",
+    "d11",
+    "d14",
+    "d15"
+   ]
+  },
+  "2字 漢字": {
+   "tri MATCH": [],
+   "tri MATCH 両側NFKC": [],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [],
+   "tri LIKE(FTS表)": [
+    "d1",
+    "d8"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [
+    "d1"
+   ],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d1",
+    "d8"
+   ],
+   "instr": [
+    "d1",
+    "d8"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d1",
+    "d8"
+   ]
+  },
+  "2字 漢字(都市)": {
+   "tri MATCH": [],
+   "tri MATCH 両側NFKC": [],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [],
+   "tri LIKE(FTS表)": [
+    "d1",
+    "d8"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [
+    "d8"
+   ],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d1",
+    "d8"
+   ],
+   "instr": [
+    "d1",
+    "d8"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d1",
+    "d8"
+   ]
+  },
+  "2字 ASCII": {
+   "tri MATCH": [],
+   "tri MATCH 両側NFKC": [],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [],
+   "tri LIKE(FTS表)": [
+    "d5"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [
+    "d5"
+   ],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d5"
+   ],
+   "instr": [
+    "d5"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d4",
+    "d5"
+   ]
+  },
+  "3字 漢字": {
+   "tri MATCH": [
+    "d1"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d1"
+   ],
+   "tri case_sensitive": [
+    "d1"
+   ],
+   "tri remove_diacritics": [
+    "d1"
+   ],
+   "tri LIKE(FTS表)": [
+    "d1"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [
+    "d1"
+   ],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d1"
+   ],
+   "instr": [
+    "d1"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d1"
+   ]
+  },
+  "3字 ASCII 小文字": {
+   "tri MATCH": [
+    "d5"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "tri case_sensitive": [
+    "d5"
+   ],
+   "tri remove_diacritics": [
+    "d5"
+   ],
+   "tri LIKE(FTS表)": [
+    "d5"
+   ],
+   "unicode61 MATCH": [
+    "d5"
+   ],
+   "unicode61 prefix*": [
+    "d5"
+   ],
+   "unicode61 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "LIKE": [
+    "d5"
+   ],
+   "instr": [
+    "d5"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d4",
+    "d5"
+   ]
+  },
+  "3字 ASCII 大文字": {
+   "tri MATCH": [
+    "d5"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "tri case_sensitive": [
+    "d5"
+   ],
+   "tri remove_diacritics": [
+    "d5"
+   ],
+   "tri LIKE(FTS表)": [
+    "d5"
+   ],
+   "unicode61 MATCH": [
+    "d5"
+   ],
+   "unicode61 prefix*": [
+    "d5"
+   ],
+   "unicode61 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "LIKE": [
+    "d5"
+   ],
+   "instr": [
+    "d5"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d4",
+    "d5"
+   ]
+  },
+  "3字 全角英字": {
+   "tri MATCH": [
+    "d4"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "tri case_sensitive": [
+    "d4"
+   ],
+   "tri remove_diacritics": [
+    "d4"
+   ],
+   "tri LIKE(FTS表)": [
+    "d4"
+   ],
+   "unicode61 MATCH": [
+    "d4"
+   ],
+   "unicode61 prefix*": [
+    "d4"
+   ],
+   "unicode61 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "LIKE": [
+    "d4"
+   ],
+   "instr": [
+    "d4"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d4",
+    "d5"
+   ]
+  },
+  "3字 全角小文字": {
+   "tri MATCH": [
+    "d4"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [
+    "d4"
+   ],
+   "tri LIKE(FTS表)": [],
+   "unicode61 MATCH": [
+    "d4"
+   ],
+   "unicode61 prefix*": [
+    "d4"
+   ],
+   "unicode61 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "LIKE": [],
+   "instr": [],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d4",
+    "d5"
+   ]
+  },
+  "3字 かな": {
+   "tri MATCH": [
+    "d2"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d2"
+   ],
+   "tri case_sensitive": [
+    "d2"
+   ],
+   "tri remove_diacritics": [
+    "d2"
+   ],
+   "tri LIKE(FTS表)": [
+    "d2"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [
+    "d2"
+   ],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d2"
+   ],
+   "instr": [
+    "d2"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d2"
+   ]
+  },
+  "3字 カナ": {
+   "tri MATCH": [
+    "d3"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d3",
+    "d6"
+   ],
+   "tri case_sensitive": [
+    "d3"
+   ],
+   "tri remove_diacritics": [
+    "d3"
+   ],
+   "tri LIKE(FTS表)": [
+    "d3"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [
+    "d3"
+   ],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d3"
+   ],
+   "instr": [
+    "d3"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d3",
+    "d6"
+   ]
+  },
+  "半角カナ 3字": {
+   "tri MATCH": [
+    "d6"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d3",
+    "d6"
+   ],
+   "tri case_sensitive": [
+    "d6"
+   ],
+   "tri remove_diacritics": [
+    "d6"
+   ],
+   "tri LIKE(FTS表)": [
+    "d6"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [
+    "d6"
+   ],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d6"
+   ],
+   "instr": [
+    "d6"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d3",
+    "d6"
+   ]
+  },
+  "6字 カナ(ガイドライン)": {
+   "tri MATCH": [
+    "d9"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d9",
+    "d13",
+    "d16"
+   ],
+   "tri case_sensitive": [
+    "d9"
+   ],
+   "tri remove_diacritics": [
+    "d9"
+   ],
+   "tri LIKE(FTS表)": [
+    "d9"
+   ],
+   "unicode61 MATCH": [
+    "d9"
+   ],
+   "unicode61 prefix*": [
+    "d9"
+   ],
+   "unicode61 両側NFKC": [
+    "d9",
+    "d13",
+    "d16"
+   ],
+   "LIKE": [
+    "d9"
+   ],
+   "instr": [
+    "d9"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d9",
+    "d13",
+    "d16"
+   ]
+  },
+  "6字 カナ NFD": {
+   "tri MATCH": [
+    "d13"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d9",
+    "d13",
+    "d16"
+   ],
+   "tri case_sensitive": [
+    "d13"
+   ],
+   "tri remove_diacritics": [
+    "d13"
+   ],
+   "tri LIKE(FTS表)": [
+    "d13"
+   ],
+   "unicode61 MATCH": [
+    "d13"
+   ],
+   "unicode61 prefix*": [
+    "d13"
+   ],
+   "unicode61 両側NFKC": [
+    "d9",
+    "d13",
+    "d16"
+   ],
+   "LIKE": [
+    "d13"
+   ],
+   "instr": [
+    "d13"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d9",
+    "d13",
+    "d16"
+   ]
+  },
+  "大小 hello(文書はHello/HELLO)": {
+   "tri MATCH": [
+    "d7",
+    "d14"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d7",
+    "d14"
+   ],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [
+    "d7",
+    "d14"
+   ],
+   "tri LIKE(FTS表)": [
+    "d7",
+    "d14"
+   ],
+   "unicode61 MATCH": [
+    "d7",
+    "d14"
+   ],
+   "unicode61 prefix*": [
+    "d7",
+    "d14"
+   ],
+   "unicode61 両側NFKC": [
+    "d7",
+    "d14"
+   ],
+   "LIKE": [
+    "d7",
+    "d14"
+   ],
+   "instr": [],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d7",
+    "d14"
+   ]
+  },
+  "大小 HELLO": {
+   "tri MATCH": [
+    "d7",
+    "d14"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d7",
+    "d14"
+   ],
+   "tri case_sensitive": [
+    "d14"
+   ],
+   "tri remove_diacritics": [
+    "d7",
+    "d14"
+   ],
+   "tri LIKE(FTS表)": [
+    "d7",
+    "d14"
+   ],
+   "unicode61 MATCH": [
+    "d7",
+    "d14"
+   ],
+   "unicode61 prefix*": [
+    "d7",
+    "d14"
+   ],
+   "unicode61 両側NFKC": [
+    "d7",
+    "d14"
+   ],
+   "LIKE": [
+    "d7",
+    "d14"
+   ],
+   "instr": [
+    "d14"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d7",
+    "d14"
+   ]
+  },
+  "長め 漢字かな混在": {
+   "tri MATCH": [
+    "d1"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d1"
+   ],
+   "tri case_sensitive": [
+    "d1"
+   ],
+   "tri remove_diacritics": [
+    "d1"
+   ],
+   "tri LIKE(FTS表)": [
+    "d1"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d1"
+   ],
+   "instr": [
+    "d1"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d1"
+   ]
+  },
+  "漢字+かな 3字跨ぎ": {
+   "tri MATCH": [
+    "d1"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d1"
+   ],
+   "tri case_sensitive": [
+    "d1"
+   ],
+   "tri remove_diacritics": [
+    "d1"
+   ],
+   "tri LIKE(FTS表)": [
+    "d1"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [],
+   "unicode61 両側NFKC": [],
+   "LIKE": [
+    "d1"
+   ],
+   "instr": [
+    "d1"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d1"
+   ]
+  },
+  "記号 C++": {
+   "tri MATCH": [
+    "d7"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d7"
+   ],
+   "tri case_sensitive": [
+    "d7"
+   ],
+   "tri remove_diacritics": [
+    "d7"
+   ],
+   "tri LIKE(FTS表)": [
+    "d7"
+   ],
+   "unicode61 MATCH": [
+    "d7"
+   ],
+   "unicode61 prefix*": [
+    "d7",
+    "d11",
+    "d14",
+    "d15"
+   ],
+   "unicode61 両側NFKC": [
+    "d7"
+   ],
+   "LIKE": [
+    "d7"
+   ],
+   "instr": [
+    "d7"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d7"
+   ]
+  },
+  "記号 C#": {
+   "tri MATCH": [],
+   "tri MATCH 両側NFKC": [],
+   "tri case_sensitive": [],
+   "tri remove_diacritics": [],
+   "tri LIKE(FTS表)": [
+    "d7"
+   ],
+   "unicode61 MATCH": [
+    "d7"
+   ],
+   "unicode61 prefix*": [
+    "d7",
+    "d11",
+    "d14",
+    "d15"
+   ],
+   "unicode61 両側NFKC": [
+    "d7"
+   ],
+   "LIKE": [
+    "d7"
+   ],
+   "instr": [
+    "d7"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d7"
+   ]
+  },
+  "記号 foo_bar": {
+   "tri MATCH": [
+    "d7"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d7"
+   ],
+   "tri case_sensitive": [
+    "d7"
+   ],
+   "tri remove_diacritics": [
+    "d7"
+   ],
+   "tri LIKE(FTS表)": [
+    "d7"
+   ],
+   "unicode61 MATCH": [
+    "d7"
+   ],
+   "unicode61 prefix*": [
+    "d7"
+   ],
+   "unicode61 両側NFKC": [
+    "d7"
+   ],
+   "LIKE": [
+    "d7"
+   ],
+   "instr": [
+    "d7"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d7"
+   ]
+  },
+  "記号 foo-bar": {
+   "tri MATCH": [
+    "d7"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d7"
+   ],
+   "tri case_sensitive": [
+    "d7"
+   ],
+   "tri remove_diacritics": [
+    "d7"
+   ],
+   "tri LIKE(FTS表)": [
+    "d7"
+   ],
+   "unicode61 MATCH": [
+    "d7"
+   ],
+   "unicode61 prefix*": [
+    "d7"
+   ],
+   "unicode61 両側NFKC": [
+    "d7"
+   ],
+   "LIKE": [
+    "d7"
+   ],
+   "instr": [
+    "d7"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d7"
+   ]
+  },
+  "記号 メール": {
+   "tri MATCH": [
+    "d7"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d7"
+   ],
+   "tri case_sensitive": [
+    "d7"
+   ],
+   "tri remove_diacritics": [
+    "d7"
+   ],
+   "tri LIKE(FTS表)": [
+    "d7"
+   ],
+   "unicode61 MATCH": [
+    "d7"
+   ],
+   "unicode61 prefix*": [
+    "d7"
+   ],
+   "unicode61 両側NFKC": [
+    "d7"
+   ],
+   "LIKE": [
+    "d7"
+   ],
+   "instr": [
+    "d7"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d7"
+   ]
+  },
+  "全角数字": {
+   "tri MATCH": [
+    "d4"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "tri case_sensitive": [
+    "d4"
+   ],
+   "tri remove_diacritics": [
+    "d4"
+   ],
+   "tri LIKE(FTS表)": [
+    "d4"
+   ],
+   "unicode61 MATCH": [],
+   "unicode61 prefix*": [],
+   "unicode61 両側NFKC": [
+    "d5"
+   ],
+   "LIKE": [
+    "d4"
+   ],
+   "instr": [
+    "d4"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d4",
+    "d5"
+   ]
+  },
+  "半角数字(全角文書側)": {
+   "tri MATCH": [
+    "d5"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d4",
+    "d5"
+   ],
+   "tri case_sensitive": [
+    "d5"
+   ],
+   "tri remove_diacritics": [
+    "d5"
+   ],
+   "tri LIKE(FTS表)": [
+    "d5"
+   ],
+   "unicode61 MATCH": [
+    "d5"
+   ],
+   "unicode61 prefix*": [
+    "d5"
+   ],
+   "unicode61 両側NFKC": [
+    "d5"
+   ],
+   "LIKE": [
+    "d5"
+   ],
+   "instr": [
+    "d5"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d4",
+    "d5"
+   ]
+  },
+  "アクセント有 Résumé": {
+   "tri MATCH": [
+    "d11"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d11"
+   ],
+   "tri case_sensitive": [
+    "d11"
+   ],
+   "tri remove_diacritics": [
+    "d11",
+    "d15"
+   ],
+   "tri LIKE(FTS表)": [
+    "d11"
+   ],
+   "unicode61 MATCH": [
+    "d11",
+    "d15"
+   ],
+   "unicode61 prefix*": [
+    "d11",
+    "d15"
+   ],
+   "unicode61 両側NFKC": [
+    "d11",
+    "d15"
+   ],
+   "LIKE": [
+    "d11"
+   ],
+   "instr": [
+    "d11"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d11"
+   ]
+  },
+  "アクセント無 resume": {
+   "tri MATCH": [
+    "d15"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d15"
+   ],
+   "tri case_sensitive": [
+    "d15"
+   ],
+   "tri remove_diacritics": [
+    "d11",
+    "d15"
+   ],
+   "tri LIKE(FTS表)": [
+    "d15"
+   ],
+   "unicode61 MATCH": [
+    "d11",
+    "d15"
+   ],
+   "unicode61 prefix*": [
+    "d11",
+    "d15"
+   ],
+   "unicode61 両側NFKC": [
+    "d11",
+    "d15"
+   ],
+   "LIKE": [
+    "d15"
+   ],
+   "instr": [
+    "d15"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d15"
+   ]
+  },
+  "アクセント café": {
+   "tri MATCH": [
+    "d11"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d11"
+   ],
+   "tri case_sensitive": [
+    "d11"
+   ],
+   "tri remove_diacritics": [
+    "d11",
+    "d15"
+   ],
+   "tri LIKE(FTS表)": [
+    "d11"
+   ],
+   "unicode61 MATCH": [
+    "d11",
+    "d15"
+   ],
+   "unicode61 prefix*": [
+    "d11",
+    "d15"
+   ],
+   "unicode61 両側NFKC": [
+    "d11",
+    "d15"
+   ],
+   "LIKE": [
+    "d11"
+   ],
+   "instr": [
+    "d11"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d11"
+   ]
+  },
+  "アクセント無 cafe": {
+   "tri MATCH": [
+    "d15"
+   ],
+   "tri MATCH 両側NFKC": [
+    "d15"
+   ],
+   "tri case_sensitive": [
+    "d15"
+   ],
+   "tri remove_diacritics": [
+    "d11",
+    "d15"
+   ],
+   "tri LIKE(FTS表)": [
+    "d15"
+   ],
+   "unicode61 MATCH": [
+    "d11",
+    "d15"
+   ],
+   "unicode61 prefix*": [
+    "d11",
+    "d15"
+   ],
+   "unicode61 両側NFKC": [
+    "d11",
+    "d15"
+   ],
+   "LIKE": [
+    "d15"
+   ],
+   "instr": [
+    "d15"
+   ],
+   "instr 両側NFKC+lower(JS正規化)": [
+    "d15"
+   ]
+  }
+ }
+}
