@@ -2,6 +2,8 @@ import type { AccessContext } from "./access.js";
 import type {
 	EvidenceRequest,
 	EvidenceResponse,
+	GraphRequest,
+	GraphResponse,
 	KnowledgeStatus,
 	RelatedRequest,
 	RelatedResponse,
@@ -216,3 +218,10 @@ export type ReadRelated = (
 	access: AccessContext,
 	request: RelatedRequest,
 ) => RelatedResponse;
+
+/** The knowledge graph of the current documents `access` may read (kg.md §2; never writes). */
+export type ReadGraph = (
+	deps: Pick<SearchDeps, "read" | "clock" | "options">,
+	access: AccessContext,
+	request: GraphRequest,
+) => GraphResponse;

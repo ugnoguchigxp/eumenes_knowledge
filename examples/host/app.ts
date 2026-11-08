@@ -10,6 +10,8 @@ import {
 	apiPaths,
 	evidenceRequestSchema,
 	evidenceResponseSchema,
+	graphRequestSchema,
+	graphResponseSchema,
 	KnowledgeError,
 	knowledgeStatusSchema,
 	relatedRequestSchema,
@@ -21,6 +23,8 @@ import {
 	type ApiErrorCode,
 	type EvidenceRequest,
 	type EvidenceResponse,
+	type GraphRequest,
+	type GraphResponse,
 	type KnowledgeStatus,
 	type RelatedRequest,
 	type RelatedResponse,
@@ -65,6 +69,8 @@ export type ExampleAppOptions = {
 	): EvidenceResponse;
 	/** 関連文書。省略すると経路を持たない。`not_available`・`stale` も応答の本文（200）。 */
 	readRelated?(access: AccessContext, request: RelatedRequest): RelatedResponse;
+	/** 知識グラフ（kg.md §2）。省略すると経路を持たない。 */
+	readGraph?(access: AccessContext, request: GraphRequest): GraphResponse;
 };
 
 type Env = { Variables: { access: AccessContext } };
@@ -143,7 +149,7 @@ export function createExampleApp(options: ExampleAppOptions): Hono<Env> {
 		return c.json(syncRequestSchema.parse(request), 200);
 	});
 
-	const { search, readEvidence, readRelated } = options;
+	const { search, readEvidence, readRelated, readGraph } = options;
 	if (search) {
 		app.post(apiPaths.search, bodyLimited, async (c) => {
 			const raw = await readJson(c);
@@ -193,6 +199,22 @@ export function createExampleApp(options: ExampleAppOptions): Hono<Env> {
 				throw error;
 			}
 			return c.json(relatedResponseSchema.parse(result), 200);
+		});
+	}
+
+	if (readGraph) {
+		app.post(apiPaths.graph, bodyLimited, async (c) => {
+			const input = graphRequestSchema.safeParse(await readJson(c));
+			if (!input.success) return fail(c, "invalid_input");
+			let result: GraphResponse;
+			try {
+				// access は Bearer から引いたものだけ。本文の namespaces は狭めるだけで、広げない。
+				result = readGraph(c.get("access"), input.data);
+			} catch (error) {
+				if (isInvalidInput(error)) return fail(c, "invalid_input");
+				throw error;
+			}
+			return c.json(graphResponseSchema.parse(result), 200);
 		});
 	}
 

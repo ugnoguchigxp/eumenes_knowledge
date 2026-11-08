@@ -108,6 +108,94 @@ describe("candidates", () => {
 		]);
 	});
 
+	test("mentions of the same document in another fragment are candidates; the same fragment never is", async () => {
+		const env = makeLinkEnv();
+		putDoc(
+			env,
+			1,
+			"# One\n\nAlpha Corp opens.\n\n# Two\n\nAlpha Corp returns.\n",
+		);
+		putDoc(env, 2, "Alpha Corp elsewhere.");
+		await ingestWithoutLinking(env);
+		const mine = (
+			rows(
+				env.db,
+				`SELECT m.entity_id AS id, m.fragment_ordinal AS f FROM knowledge_entity_mentions m
+JOIN knowledge_documents d ON d.published_version_id = m.version_id
+WHERE d.document_id = ? AND m.name = 'Alpha Corp' ORDER BY m.fragment_ordinal`,
+				`wiki-${(1).toString(16).padStart(32, "0")}`,
+			) as { id: number; f: number }[]
+		).map((r) => r);
+		expect(mine.length).toBe(2);
+		expect(mine[0]!.f).not.toBe(mine[1]!.f);
+		const other = entityOf(env, 2, "Alpha Corp");
+		const ids = (id: number) =>
+			readLinkCandidatesInTransaction(env.db, id, 10).map((c) => c.entityId);
+		// Same ordering for both kinds: entity id order (the other document was ingested after).
+		expect(ids(mine[0]!.id)).toEqual([mine[1]!.id, other]);
+		expect(ids(mine[1]!.id)).toEqual([mine[0]!.id, other]);
+		expect(ids(other)).toEqual([mine[0]!.id, mine[1]!.id]);
+		// The limit applies to the mixed list.
+		expect(ids(mine[0]!.id).length).toBe(2);
+		expect(
+			readLinkCandidatesInTransaction(env.db, mine[0]!.id, 1),
+		).toHaveLength(1);
+		// Put both mentions of the document into one fragment: they are never candidates of each other.
+		env.db.run(
+			"UPDATE knowledge_entity_mentions SET fragment_ordinal = ?, local_id = 'moved' WHERE entity_id = ?",
+			[mine[0]!.f, mine[1]!.id],
+		);
+		expect(ids(mine[0]!.id)).toEqual([other]);
+		expect(ids(mine[1]!.id)).toEqual([other]);
+		// A decided same-document pair is not offered again, whatever the decision.
+		env.db.run(
+			"UPDATE knowledge_entity_mentions SET fragment_ordinal = ? WHERE entity_id = ?",
+			[mine[1]!.f, mine[1]!.id],
+		);
+		expect(
+			recordLinkDecisionsInTransaction(
+				env.db,
+				[{ entityId: mine[1]!.id, otherId: mine[0]!.id, decision: "same" }],
+				provenance,
+				5,
+			),
+		).toBe(1);
+		expect(ids(mine[0]!.id)).toEqual([other]);
+		expect(ids(mine[1]!.id)).toEqual([other]);
+	});
+
+	test("a same-document mention found only by the full-text index follows the equal names", async () => {
+		const env = makeLinkEnv();
+		// Fragment 1 names Alpha Corp; fragment 2 names Delta, whose description contains "Alpha Corp".
+		putDoc(
+			env,
+			1,
+			"# One\n\nAlpha Corp opens.\n\n# Two\n\nAlpha Corp and Delta.\n",
+		);
+		putDoc(env, 2, "Alpha Corp elsewhere.");
+		await ingestWithoutLinking(env);
+		const first = readLinkCandidatesInTransaction(
+			env.db,
+			(
+				rows(
+					env.db,
+					`SELECT m.entity_id AS id FROM knowledge_entity_mentions m
+JOIN knowledge_documents d ON d.published_version_id = m.version_id
+WHERE d.document_id = ? AND m.name = 'Alpha Corp' ORDER BY m.fragment_ordinal LIMIT 1`,
+					`wiki-${(1).toString(16).padStart(32, "0")}`,
+				)[0] as { id: number }
+			).id,
+			10,
+		).map((c) => [c.documentId.slice(-1), c.name]);
+		// Equal names first (the same document's other fragment, then the other document),
+		// then the Delta mention of the same document found through the index.
+		expect(first).toEqual([
+			["1", "Alpha Corp"],
+			["2", "Alpha Corp"],
+			["1", "Delta"],
+		]);
+	});
+
 	test("names shorter than 3 characters match by equality only", async () => {
 		const env = makeLinkEnv();
 		putDoc(env, 1, "Delta here.");
@@ -436,6 +524,56 @@ describe("mentions that can start a cluster", () => {
 		expect(listLinkedMentionIdsInSnapshot(env.db, 1, 1)).toEqual({
 			entityIds: [a1],
 			truncated: true,
+		});
+	});
+});
+
+describe("mentions that can start a cluster, within one version", () => {
+	test("a mention whose only same link is inside its own version is not a start; one with a cross-document link is", async () => {
+		const env = makeLinkEnv();
+		putDoc(
+			env,
+			1,
+			"# One\n\nAlpha Corp and Beta Ltd.\n\n# Two\n\nAlpha Corp again and Beta Ltd.\n",
+		);
+		putDoc(env, 2, "Alpha Corp elsewhere.");
+		await ingestWithoutLinking(env);
+		const inDoc1 = (name: string) =>
+			(
+				rows(
+					env.db,
+					`SELECT m.entity_id AS id FROM knowledge_entity_mentions m
+JOIN knowledge_documents d ON d.published_version_id = m.version_id
+WHERE d.document_id = ? AND m.name = ? ORDER BY m.fragment_ordinal`,
+					`wiki-${(1).toString(16).padStart(32, "0")}`,
+					name,
+				) as { id: number }[]
+			).map((r) => r.id) as [number, number];
+		const [a1, a1b] = inDoc1("Alpha Corp");
+		const [b1, b1b] = inDoc1("Beta Ltd");
+		const a2 = entityOf(env, 2, "Alpha Corp");
+		recordLinkDecisionsInTransaction(
+			env.db,
+			[
+				// Inside the version only: Alpha's first mention and both Beta mentions.
+				{ entityId: a1, otherId: a1b, decision: "same" },
+				{ entityId: b1, otherId: b1b, decision: "same" },
+				// Across documents: Alpha's second mention.
+				{ entityId: a1b, otherId: a2, decision: "same" },
+			],
+			provenance,
+			1,
+		);
+		const version = (
+			rows(
+				env.db,
+				"SELECT published_version_id AS v FROM knowledge_documents WHERE document_id = ?",
+				`wiki-${(1).toString(16).padStart(32, "0")}`,
+			)[0] as { v: number }
+		).v;
+		expect(listLinkedMentionIdsInSnapshot(env.db, version, 10)).toEqual({
+			entityIds: [a1b],
+			truncated: false,
 		});
 	});
 });

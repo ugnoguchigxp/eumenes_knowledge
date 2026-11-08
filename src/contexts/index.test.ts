@@ -29,20 +29,38 @@ test("the bundled set is consistent: ordered, hashes match the text, set digest 
 	expect(keys).toEqual([...keys].sort());
 });
 
-test("the shipped instructions are extract, link and summarize v1; an unknown id or version fails with not_available", () => {
+test("the shipped instructions are extract v1 and v2, link v1 and v2, and summarize v1; an unknown id or version fails with not_available", () => {
 	expect(instructions.map((i) => [i.id, i.version])).toEqual([
 		["extract", 1],
+		["extract", 2],
 		["link", 1],
+		["link", 2],
 		["summarize", 1],
 	]);
-	expect(instruction("extract").version).toBe(1);
+	// The latest extract instruction is v2; v1 stays shipped.
+	expect(instruction("extract").version).toBe(2);
+	expect(instruction("extract", 1).version).toBe(1);
+	// The latest link instruction is v2; v1 stays shipped (decisions recorded under it stay valid).
+	expect(instruction("link").version).toBe(2);
+	expect(instruction("link", 1).text).not.toBe(instruction("link", 2).text);
+	expect(instruction("link", 2).text).toContain("同じ文書の別の箇所から");
 	// The adaptation is traceable from the shipped text (THIRD_PARTY_NOTICES.md, manifest).
 	expect(instruction("extract", 1).text).toContain(
 		"aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a",
 	);
+	// v2 is the same adaptation: it keeps the upstream note and adds the rule about document structure.
+	expect(instruction("extract", 2).text).toContain(
+		"aaebfe1bb8d55deb6a4304d357a3bf4c92fcd40a",
+	);
+	expect(instruction("extract", 2).text).toContain(
+		"文書自身の構造は対象にしません",
+	);
+	expect(instruction("extract", 1).text).not.toContain(
+		"文書自身の構造は対象にしません",
+	);
 	for (const call of [
 		() => instruction("extract-entities"),
-		() => instruction("extract", 2),
+		() => instruction("extract", 3),
 	]) {
 		expect(call).toThrow(KnowledgeError);
 		try {

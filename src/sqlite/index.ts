@@ -121,3 +121,18 @@ export {
 	pickSummaryWorkInTransaction,
 } from "./links.js";
 export type { ClusterSummaryCandidate } from "./links.js";
+// Graph reads (kg.md 2): the rows `readGraph` joins, all inside the caller's namespaces.
+export {
+	readGraphDocumentsInSnapshot,
+	readGraphEvidenceInSnapshot,
+	readGraphLinksInSnapshot,
+	readGraphMentionsInSnapshot,
+	readGraphRelationsInSnapshot,
+} from "./graph.js";
+export type {
+	GraphDocument,
+	GraphEvidence,
+	GraphLink,
+	GraphMention,
+	GraphRelation,
+} from "./graph.js";

@@ -67,10 +67,12 @@ describe("link request", () => {
 				deadlineAtMs: 123,
 			},
 		);
+		// The chain asks with the latest link instruction, v2, and records it in the request.
+		expect(linkInstruction.version).toBe(2);
 		expect(request).toMatchObject({
 			purpose: "link",
 			instructionId: "link",
-			instructionVersion: linkInstruction.version,
+			instructionVersion: 2,
 			system: linkInstruction.text,
 			deadlineAtMs: 123,
 		});

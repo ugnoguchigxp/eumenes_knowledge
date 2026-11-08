@@ -147,8 +147,23 @@ describe("the identity chain", () => {
 				decision: "same",
 				model: "mock-model",
 				instruction_id: "link",
-				instruction_version: 1,
+				instruction_version: 2,
 			},
+		]);
+		// The request carried link v2, and the version mark records it.
+		const asked = env.inference.calls.filter((c) => c.purpose === "link");
+		expect(asked.length).toBeGreaterThan(0);
+		for (const call of asked)
+			expect([call.instructionId, call.instructionVersion]).toEqual([
+				"link",
+				2,
+			]);
+		const marked = rows(
+			env.db,
+			"SELECT DISTINCT instruction_id, instruction_version FROM knowledge_link_versions",
+		);
+		expect(marked).toEqual([
+			{ instruction_id: "link", instruction_version: 2 },
 		]);
 	});
 

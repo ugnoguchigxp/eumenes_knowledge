@@ -4,6 +4,7 @@
 // listening socket.
 import { randomUUID } from "node:crypto";
 import { createKnowledgeClient } from "../../src/client/index.js";
+import { instruction } from "../../src/contexts/index.js";
 import type {
 	AccessContext,
 	EmbeddingPort,
@@ -19,6 +20,7 @@ import {
 	createSyncPageHandler,
 	createVectorIndex,
 	readEvidence,
+	readGraph,
 	readRelated,
 	search,
 	sha256Hex,
@@ -65,11 +67,11 @@ export const TEST_SPACE: EmbeddingSpace = {
 	passagePrefix: "passage: ",
 };
 
-/** What the extraction instruction v1 is called with (one call per fragment). */
+/** What the shipped extraction instruction (its highest version) is called with (one call per fragment). */
 export const EXTRACT_CALL = {
 	purpose: "extract",
 	instructionId: "extract",
-	instructionVersion: 1,
+	instructionVersion: instruction("extract").version,
 	outputSchema: true,
 } as const;
 
@@ -257,6 +259,7 @@ export async function createScenario(options: ScenarioOptions = {}) {
 		search,
 		readEvidence,
 		readRelated,
+		readGraph,
 		createVectorIndex,
 		searchOptions: {
 			verifiedWithinMs: DAY_MS,

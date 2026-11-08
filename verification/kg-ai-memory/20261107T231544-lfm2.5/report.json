@@ -1,0 +1,993 @@
+{
+	"kind": "kg-live",
+	"note": "Synthetic research notes ingested with a real model through LARM. A single run: not a benchmark.",
+	"startedAt": "2026-11-07T23:15:44.070Z",
+	"elapsedMinutes": 239.1,
+	"finished": true,
+	"jobs": {
+		"knowledge.sync-page:completed": 1,
+		"knowledge.ingest-next:completed": 4,
+		"knowledge.link-next:completed": 1057
+	},
+	"documents": [
+		{
+			"documentId": "wiki-c4091e337c6db49f25786c30d41e8765",
+			"path": "ai-memory/eumenes-memory-direction.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-3dd85ad5607d4a1c034bdf707959b077",
+			"path": "ai-memory/eumenes-memory-evaluation.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-55c123bfe4e70e5926b32271c3ae00a5",
+			"path": "ai-memory/mem0-architecture-shift.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-f6c43ad7809029b907da7f3c793eb63f",
+			"path": "ai-memory/memory-research-map.md",
+			"state": "current"
+		}
+	],
+	"larm": {
+		"profile": "lfm2.5",
+		"catalogRevision": "73bfa004e4f37de8a989a756b5464a99b3d8143f13d907fb6e9364a2de74debf",
+		"llm": {
+			"name": "llm",
+			"model": "ornith1.5-strix",
+			"contextWindow": {
+				"maxTokens": 200000,
+				"outputReserveTokens": 4096,
+				"outputLimit": "remaining-context"
+			}
+		},
+		"embedding": {
+			"name": "embedding",
+			"model": "multilingual-e5-small",
+			"space": {
+				"modelId": "intfloat/multilingual-e5-small",
+				"revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+				"artifactDigest": "63bc913284590439c0fdadcd5f61ee9ad9630591075314bc975fb190983ed62c",
+				"dimension": 384,
+				"queryPrefix": "query: ",
+				"passagePrefix": "passage: "
+			}
+		},
+		"reasoning": "off"
+	},
+	"corpus": [
+		{
+			"path": "ai-memory/eumenes-memory-direction.md",
+			"bytes": 14812
+		},
+		{
+			"path": "ai-memory/eumenes-memory-evaluation.md",
+			"bytes": 19896
+		},
+		{
+			"path": "ai-memory/mem0-architecture-shift.md",
+			"bytes": 21254
+		},
+		{
+			"path": "ai-memory/memory-research-map.md",
+			"bytes": 4016
+		}
+	],
+	"inference": {
+		"extract": {
+			"calls": 76,
+			"ok": 76,
+			"errors": {},
+			"ms": 3964198,
+			"inputTokens": 194172,
+			"outputTokens": 213767
+		},
+		"link": {
+			"calls": 1546,
+			"ok": 1546,
+			"errors": {},
+			"ms": 10342681,
+			"inputTokens": 2643475,
+			"outputTokens": 239274
+		},
+		"summarize": {
+			"calls": 4,
+			"ok": 4,
+			"errors": {},
+			"ms": 21230,
+			"inputTokens": 4095,
+			"outputTokens": 428
+		}
+	},
+	"larmStats": {
+		"calls": 1630,
+		"ok": 1630,
+		"failures": {},
+		"inputTokens": 2841742,
+		"outputTokens": 453469,
+		"reasoningTokens": 0,
+		"totalMs": 14333897
+	},
+	"store": {
+		"fragments": 76,
+		"extractionsOk": 76,
+		"extractionsFailed": 0,
+		"droppedItems": 322,
+		"entityMentions": 920,
+		"relationMentions": 600,
+		"linksSame": 2638,
+		"linksDifferent": 9571,
+		"linksUnsure": 307,
+		"summariesOk": 4
+	},
+	"status": {
+		"complete": true,
+		"partialReasons": []
+	},
+	"graph": {
+		"complete": false,
+		"partialReasons": [
+			"linking_unsure",
+			"linking_conflict"
+		],
+		"nodes": 516,
+		"edges": 599,
+		"singletonNodes": 387,
+		"multiDocumentNodes": 71,
+		"nodesWithSummary": 4,
+		"multiMentionEdges": 1,
+		"crossDocumentEdges": 0,
+		"topNodes": [
+			{
+				"label": "mem0",
+				"mentions": 27,
+				"documents": 4,
+				"types": [
+					"記憶システムの名称",
+					"システム・プロジェクト",
+					"製品・システム"
+				]
+			},
+			{
+				"label": "Python v2.0.0",
+				"mentions": 16,
+				"documents": 3,
+				"types": [
+					"記憶書き込みの旧来の方式",
+					"書込み方式",
+					"SDKのバージョン"
+				]
+			},
+			{
+				"label": "eumenes_memory",
+				"mentions": 16,
+				"documents": 3,
+				"types": [
+					"記憶システムの名称",
+					"ライブラリ",
+					"記憶システム（製品・手法）"
+				]
+			},
+			{
+				"label": "Platform",
+				"mentions": 14,
+				"documents": 3,
+				"types": [
+					"プラットフォーム",
+					"mem0 の構成要素",
+					"mem0 が動作する基盤"
+				]
+			},
+			{
+				"label": "Eumenes",
+				"mentions": 14,
+				"documents": 2,
+				"types": [
+					"システム",
+					"記憶の主体・システム",
+					"ホスト"
+				]
+			},
+			{
+				"label": "LLM",
+				"mentions": 13,
+				"documents": 3,
+				"types": [
+					"大規模言語モデル",
+					"言語モデル",
+					"判断を行う主体"
+				]
+			},
+			{
+				"label": "本体",
+				"mentions": 12,
+				"documents": 3,
+				"types": [
+					"試験の時点・対象",
+					"文書（リンク）",
+					"弱点"
+				]
+			},
+			{
+				"label": "時間推論",
+				"mentions": 11,
+				"documents": 3,
+				"types": [
+					"機能",
+					"機能（英語名）",
+					"概念・タスク"
+				]
+			},
+			{
+				"label": "host",
+				"mentions": 11,
+				"documents": 2,
+				"types": [
+					"Eumenes 側の構成要素",
+					"別パッケージ（CLI・MCP）",
+					"意味の判断を持つ主体"
+				]
+			},
+			{
+				"label": "新方式",
+				"mentions": 10,
+				"documents": 4,
+				"types": [
+					"書込み方式",
+					"記憶管理の新方式",
+					"記憶書き込みの新方式"
+				]
+			},
+			{
+				"label": "記憶",
+				"mentions": 9,
+				"documents": 3,
+				"types": [
+					"データ",
+					"記憶データ",
+					"本人の確認・修正・推測の痕跡を残す対象"
+				]
+			},
+			{
+				"label": "減衰",
+				"mentions": 9,
+				"documents": 2,
+				"types": [
+					"機能",
+					"時間の推論と記憶の減衰を追加した時期",
+					"記憶機能に追加された機能"
+				]
+			},
+			{
+				"label": "合成データ",
+				"mentions": 8,
+				"documents": 3,
+				"types": [
+					"評価データ",
+					"検証に使用するデータ",
+					"評価に使用されるデータ"
+				]
+			},
+			{
+				"label": "OSS",
+				"mentions": 8,
+				"documents": 2,
+				"types": [
+					"オープンソースソフトウェア",
+					"オープンソース版のmem0",
+					"ソフトウェア開発キット（SDK）"
+				]
+			},
+			{
+				"label": "削除",
+				"mentions": 8,
+				"documents": 2,
+				"types": [
+					"mem0 の忘却方法",
+					"mem0 が残す課題",
+					"記憶の削除処理（DELETE）"
+				]
+			},
+			{
+				"label": "README",
+				"mentions": 7,
+				"documents": 3,
+				"types": [
+					"文書",
+					"実データのSeed",
+					"ドキュメントファイル"
+				]
+			},
+			{
+				"label": "0.0.4",
+				"mentions": 7,
+				"documents": 2,
+				"types": [
+					"版番号",
+					"パッケージ（本体）",
+					"ベンダーパッケージディレクトリ"
+				]
+			},
+			{
+				"label": "LongMemEval",
+				"mentions": 6,
+				"documents": 3,
+				"types": [
+					"公開ベンチマーク",
+					"評価（ベンチマーク）",
+					"ベンチマーク"
+				]
+			},
+			{
+				"label": "memory-benchmarks",
+				"mentions": 6,
+				"documents": 3,
+				"types": [
+					"評価の枠組み",
+					"ベンチマーク",
+					"ツール・リソース"
+				]
+			},
+			{
+				"label": "tgz",
+				"mentions": 6,
+				"documents": 3,
+				"types": [
+					"配布ファイル形式",
+					"配布パッケージ",
+					"配布パッケージ形式"
+				]
+			},
+			{
+				"label": "LoCoMo",
+				"mentions": 6,
+				"documents": 2,
+				"types": [
+					"公開ベンチマーク",
+					"ベンチマーク",
+					"評価対象"
+				]
+			},
+			{
+				"label": "eumenes_knowledge",
+				"mentions": 6,
+				"documents": 2,
+				"types": [
+					"知識システム",
+					"制度・仕組み",
+					"記憶・知識機構"
+				]
+			},
+			{
+				"label": "出典",
+				"mentions": 6,
+				"documents": 2,
+				"types": [
+					"出典・派生物",
+					"派生物",
+					"動作方針・概念"
+				]
+			},
+			{
+				"label": "state key",
+				"mentions": 5,
+				"documents": 3,
+				"types": [
+					"mem0 の時間管理の要素",
+					"mem0 の Platform に追加された鍵",
+					"続いている状態に付けるキー"
+				]
+			},
+			{
+				"label": "journal",
+				"mentions": 5,
+				"documents": 2,
+				"types": [
+					"忘却の依存閉包と併置される仕組み",
+					"データ構造・記憶媒体",
+					"要素"
+				]
+			}
+		]
+	},
+	"evidence": {
+		"valid": 1338,
+		"stale": 0,
+		"unavailable": 0,
+		"mismatch": 0,
+		"not_available": 0
+	},
+	"evaluation": {
+		"summary": {
+			"entitiesInCorpus": 32,
+			"entityRecall": 0.96875,
+			"crossDocumentEntities": 18,
+			"mergedIntoOneNode": 15,
+			"meanBestNodeCoverage": 0.949074074074074,
+			"meanNodesPerFoundEntity": 1.2903225806451613,
+			"relationRecall": 0.8823529411764706,
+			"relationEndpointsFound": 17,
+			"distinctViolations": 0
+		},
+		"entities": [
+			{
+				"id": "mem0",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"mem0",
+					"Python v2.0.0"
+				]
+			},
+			{
+				"id": "mem0-oss",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.6666666666666666,
+				"unionCoverage": 0.6666666666666666,
+				"labels": [
+					"OSS",
+					"mem0 OSS"
+				]
+			},
+			{
+				"id": "mem0-platform",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 3,
+				"bestNodeCoverage": 0.75,
+				"unionCoverage": 1,
+				"labels": [
+					"Python v2.0.0",
+					"Platform",
+					"Platform"
+				]
+			},
+			{
+				"id": "mem0g",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Mem0g"
+				]
+			},
+			{
+				"id": "mem0-paper",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"2025 年の論文",
+					"Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory"
+				]
+			},
+			{
+				"id": "neo4j",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Neo4j"
+				]
+			},
+			{
+				"id": "add-only",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"新方式"
+				]
+			},
+			{
+				"id": "bm25",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"BM25"
+				]
+			},
+			{
+				"id": "locomo",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"LoCoMo"
+				]
+			},
+			{
+				"id": "longmemeval",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"LongMemEval"
+				]
+			},
+			{
+				"id": "beam",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"BEAM"
+				]
+			},
+			{
+				"id": "memory-benchmarks",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"memory-benchmarks"
+				]
+			},
+			{
+				"id": "gpt-4o",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"gpt-4o"
+				]
+			},
+			{
+				"id": "temporal-reasoning",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"時間推論"
+				]
+			},
+			{
+				"id": "memory-decay",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"減衰"
+				]
+			},
+			{
+				"id": "graph-memory",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"グラフ記憶"
+				]
+			},
+			{
+				"id": "state-key",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"state key"
+				]
+			},
+			{
+				"id": "hysen-labs",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Hysen Labs"
+				]
+			},
+			{
+				"id": "eumenes",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 3,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Eumenes",
+					"本体",
+					"eumenes-memory-host 0.1.0"
+				]
+			},
+			{
+				"id": "eumenes-memory",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"eumenes_memory",
+					"0.0.4"
+				]
+			},
+			{
+				"id": "eumenes-memory-host",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "eumenes-knowledge",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.6666666666666666,
+				"unionCoverage": 0.6666666666666666,
+				"labels": [
+					"eumenes_knowledge"
+				]
+			},
+			{
+				"id": "steward",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"host"
+				]
+			},
+			{
+				"id": "cas",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"CAS"
+				]
+			},
+			{
+				"id": "journal",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"journal"
+				]
+			},
+			{
+				"id": "tombstone",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"墓標"
+				]
+			},
+			{
+				"id": "quality-80",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"quality-80",
+					"quality-80"
+				]
+			},
+			{
+				"id": "rrf",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"RRF"
+				]
+			},
+			{
+				"id": "world",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"World"
+				]
+			},
+			{
+				"id": "multilingual-e5",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"multilingual-e5"
+				]
+			},
+			{
+				"id": "read-memory",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"read_memory"
+				]
+			},
+			{
+				"id": "model-input-too-large",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"MODEL_INPUT_TOO_LARGE"
+				]
+			}
+		],
+		"relations": [
+			{
+				"about": "Mem0g は Neo4j に型付きの関係を持っていた",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"古い関係を無効化していた",
+					"型付きの関係に用いたデータベース",
+					"使用"
+				]
+			},
+			{
+				"about": "OSS から外部のグラフ DB（Neo4j など）への対応を外した",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "新方式は ADD-only の書込み",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"判断に対するmem0側の根拠",
+					"新旧の対比"
+				]
+			},
+			{
+				"about": "Platform だけに時間推論を足した",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"出典として含む",
+					"時間推論を持つ",
+					"発表対象",
+					"動作の主体",
+					"機能を持つ"
+				]
+			},
+			{
+				"about": "Platform だけに記憶の減衰を足した",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"減衰が並べ替え-only とする mem0 の性質",
+					"出典として含む",
+					"減衰を持つ",
+					"発表対象",
+					"機能を持つ"
+				]
+			},
+			{
+				"about": "Platform のグラフ記憶は共起から推定する",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"出典として含む",
+					"を持つ",
+					"機能を持つ"
+				]
+			},
+			{
+				"about": "2025 年の論文が旧方式と Mem0g を述べる",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"値（LoCoMo）",
+					"が述べる"
+				]
+			},
+			{
+				"about": "mem0 がベンチマークの数値を公表した",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"弱いとされる分類",
+					"属する分類",
+					"重視すべきだと記述している"
+				]
+			},
+			{
+				"about": "評価の枠組みの既定モデルは gpt-4o",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"既定のモデル"
+				]
+			},
+			{
+				"about": "eumenes_memory は Eumenes の記憶を切り出したライブラリ",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"記憶を切り出して作成された",
+					"eumenes_memoryを評価する",
+					"ホストを持つ",
+					"所有している",
+					"上に配置される"
+				]
+			},
+			{
+				"about": "書込みの競合を CAS で検出する",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"持つ機能の一つ",
+					"CASで誤った削除を抑制する"
+				]
+			},
+			{
+				"about": "忘却を journal に記録する",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"持つ機能の一つ"
+				]
+			},
+			{
+				"about": "quality-80 の評価",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "mem0 と比べる",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"mem0 と eumenes_memory が同じ問いにどう答えているか並べられている",
+					"mem0 と eumenes_memory の比較",
+					"mem0 の変更を取り入れない対象とする",
+					"一般の記憶ライブラリと比較して厳密とされる",
+					"後を追わない設計方針",
+					"書込み時の判断の立場が異なる",
+					"比較・評価の対象",
+					"解決済み課題の共有",
+					"mem0 の弱点を設計で回避している"
+				]
+			},
+			{
+				"about": "2 つのパッケージは同じ作り方をする",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"関係にある"
+				]
+			},
+			{
+				"about": "検索は順位だけで融合する（RRF）",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"が同じ作り方",
+					"検索の融合に使う"
+				]
+			},
+			{
+				"about": "判断は Eumenes の steward が持つ",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"steward が判断を持つ",
+					"自然文 recall を行う",
+					"同じ想起を使える"
+				]
+			}
+		],
+		"distinct": [
+			{
+				"pair": [
+					"mem0",
+					"mem0g"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"mem0-oss",
+					"mem0-platform"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"eumenes",
+					"eumenes-memory"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"eumenes-memory",
+					"eumenes-knowledge"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"eumenes-memory",
+					"eumenes-memory-host"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"locomo",
+					"longmemeval"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"temporal-reasoning",
+					"memory-decay"
+				],
+				"merged": []
+			}
+		]
+	}
+}

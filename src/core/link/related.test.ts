@@ -121,7 +121,7 @@ describe("related documents", () => {
 		expect(both.results[0]!.shared[0]!.decidedBy).toEqual({
 			model: "mock-model",
 			instructionId: "link",
-			instructionVersion: 1,
+			instructionVersion: 2,
 		});
 		expect(both.complete).toBe(true);
 		expect(both.partialReasons).toEqual([]);
@@ -145,6 +145,38 @@ describe("related documents", () => {
 				(r) => r.documentId,
 			),
 		).toEqual([docId(2)]);
+	});
+
+	test("a link between two mentions of the same document never makes the document related to itself", async () => {
+		const env = makeLinkEnv({ summaryMinMentions: 2 });
+		const twoFragments =
+			"# One\n\nAlpha Corp opens.\n\n# Two\n\nAlpha Corp returns.\n";
+		putDoc(env, 5, twoFragments);
+		await scanAndDrain(env);
+		// The chain compared the two mentions and found them the same entity.
+		const same = rows(
+			env.db,
+			"SELECT decision FROM knowledge_entity_links WHERE decision = 'same'",
+		);
+		expect(same).toHaveLength(1);
+		const alone = related(env, 5, ["wiki"]);
+		expect(alone.status).toBe("ok");
+		expect(alone.results).toEqual([]);
+		// One document alone makes no cluster to summarize.
+		expect(env.calls.summarize).toBe(0);
+
+		// A second document with the entity: the only related document is the other one, once,
+		// and the same-document link does not add a shared entity with the document itself.
+		putDoc(env, 6, "Alpha Corp elsewhere.");
+		await scanAndDrain(env);
+		const both = related(env, 5, ["wiki"]);
+		expect(both.results.map((r) => r.documentId)).toEqual([docId(6)]);
+		expect(both.results[0]!.shared).toHaveLength(1);
+		const back = related(env, 6, ["wiki"]);
+		expect(back.results.map((r) => r.documentId)).toEqual([docId(5)]);
+		expect(back.results[0]!.shared).toHaveLength(1);
+		// The cluster of three mentions spans two documents, so it has a summary.
+		expect(env.calls.summarize).toBe(1);
 	});
 
 	test("both evidence ranges lead back to the original text of each document", async () => {

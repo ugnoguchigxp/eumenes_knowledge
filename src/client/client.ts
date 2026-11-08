@@ -4,6 +4,8 @@ import {
 	apiPaths,
 	evidenceRequestSchema,
 	evidenceResponseSchema,
+	graphRequestSchema,
+	graphResponseSchema,
 	knowledgeStatusSchema,
 	relatedRequestSchema,
 	relatedResponseSchema,
@@ -13,6 +15,8 @@ import {
 	syncRequestSchema,
 	type EvidenceRequest,
 	type EvidenceResponse,
+	type GraphRequest,
+	type GraphResponse,
 	type KnowledgeStatus,
 	type RelatedRequest,
 	type RelatedResponse,
@@ -106,6 +110,8 @@ export type KnowledgeClient = {
 	evidence(request: EvidenceRequest): Promise<EvidenceResponse>;
 	/** Documents sharing entities with one document. `not_available` and `stale` are answers (status). */
 	related(request: RelatedRequest): Promise<RelatedResponse>;
+	/** The entities and relations of what the token's principal may read (kg.md §2). */
+	graph(request: GraphRequest): Promise<GraphResponse>;
 };
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -261,6 +267,13 @@ export function createKnowledgeClient(
 				"POST",
 				apiPaths.related,
 				parseInput(relatedRequestSchema, request),
+			),
+		graph: async (request) =>
+			call(
+				graphResponseSchema,
+				"POST",
+				apiPaths.graph,
+				parseInput(graphRequestSchema, request),
 			),
 	};
 }

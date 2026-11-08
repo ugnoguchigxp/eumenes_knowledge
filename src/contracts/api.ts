@@ -20,6 +20,7 @@ export const apiPaths = {
 	search: `${API_BASE_PATH}/search`,
 	evidence: `${API_BASE_PATH}/evidence`,
 	related: `${API_BASE_PATH}/related`,
+	graph: `${API_BASE_PATH}/graph`,
 } as const;
 
 const count = z.number().int().min(0);
@@ -336,6 +337,145 @@ export const relatedResponseSchema = z.strictObject({
 	partialReasons: z.array(z.enum(relatedPartialReasons)),
 });
 export type RelatedResponse = z.infer<typeof relatedResponseSchema>;
+
+// ---------------------------------------------------------------------------
+// Knowledge graph (kg.md §2)
+// ---------------------------------------------------------------------------
+
+export const GRAPH_LIMITS = {
+	defaultNodes: 200,
+	maxNodes: 1000,
+	defaultEdges: 500,
+	maxEdges: 2000,
+	/** Quotations returned per node and per edge (the first ones, one per document first). */
+	evidencePerItem: 3,
+	/** Distinct names and types listed per node. */
+	namesPerNode: 10,
+	/** Current mentions read for one graph; a larger scope answers `mentions_truncated`. */
+	maxMentions: 20_000,
+	/** Relation mentions read for one graph; more answers `relations_truncated`. */
+	maxRelations: 50_000,
+} as const;
+
+export const graphRequestSchema = z.strictObject({
+	maxNodes: z
+		.number()
+		.int()
+		.min(1)
+		.max(GRAPH_LIMITS.maxNodes)
+		.default(GRAPH_LIMITS.defaultNodes),
+	maxEdges: z
+		.number()
+		.int()
+		.min(0)
+		.max(GRAPH_LIMITS.maxEdges)
+		.default(GRAPH_LIMITS.defaultEdges),
+	/** Narrows the caller's namespaces; never widens them. */
+	namespaces: z.array(z.string().min(1).max(512)).max(100).optional(),
+});
+export type GraphRequest = z.input<typeof graphRequestSchema>;
+export type ParsedGraphRequest = z.output<typeof graphRequestSchema>;
+
+/** A quotation that backs a node or an edge; check it with the evidence API before using it. */
+const graphEvidencePoint = z.strictObject({
+	documentId: doclingDocumentIdSchema,
+	markdownSha256: sha256HexSchema,
+	fragmentOrdinal: count,
+	...byteRange,
+	quoteSha256: sha256HexSchema,
+});
+
+const linkProvenance = z.strictObject({
+	model: z.string().nullable(),
+	instructionId: z.string(),
+	instructionVersion: z.number().int().min(1),
+});
+
+export const graphPartialReasons = [
+	...partialReasons,
+	/** Some current documents in scope were not compared for identity yet: nodes may split later. */
+	"linking_pending",
+	/** The model was unsure for some candidate pairs; they are not merged. */
+	"linking_unsure",
+	/**
+	 * Some `same` judgments contradict `different` ones (joining them would put two mentions judged
+	 * different into one node); those `same` links were not used.
+	 */
+	"linking_conflict",
+	/** More nodes than `maxNodes`: the most mentioned ones are returned. */
+	"nodes_truncated",
+	/** More edges between the returned nodes than `maxEdges`: the most mentioned ones are returned. */
+	"edges_truncated",
+	/** The scope holds more than `GRAPH_LIMITS.maxMentions` current mentions: only the first were read. */
+	"mentions_truncated",
+	/** The read versions hold more than `GRAPH_LIMITS.maxRelations` relation mentions: only the first were read. */
+	"relations_truncated",
+] as const;
+
+export const graphResponseSchema = z.strictObject({
+	contractVersion: z.literal(CONTRACT_VERSION),
+	status: z.literal("ok"),
+	/** The documents the returned nodes and edges come from. */
+	documents: z.array(
+		z.strictObject({
+			documentId: doclingDocumentIdSchema,
+			namespace: z.string(),
+			path: z.string(),
+			title: z.string(),
+			markdownSha256: sha256HexSchema,
+			state: z.enum(["current", "unverified"]),
+		}),
+	),
+	/**
+	 * One node per entity: the current mentions in the caller's scope joined by `same` links whose
+	 * both ends are in scope (a mention outside never joins two inside). A `same` link that would put
+	 * two mentions judged `different` into one node is not used (`linking_conflict`).
+	 */
+	nodes: z.array(
+		z.strictObject({
+			/** An ordinal valid within this response only (`n1`, `n2`, ... in the returned order). */
+			nodeId: z.string(),
+			/** The name written most often among the mentions. */
+			label: z.string(),
+			/** Distinct names as written, most frequent first. */
+			names: z.array(z.string()),
+			/** Distinct types given at extraction, most frequent first. */
+			types: z.array(z.string()),
+			mentionCount: z.number().int().min(1),
+			documentIds: z.array(doclingDocumentIdSchema),
+			evidence: z.array(graphEvidencePoint),
+			/** Who joined the mentions (`same` links inside the node); empty for one mention. */
+			decidedBy: z.array(linkProvenance),
+			/** The derived summary, only when it was made from exactly these mentions (p0.md #5). */
+			summary: z.string().nullable(),
+		}),
+	),
+	/**
+	 * Relation mentions grouped by their two nodes, direction, relation name (normalized),
+	 * negation and certainty. Only edges whose both nodes are returned.
+	 */
+	edges: z.array(
+		z.strictObject({
+			/** An ordinal valid within this response only (`e1`, `e2`, ... in the returned order). */
+			edgeId: z.string(),
+			source: z.string(),
+			target: z.string(),
+			directed: z.boolean(),
+			/** The relation name written most often among the grouped mentions. */
+			relation: z.string(),
+			keywords: z.array(z.string()),
+			negated: z.boolean(),
+			certainty: z.enum(["stated", "uncertain", "hypothetical"]),
+			conditions: z.array(z.string()),
+			mentionCount: z.number().int().min(1),
+			documentIds: z.array(doclingDocumentIdSchema),
+			evidence: z.array(graphEvidencePoint),
+		}),
+	),
+	complete: z.boolean(),
+	partialReasons: z.array(z.enum(graphPartialReasons)),
+});
+export type GraphResponse = z.infer<typeof graphResponseSchema>;
 
 /** HTTP status of each error code the API answers with. */
 export const API_ERROR_STATUS = {

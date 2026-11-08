@@ -17,3 +17,4 @@ export {
 } from "./verify.js";
 export type { LinkErrorCode, LinkVerdict, SummaryVerdict } from "./verify.js";
 export { readRelated } from "./related.js";
+export { readGraph } from "./graph.js";

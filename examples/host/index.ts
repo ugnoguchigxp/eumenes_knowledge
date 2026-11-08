@@ -11,6 +11,7 @@ import type {
 	InferencePort,
 	IngestDeps,
 	ReadEvidence,
+	ReadGraph,
 	ReadRelated,
 	ReadScanInSnapshot,
 	ReadStatusInSnapshot,
@@ -72,6 +73,8 @@ export type ExampleHostOptions = {
 	readEvidence?: ReadEvidence;
 	/** 関連文書 API の実装（package の `readRelated`）。省略すると `/related` を持たない。`searchOptions` が要る。 */
 	readRelated?: ReadRelated;
+	/** 知識グラフ API の実装（package の `readGraph`）。省略すると `/graph` を持たない。`searchOptions` が要る。 */
+	readGraph?: ReadGraph;
 	/** host 1 つにつき 1 回だけ呼んで `VectorIndex` を作る（package の `createVectorIndex`）。 */
 	createVectorIndex?: () => VectorIndex;
 	/** 検索・根拠確認・関連文書へ `options` として渡す。 */
@@ -102,9 +105,10 @@ export type ExampleHost = {
 
 export function createExampleHost(options: ExampleHostOptions): ExampleHost {
 	const { clock } = options;
-	const { search, readEvidence, readRelated, searchOptions } = options;
+	const { search, readEvidence, readRelated, readGraph, searchOptions } =
+		options;
 	if (
-		(search || readEvidence || readRelated) &&
+		(search || readEvidence || readRelated || readGraph) &&
 		(searchOptions === undefined ||
 			(search && options.createVectorIndex === undefined))
 	) {
@@ -233,6 +237,20 @@ export function createExampleHost(options: ExampleHostOptions): ExampleHost {
 			? {
 					readRelated: (access, request) =>
 						readRelated(
+							{
+								read: readSnapshot,
+								clock,
+								options: searchOptions,
+							},
+							access,
+							request,
+						),
+				}
+			: {}),
+		...(readGraph && searchOptions
+			? {
+					readGraph: (access, request) =>
+						readGraph(
 							{
 								read: readSnapshot,
 								clock,

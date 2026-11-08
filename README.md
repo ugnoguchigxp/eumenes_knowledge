@@ -4,7 +4,7 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 
 ## 現在の状態
 
-**開発中です。索引の作成と、検索・関連探索・根拠取得（P0〜P3）まで実装し、合成資料と mock による検証を通しています。** CLI・MCP（P4）と Eumenes への導入（P6）はまだです。
+**開発中です。索引の作成と、検索・関連探索・根拠取得（P0〜P3）まで実装し、合成資料と mock による検証を通しています。** 続けて、取り込んだ結果をグラフとして取り出す口を足し、合成の調査資料を実モデル（LARM）で取り込んで確かめました（KG）。CLI・MCP（P4）と Eumenes への導入（P6）はまだです。
 
 | 段階 | 状態 | 文書 |
 | --- | --- | --- |
@@ -12,11 +12,12 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 | P1 配布骨格・examples ホスト | 実装済み・固定検証済み | [p1.md](p1.md) |
 | P2 分割・抽出・ベクトル・根拠・失効 | 実装済み・固定検証済み | [p2.md](p2.md) |
 | P3 検索・関連探索・根拠取得 | 実装済み・固定検証済み | [p3.md](p3.md) |
+| KG グラフの読み取り・実モデルでの試行 | 実装済み。実モデルで 1 回実行した（examples の中だけ） | [kg.md](kg.md) |
 | P4 CLI・MCP | 未着手（入口のスタブだけ） | — |
 | P5 tgz 受入 | 配布の検査は通る。clean な commit からの受入は未実施 | — |
 | P6 Eumenes 統合 | 未着手。examples で十分に検証してから着手する | — |
 
-検証はすべて合成資料と scripted mock によるもので、実 Docling・実 LARM・実モデルとの接続や、抽出・検索の意味の品質は確かめていません。
+固定の検証は、すべて合成資料と scripted mock によるものです。実モデルでの実行は、合成の調査 4 文書で 1 回だけ行いました（LARM 経由。実 Docling は使っていません）。結果と見つかった問題は [kg.md](kg.md) §6 にあります。検索の意味の品質は、まだ確かめていません。
 
 ## できること（P3 まで）
 
@@ -30,7 +31,8 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 - 検索は、断片の全文索引（2 文字の query は部分一致の走査）・ベクトル・対象の言及・関係の 4 経路の候補を、順位だけで統合します（RRF）。得点は返さず、文書 ID・版・byte 範囲・引用 digest と、どの経路で何位だったかを返します。未処理・失敗・予算の打切りがあれば `complete: false` と理由を返します。
 - 根拠取得で、回答に使う直前に引用の範囲が今も有効か（`valid`・`stale`・`unavailable`・`mismatch`・`not_available`）を確かめます。
 - 文書をまたぐ同一視は、候補を機械的に絞り、同じかどうかを LLM が判断して由来付きで保存します。関連文書は、共有する実体ごとに両方の根拠と判断の由来を返します。範囲外の言及を橋にせず、範囲外の言及を含む要約は返しません。
-- 検索・根拠取得・関連文書は、ホストが認証から束縛した namespace だけを読みます（fail-closed）。
+- グラフの読み取り（`POST /api/knowledge/graph`）は、同一視で `same` とされた言及をノードに、関係の言及を辺にまとめて返します。`different` の判断と矛盾するリンクは使いません。ノードと辺には引用の根拠が付きます。
+- 検索・根拠取得・関連文書・グラフは、ホストが認証から束縛した namespace だけを読みます（fail-closed）。
 - ジョブは Eumenes の queue の `HandlerDefinition` と同じ形で export しています。examples のホストと、将来の Eumenes は同じ定義を実行します。
 
 ## Eumenes との関係
@@ -47,12 +49,12 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 | `src/contracts/` | 文書・認可・ホストの port・ジョブ・API・抽出結果の契約（Zod） |
 | `src/core/` | 分割（`text/`）、抽出の要求と検証（`extract/`）、検索と根拠取得（`search/`）、同一視・要約・関連文書（`link/`）、ジョブ（`jobs/`） |
 | `src/sqlite/` | migration と transaction 内の操作、読み取り |
-| `src/contexts/` | 版付きの指示資源（`extract`・`link`・`summarize` の各 v1） |
+| `src/contexts/` | 版付きの指示資源（`extract` v1・v2、`link` v1・v2、`summarize` v1。ジョブは最も高い版を使う） |
 | `src/client/` | Eumenes の公開 API の client と接続設定 |
 | `src/cli/`、`src/mcp/` | P4 で実装する入口のスタブ |
-| `examples/` | Eumenes の実行環境のエミュレーター（[examples/README.md](examples/README.md)） |
-| `scripts/` | build・manifest・pack・検証・比較評価（`eval:search`）のスクリプト |
-| `verification/` | 比較評価の記録（fixture の結果。意味の品質を示さない） |
+| `examples/` | Eumenes の実行環境のエミュレーター（[examples/README.md](examples/README.md)）。`examples/larm/` は Eumenes と同じ手順の LARM 接続、`examples/corpus/ai-memory/` は実モデルの試行に使う合成の調査資料と正解表 |
+| `scripts/` | build・manifest・pack・検証・比較評価（`eval:search`）、実モデルでの試行（`kg-live.ts`）とグラフを見るページの生成（`kg-view.ts`）のスクリプト |
+| `verification/` | 比較評価の記録（fixture の結果。意味の品質を示さない）と、実モデルでの試行の記録（`kg-ai-memory/`） |
 | `p0/` | P0 の調査資料と方式確認用の spike（製品コードではない） |
 
 ## 開発
@@ -68,6 +70,16 @@ bun run eval:search      # 合成資料での検索の比較（本パッケー�
 ```
 
 ネットワークの待受や外部サービスへの接続はしません。HTTP は in-process で呼び、一時 DB は OS の一時ディレクトリに作って片付けます。
+
+実モデルでの試行だけは、LARM に接続します（手で実行するもので、上の検証には含みません）。
+
+```sh
+LARM_API_TOKEN=… KG_LARM_BASE_URL=… KG_LARM_PROFILE=… KG_LARM_AUDIENCE=… \
+  bun scripts/kg-live.ts [--docs <拡張子なしの名前>,…] [--max-minutes 240]   # verification/kg-ai-memory/<時刻>-<profile>/ に graph.json と report.json
+bun scripts/kg-view.ts verification/kg-ai-memory/<時刻>-<profile>   # 同じ場所に graph.html
+```
+
+4 文書の取り込みには約 4 時間かかりました（大半は同一視）。
 
 ## 技術スタック
 
@@ -90,6 +102,7 @@ bun run eval:search      # 合成資料での検索の比較（本パッケー�
 | [p1.md](p1.md) | P1 の設計、Eumenes の queue との整合、実施結果 |
 | [p2.md](p2.md) | P2 の設計（取り込みの連鎖、抽出、保存と失効）、実施結果 |
 | [p3.md](p3.md) | P3 の設計（検索、根拠取得、比較評価、同一視・要約・関連文書）、実施結果 |
+| [kg.md](kg.md) | KG の設計（グラフの読み取り、文書の中の同一視、指示 v2、LARM 接続）、実モデルでの結果と問題 |
 | [p0/lightrag.md](p0/lightrag.md) | LightRAG の参照 commit の固定と移植範囲 |
 | [p0/mcp-cli.md](p0/mcp-cli.md) | MCP SDK の選定と CLI/MCP の接続方式 |
 | [p0/search-storage.md](p0/search-storage.md) | SQLite の全文・ベクトル検索、引用 byte 範囲、検証用 writer の測定 |

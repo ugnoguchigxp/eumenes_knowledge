@@ -1,0 +1,147 @@
+{
+	"corpus": "ai-memory",
+	"about": "合成の調査 4 文書（2026-11-07〜08 に Claude Docs で作成）の正解表。ノードの名前のどれかが別名のどれかと一致（NFKC・小文字・前後の空白を除いて）すれば、その実体に当たったとみなす。実体が現れる文書は、別名の出現から評価時に数える。",
+	"entities": [
+		{ "id": "mem0", "aliases": ["mem0", "Mem0"] },
+		{
+			"id": "mem0-oss",
+			"aliases": ["mem0 OSS", "OSS", "OSS 版", "mem0 の OSS"]
+		},
+		{
+			"id": "mem0-platform",
+			"aliases": ["mem0 Platform", "Platform", "mem0 の Platform"]
+		},
+		{ "id": "mem0g", "aliases": ["Mem0g"] },
+		{
+			"id": "mem0-paper",
+			"aliases": [
+				"Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory",
+				"arXiv 2504.19413",
+				"2504.19413",
+				"2025 年の論文"
+			]
+		},
+		{ "id": "neo4j", "aliases": ["Neo4j"] },
+		{ "id": "add-only", "aliases": ["ADD-only"] },
+		{ "id": "bm25", "aliases": ["BM25"] },
+		{ "id": "locomo", "aliases": ["LoCoMo"] },
+		{ "id": "longmemeval", "aliases": ["LongMemEval"] },
+		{ "id": "beam", "aliases": ["BEAM"] },
+		{ "id": "memory-benchmarks", "aliases": ["memory-benchmarks"] },
+		{ "id": "gpt-4o", "aliases": ["gpt-4o"] },
+		{
+			"id": "temporal-reasoning",
+			"aliases": ["時間推論", "Temporal Reasoning"]
+		},
+		{ "id": "memory-decay", "aliases": ["記憶の減衰", "Memory Decay", "減衰"] },
+		{ "id": "graph-memory", "aliases": ["グラフ記憶", "Graph Memory"] },
+		{ "id": "state-key", "aliases": ["state key"] },
+		{ "id": "hysen-labs", "aliases": ["Hysen Labs"] },
+		{ "id": "eumenes", "aliases": ["Eumenes"] },
+		{ "id": "eumenes-memory", "aliases": ["eumenes_memory", "eumenes-memory"] },
+		{ "id": "eumenes-memory-host", "aliases": ["eumenes-memory-host"] },
+		{ "id": "eumenes-knowledge", "aliases": ["eumenes_knowledge"] },
+		{ "id": "steward", "aliases": ["steward", "Eumenes の steward"] },
+		{ "id": "cas", "aliases": ["CAS"] },
+		{ "id": "journal", "aliases": ["journal"] },
+		{ "id": "tombstone", "aliases": ["墓標"] },
+		{ "id": "quality-80", "aliases": ["quality-80"] },
+		{ "id": "rrf", "aliases": ["RRF"] },
+		{ "id": "world", "aliases": ["World"] },
+		{ "id": "multilingual-e5", "aliases": ["multilingual-e5"] },
+		{ "id": "read-memory", "aliases": ["read_memory"] },
+		{ "id": "model-input-too-large", "aliases": ["MODEL_INPUT_TOO_LARGE"] }
+	],
+	"relations": [
+		{
+			"a": ["mem0g"],
+			"b": ["neo4j"],
+			"about": "Mem0g は Neo4j に型付きの関係を持っていた"
+		},
+		{
+			"a": ["mem0", "mem0-oss"],
+			"b": ["neo4j"],
+			"about": "OSS から外部のグラフ DB（Neo4j など）への対応を外した"
+		},
+		{
+			"a": ["mem0", "mem0-oss"],
+			"b": ["add-only"],
+			"about": "新方式は ADD-only の書込み"
+		},
+		{
+			"a": ["mem0", "mem0-platform"],
+			"b": ["temporal-reasoning"],
+			"about": "Platform だけに時間推論を足した"
+		},
+		{
+			"a": ["mem0", "mem0-platform"],
+			"b": ["memory-decay"],
+			"about": "Platform だけに記憶の減衰を足した"
+		},
+		{
+			"a": ["mem0", "mem0-platform"],
+			"b": ["graph-memory"],
+			"about": "Platform のグラフ記憶は共起から推定する"
+		},
+		{
+			"a": ["mem0", "mem0g"],
+			"b": ["mem0-paper"],
+			"about": "2025 年の論文が旧方式と Mem0g を述べる"
+		},
+		{
+			"a": ["mem0", "mem0-platform"],
+			"b": ["locomo", "longmemeval", "beam"],
+			"about": "mem0 がベンチマークの数値を公表した"
+		},
+		{
+			"a": ["memory-benchmarks"],
+			"b": ["gpt-4o"],
+			"about": "評価の枠組みの既定モデルは gpt-4o"
+		},
+		{
+			"a": ["eumenes-memory"],
+			"b": ["eumenes"],
+			"about": "eumenes_memory は Eumenes の記憶を切り出したライブラリ"
+		},
+		{
+			"a": ["eumenes-memory"],
+			"b": ["cas"],
+			"about": "書込みの競合を CAS で検出する"
+		},
+		{
+			"a": ["eumenes-memory"],
+			"b": ["journal"],
+			"about": "忘却を journal に記録する"
+		},
+		{
+			"a": ["eumenes-memory"],
+			"b": ["quality-80"],
+			"about": "quality-80 の評価"
+		},
+		{ "a": ["eumenes-memory"], "b": ["mem0"], "about": "mem0 と比べる" },
+		{
+			"a": ["eumenes-memory"],
+			"b": ["eumenes-knowledge"],
+			"about": "2 つのパッケージは同じ作り方をする"
+		},
+		{
+			"a": ["eumenes-knowledge"],
+			"b": ["rrf"],
+			"about": "検索は順位だけで融合する（RRF）"
+		},
+		{
+			"a": ["steward"],
+			"b": ["eumenes"],
+			"about": "判断は Eumenes の steward が持つ"
+		}
+	],
+	"distinct": [
+		["mem0", "mem0g"],
+		["mem0-oss", "mem0-platform"],
+		["eumenes", "eumenes-memory"],
+		["eumenes-memory", "eumenes-knowledge"],
+		["eumenes-memory", "eumenes-memory-host"],
+		["locomo", "longmemeval"],
+		["temporal-reasoning", "memory-decay"]
+	]
+}

@@ -206,12 +206,14 @@ const NOT_DECIDED = `NOT EXISTS (SELECT 1 FROM knowledge_entity_links l
   WHERE l.entity_a = MIN(?1, m.entity_id) AND l.entity_b = MAX(?1, m.entity_id))`;
 
 /**
- * Candidates to compare with one current mention: mentions of other documents' published
- * versions of `current` documents (any namespace: the index is the host's, and what a caller
- * sees is narrowed when reading) whose normalized name equals the mention's, then those the
- * mention full-text index finds for the name as one phrase (best bm25 first, ids breaking ties).
- * A pair that already has a decision is never returned. At most `limit`; empty when the mention
- * is not current.
+ * Candidates to compare with one current mention: mentions of the published versions of
+ * `current` documents (any namespace: the index is the host's, and what a caller sees is
+ * narrowed when reading) whose normalized name equals the mention's, then those the mention
+ * full-text index finds for the name as one phrase (best bm25 first, ids breaking ties). Other
+ * documents' mentions qualify, and so do mentions of the same document's same version that sit
+ * in a different fragment (a mention in the same fragment never does: it was told apart by the
+ * one extraction that produced it). Both kinds share one ordering. A pair that already has a
+ * decision is never returned. At most `limit`; empty when the mention is not current.
  */
 export function readLinkCandidatesInTransaction(
 	db: Tx,
@@ -225,8 +227,9 @@ export function readLinkCandidatesInTransaction(
 			name: string;
 			source_namespace: string;
 			document_id: string;
+			fragment_ordinal: number;
 		}>(
-			`SELECT m.name_norm, m.name, d.source_namespace, d.document_id
+			`SELECT m.name_norm, m.name, m.fragment_ordinal, d.source_namespace, d.document_id
 FROM knowledge_entity_mentions m ${CURRENT_MENTION_JOIN} WHERE m.entity_id = ?`,
 		)
 		.get(entityId);
@@ -249,14 +252,21 @@ FROM knowledge_entity_mentions m ${CURRENT_MENTION_JOIN} WHERE m.entity_id = ?`,
 		}
 	};
 	const columns = `${MENTION_COLUMNS}, d.source_namespace, d.document_id`;
-	const others = `m.entity_id <> ?1 AND NOT (d.source_namespace = ?2 AND d.document_id = ?3) AND ${NOT_DECIDED}`;
+	const others = `m.entity_id <> ?1 AND (NOT (d.source_namespace = ?2 AND d.document_id = ?3) OR m.fragment_ordinal <> ?6) AND ${NOT_DECIDED}`;
 	take(
 		db
 			.query<RawMention & { source_namespace: string; document_id: string }>(
 				`SELECT ${columns} FROM knowledge_entity_mentions m ${CURRENT_MENTION_JOIN}
 WHERE m.name_norm = ?4 AND ${others} ORDER BY m.entity_id LIMIT ?5`,
 			)
-			.all(entityId, self.source_namespace, self.document_id, normName, limit),
+			.all(
+				entityId,
+				self.source_namespace,
+				self.document_id,
+				normName,
+				limit,
+				self.fragment_ordinal,
+			),
 	);
 	if (picked.size < limit && charCount(normName) >= 3) {
 		const phrase = `"${normName.replaceAll('"', '""')}"`;
@@ -274,6 +284,7 @@ ORDER BY bm25(knowledge_entity_fts), m.entity_id LIMIT ?5`,
 					self.document_id,
 					phrase,
 					limit + picked.size,
+					self.fragment_ordinal,
 				),
 		);
 	}
@@ -753,8 +764,10 @@ ORDER BY m.entity_id`,
 }
 
 /**
- * Entity ids of the version's mentions that have a `same` link, in id order, at most `limit`
- * (the answer says when more exist). Only these can start a cluster with two or more members.
+ * Entity ids of the version's mentions that have a `same` link to a mention of another version,
+ * in id order, at most `limit` (the answer says when more exist). A link inside one version
+ * (two fragments of one document) does not count: it cannot make another document related, and
+ * would crowd out the starts that can. Only these can start a related cluster.
  */
 export function listLinkedMentionIdsInSnapshot(
 	db: Tx,
@@ -766,8 +779,8 @@ export function listLinkedMentionIdsInSnapshot(
 		.query<{ entity_id: number }>(
 			`SELECT m.entity_id FROM knowledge_entity_mentions m
 WHERE m.version_id = ?1 AND (
- EXISTS (SELECT 1 FROM knowledge_entity_links l WHERE l.entity_a = m.entity_id AND l.decision = 'same')
- OR EXISTS (SELECT 1 FROM knowledge_entity_links l WHERE l.entity_b = m.entity_id AND l.decision = 'same'))
+ EXISTS (SELECT 1 FROM knowledge_entity_links l WHERE l.entity_a = m.entity_id AND l.decision = 'same' AND l.version_a <> l.version_b)
+ OR EXISTS (SELECT 1 FROM knowledge_entity_links l WHERE l.entity_b = m.entity_id AND l.decision = 'same' AND l.version_a <> l.version_b))
 ORDER BY m.entity_id LIMIT ?2`,
 		)
 		.all(versionId, limit + 1)

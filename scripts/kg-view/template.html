@@ -1,0 +1,925 @@
+<title>AI 記憶調査の知識グラフ</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	rel="stylesheet"
+	href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Zen+Old+Mincho:wght@700&display=swap"
+/>
+<style>
+	/* Layout: a working sheet. Run facts on top, the graph with its inspector beside it, then the comparison with the expected graph. */
+	:root {
+		--plane: #f9f9f7;
+		--surface: #fcfcfb;
+		--ink: #0b0b0b;
+		--ink-2: #52514e;
+		--muted: #898781;
+		--hair: #e1e0d9;
+		--axis: #c3c2b7;
+		--ring: rgba(11, 11, 11, 0.10);
+		--accent: #1c5cab;
+		--d1: #86b6ef;
+		--d2: #3987e5;
+		--d3: #1c5cab;
+		--d4: #0d366b;
+		--edge: #b9b8b0;
+		--edge-cross: #52514e;
+		--good: #006300;
+		--bad: #d03b3b;
+		--warn-bg: #fdf3dc;
+		--warn-ink: #6b4a00;
+		--font-display:
+			"Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+		--font-body:
+			"BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+		--font-mono:
+			"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--plane: #0d0d0d;
+			--surface: #1a1a19;
+			--ink: #f0efec;
+			--ink-2: #c3c2b7;
+			--muted: #898781;
+			--hair: #2c2c2a;
+			--axis: #383835;
+			--ring: rgba(255, 255, 255, 0.10);
+			--accent: #6da7ec;
+			--d1: #184f95;
+			--d2: #2a78d6;
+			--d3: #6da7ec;
+			--d4: #b7d3f6;
+			--edge: #4a4a46;
+			--edge-cross: #c3c2b7;
+			--good: #0ca30c;
+			--bad: #e66767;
+			--warn-bg: #2e2510;
+			--warn-ink: #f2c35a;
+			color-scheme: dark;
+		}
+	}
+	:root[data-theme="dark"] {
+		--plane: #0d0d0d;
+		--surface: #1a1a19;
+		--ink: #f0efec;
+		--ink-2: #c3c2b7;
+		--muted: #898781;
+		--hair: #2c2c2a;
+		--axis: #383835;
+		--ring: rgba(255, 255, 255, 0.10);
+		--accent: #6da7ec;
+		--d1: #184f95;
+		--d2: #2a78d6;
+		--d3: #6da7ec;
+		--d4: #b7d3f6;
+		--edge: #4a4a46;
+		--edge-cross: #c3c2b7;
+		--good: #0ca30c;
+		--bad: #e66767;
+		--warn-bg: #2e2510;
+		--warn-ink: #f2c35a;
+		color-scheme: dark;
+	}
+	* {
+		box-sizing: border-box;
+	}
+	body {
+		background: var(--plane);
+		color: var(--ink);
+		font-family: var(--font-body);
+		font-size: 14px;
+		line-height: 1.6;
+	}
+	.page {
+		max-width: 1360px;
+		margin: 0 auto;
+		padding-left: max(16px, env(safe-area-inset-left, 0px));
+		padding-right: max(16px, env(safe-area-inset-right, 0px));
+		padding-block: 28px 56px;
+		display: grid;
+		gap: 28px;
+	}
+	h1 {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 30px;
+		line-height: 1.25;
+		margin: 0;
+		text-wrap: balance;
+	}
+	h2 {
+		font-size: 17px;
+		margin: 0;
+		text-wrap: balance;
+	}
+	h3 {
+		font-size: 14px;
+		margin: 0;
+	}
+	.lede {
+		color: var(--ink-2);
+		max-width: 68ch;
+		margin: 6px 0 0;
+	}
+	.num {
+		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
+	}
+	.label {
+		font-size: 11px;
+		letter-spacing: 0.06em;
+		color: var(--muted);
+	}
+
+	.facts {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 1px;
+		background: var(--hair);
+		border: 1px solid var(--hair);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+	.fact {
+		background: var(--surface);
+		padding: 10px 14px;
+		display: grid;
+		gap: 2px;
+		min-width: 0;
+	}
+	.fact .value {
+		font-family: var(--font-mono);
+		font-size: 18px;
+		font-variant-numeric: tabular-nums;
+	}
+	.fact .sub {
+		font-size: 12px;
+		color: var(--ink-2);
+	}
+	.reasons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.reason {
+		display: inline-flex;
+		gap: 6px;
+		align-items: baseline;
+		background: var(--warn-bg);
+		color: var(--warn-ink);
+		border-radius: 999px;
+		padding: 2px 10px;
+		font-size: 12px;
+	}
+	.reason code {
+		font-family: var(--font-mono);
+		font-size: 11px;
+	}
+
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px 18px;
+		align-items: center;
+	}
+	.controls label {
+		display: inline-flex;
+		gap: 6px;
+		align-items: center;
+		color: var(--ink-2);
+		font-size: 13px;
+	}
+	.controls input[type="search"],
+	.controls select {
+		font: inherit;
+		color: var(--ink);
+		background: var(--surface);
+		border: 1px solid var(--axis);
+		border-radius: 6px;
+		padding: 5px 9px;
+		min-width: 0;
+	}
+	.controls input[type="search"] {
+		width: 220px;
+		max-width: 100%;
+	}
+	:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+	.work {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 340px;
+		gap: 16px;
+		align-items: start;
+	}
+	@media (max-width: 900px) {
+		.work {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	.canvas {
+		position: relative;
+		background: var(--surface);
+		border: 1px solid var(--hair);
+		border-radius: 10px;
+		overflow: hidden;
+		height: 640px;
+	}
+	@media (max-width: 600px) {
+		.canvas {
+			height: 460px;
+		}
+	}
+	.canvas svg {
+		width: 100%;
+		height: 100%;
+		display: block;
+		touch-action: none;
+	}
+	.legend {
+		position: absolute;
+		left: 12px;
+		bottom: 10px;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px 14px;
+		align-items: center;
+		font-size: 12px;
+		color: var(--ink-2);
+		background: color-mix(in srgb, var(--surface) 88%, transparent);
+		padding: 6px 10px;
+		border-radius: 6px;
+		max-width: calc(100% - 24px);
+	}
+	.swatch {
+		display: inline-block;
+		width: 11px;
+		height: 11px;
+		border-radius: 50%;
+		vertical-align: -1px;
+		margin-right: 3px;
+		box-shadow: 0 0 0 1px var(--ring);
+	}
+	.hint {
+		position: absolute;
+		right: 12px;
+		top: 10px;
+		font-size: 12px;
+		color: var(--muted);
+	}
+	.tooltip {
+		position: absolute;
+		pointer-events: none;
+		background: var(--ink);
+		color: var(--surface);
+		font-size: 12px;
+		padding: 5px 8px;
+		border-radius: 6px;
+		max-width: 260px;
+	}
+
+	.inspector {
+		background: var(--surface);
+		border: 1px solid var(--hair);
+		border-radius: 10px;
+		padding: 16px;
+		display: grid;
+		gap: 12px;
+		min-width: 0;
+		max-height: 640px;
+		overflow: auto;
+	}
+	.inspector .empty {
+		color: var(--ink-2);
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+	.chip {
+		border: 1px solid var(--axis);
+		border-radius: 999px;
+		padding: 1px 9px;
+		font-size: 12px;
+		color: var(--ink-2);
+		overflow-wrap: anywhere;
+	}
+	.rel {
+		display: grid;
+		gap: 6px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.rel li {
+		display: grid;
+		gap: 1px;
+		padding: 6px 8px;
+		border-radius: 6px;
+		background: var(--plane);
+		min-width: 0;
+	}
+	.rel button {
+		all: unset;
+		cursor: pointer;
+		color: var(--accent);
+		overflow-wrap: anywhere;
+	}
+	.rel button:focus-visible {
+		outline: 2px solid var(--accent);
+	}
+	.rel .meta {
+		font-size: 11px;
+		color: var(--muted);
+	}
+	.summary {
+		border-left: 2px solid var(--axis);
+		padding-left: 10px;
+		color: var(--ink-2);
+	}
+
+	section {
+		display: grid;
+		gap: 12px;
+		min-width: 0;
+	}
+	.tables {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+		gap: 16px;
+	}
+	@media (max-width: 480px) {
+		.tables {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	.tablewrap {
+		overflow-x: auto;
+		background: var(--surface);
+		border: 1px solid var(--hair);
+		border-radius: 10px;
+	}
+	table {
+		border-collapse: collapse;
+		width: 100%;
+		font-size: 13px;
+	}
+	th,
+	td {
+		text-align: left;
+		padding: 7px 10px;
+		border-bottom: 1px solid var(--hair);
+		vertical-align: top;
+	}
+	th {
+		font-weight: 700;
+		font-size: 12px;
+		color: var(--ink-2);
+		background: var(--plane);
+		position: sticky;
+		top: 0;
+	}
+	td.n,
+	th.n {
+		text-align: right;
+		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
+	}
+	.ok {
+		color: var(--good);
+		white-space: nowrap;
+	}
+	.ng {
+		color: var(--bad);
+		white-space: nowrap;
+	}
+	.note {
+		color: var(--ink-2);
+		font-size: 13px;
+		max-width: 75ch;
+	}
+</style>
+
+<div class="page">
+	<header>
+		<h1>AI 記憶調査の知識グラフ</h1>
+		<p class="lede" id="lede"></p>
+	</header>
+	<div class="facts" id="facts"></div>
+	<div class="reasons" id="reasons"></div>
+
+	<section aria-labelledby="graph-h">
+		<h2 id="graph-h">グラフ</h2>
+		<div class="controls">
+			<label for="q"
+				>名前で探す <input type="search" id="q" placeholder="例: mem0"
+			/></label>
+			<label for="minm"
+				>言及数
+				<select id="minm">
+					<option value="1">1 以上</option>
+					<option value="2" selected>2 以上</option>
+					<option value="3">3 以上</option>
+					<option value="5">5 以上</option>
+				</select></label
+			>
+			<label for="doc"
+				>文書
+				<select id="doc">
+					<option value="">すべて</option>
+				</select></label
+			>
+			<label for="cross"
+				><input type="checkbox" id="cross" /> 文書をまたぐノードだけ</label
+			>
+			<label for="iso"
+				><input type="checkbox" id="iso" checked /> 辺のないノードを隠す</label
+			>
+			<span class="label num" id="shown"></span>
+		</div>
+		<div class="work">
+			<div class="canvas" id="canvas">
+				<svg
+					id="svg"
+					role="img"
+					aria-label="ノードと辺の図。ノードの色は現れる文書の数、大きさは言及の数。"
+				></svg>
+				<div class="hint">ドラッグで移動・ホイールで拡大・クリックで詳細</div>
+				<div class="legend" id="legend"></div>
+				<div class="tooltip" id="tip" hidden></div>
+			</div>
+			<aside class="inspector" id="inspector" aria-live="polite"></aside>
+		</div>
+	</section>
+
+	<section aria-labelledby="eval-h">
+		<h2 id="eval-h">正解表との比較</h2>
+		<p class="note" id="evalnote"></p>
+		<div class="tables">
+			<div class="tablewrap"><table id="t-ent"></table></div>
+			<div class="tablewrap"><table id="t-rel"></table></div>
+		</div>
+	</section>
+
+	<section aria-labelledby="list-h">
+		<h2 id="list-h">ノードの一覧（言及の多い順）</h2>
+		<div class="tablewrap"><table id="t-nodes"></table></div>
+	</section>
+</div>
+
+<script id="kg-data" type="application/json">
+	__KG_DATA__
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+	(() => {
+		const D = JSON.parse(document.getElementById("kg-data").textContent);
+		const $ = (id) => document.getElementById(id);
+		const esc = (s) =>
+			String(s).replace(
+				/[&<>"']/g,
+				(c) =>
+					({
+						"&": "&amp;",
+						"<": "&lt;",
+						">": "&gt;",
+						'"': "&quot;",
+						"'": "&#39;",
+					})[c],
+			);
+		const fmt = (n) => Number(n).toLocaleString("ja-JP");
+		const pct = (x) =>
+			x === null || x === undefined ? "—" : `${Math.round(x * 100)}%`;
+		const docTitle = (i) => D.documents[i]?.title ?? "?";
+		// Relation names are free text, so the API's edges (one per node pair, direction, relation name,
+		// negation and certainty) rarely repeat. The picture draws one line per node pair instead and
+		// lists the relations themselves in the inspector. Relations inside one node are not drawn.
+		const pairs = new Map();
+		for (const e of D.edges) {
+			if (e.s === e.t) continue;
+			const [a, b] = e.s < e.t ? [e.s, e.t] : [e.t, e.s];
+			const key = `${a}|${b}`;
+			let p = pairs.get(key);
+			if (!p)
+				pairs.set(key, (p = { id: key, s: a, t: b, m: 0, docs: new Set() }));
+			p.m += e.m;
+			for (const d of e.docs) p.docs.add(d);
+		}
+		const P = [...pairs.values()].map((p) => ({ ...p, docs: [...p.docs] }));
+
+		// --- header ---------------------------------------------------------------
+		const r = D.run;
+		$("lede").textContent =
+			`合成の調査 ${D.documents.length} 文書を、${r.llm}（LARM の profile ${r.profile}）で取り込み、eumenes_knowledge のグラフ API から取り出したもの。手で描いた図ではなく、抽出と同一視の結果そのものです。${r.date} の 1 回の実行で、品質の基準値ではありません。`;
+		const facts = [
+			["文書", fmt(D.documents.length), `${fmt(r.bytes)} bytes`],
+			["断片", fmt(r.fragments), `抽出の失敗 ${fmt(r.extractionsFailed)}`],
+			["言及", fmt(r.entityMentions), `関係 ${fmt(r.relationMentions)}`],
+			[
+				"同一視の判断",
+				fmt(r.linksSame + r.linksDifferent + r.linksUnsure),
+				`same ${fmt(r.linksSame)} · different ${fmt(r.linksDifferent)} · unsure ${fmt(r.linksUnsure)}`,
+			],
+			[
+				"ノード",
+				fmt(D.nodes.length),
+				`文書をまたぐもの ${fmt(D.nodes.filter((n) => n.docs.length > 1).length)}`,
+			],
+			[
+				"関係",
+				fmt(D.edges.length),
+				`ノードの組 ${fmt(P.length)} · 2 文書以上で出る組 ${fmt(P.filter((p) => p.docs.length > 1).length)}`,
+			],
+			[
+				"根拠の確認",
+				`${fmt(r.evidenceValid)}/${fmt(r.evidenceTotal)}`,
+				"根拠 API で valid",
+			],
+			["実行時間", `${r.minutes} 分`, `モデル呼出し ${fmt(r.calls)} 回`],
+		];
+		$("facts").innerHTML = facts
+			.map(
+				([k, v, s]) =>
+					`<div class="fact"><span class="label">${esc(k)}</span><span class="value">${esc(v)}</span><span class="sub">${esc(s)}</span></div>`,
+			)
+			.join("");
+		const reasonText = {
+			linking_conflict: "矛盾する same を使わなかった",
+			linking_unsure: "モデルが判断できなかった組がある",
+			linking_pending: "同一視が終わっていない文書がある",
+			extraction_incomplete: "抽出に失敗した断片がある",
+			nodes_truncated: "ノードを上限で切った",
+			edges_truncated: "辺を上限で切った",
+		};
+		$("reasons").innerHTML = D.partialReasons
+			.map(
+				(p) =>
+					`<span class="reason">${esc(reasonText[p] ?? p)} <code>${esc(p)}</code></span>`,
+			)
+			.join("");
+
+		// --- graph ----------------------------------------------------------------
+		const svg = d3.select("#svg");
+		const root = svg.append("g");
+		const gEdges = root.append("g");
+		const gNodes = root.append("g");
+		const gLabels = root.append("g");
+		const zoom = d3
+			.zoom()
+			.scaleExtent([0.2, 6])
+			.on("zoom", (ev) => root.attr("transform", ev.transform));
+		svg.call(zoom);
+		const ramp = ["--d1", "--d2", "--d3", "--d4"];
+		const fill = (n) => `var(${ramp[Math.min(n.docs.length, 4) - 1]})`;
+		const radius = (n) => 3.5 + Math.sqrt(n.m) * 2.4;
+		$("legend").innerHTML =
+			"現れる文書の数 " +
+			[1, 2, 3, 4]
+				.map(
+					(k) =>
+						`<span><span class="swatch" style="background:var(${ramp[k - 1]})"></span>${k}</span>`,
+				)
+				.join("") +
+			` <span>· 大きさ＝言及の数 · 線＝関係のあるノードの組（太さ＝関係の言及数、濃い線＝2 文書以上で出る組）</span>`;
+		D.documents.forEach((d, i) => {
+			const o = document.createElement("option");
+			o.value = String(i);
+			o.textContent = d.title;
+			$("doc").append(o);
+		});
+
+		const byId = new Map(D.nodes.map((n) => [n.id, n]));
+		let selected = null;
+		let current = { nodes: [], edges: [] };
+		let fitK = 1;
+
+		function filtered() {
+			const minm = Number($("minm").value);
+			const doc = $("doc").value === "" ? null : Number($("doc").value);
+			const cross = $("cross").checked;
+			let nodes = D.nodes.filter(
+				(n) =>
+					n.m >= minm &&
+					(!cross || n.docs.length > 1) &&
+					(doc === null || n.docs.includes(doc)),
+			);
+			const keep = new Set(nodes.map((n) => n.id));
+			const edges = P.filter(
+				(e) =>
+					keep.has(e.s) &&
+					keep.has(e.t) &&
+					(doc === null || e.docs.includes(doc)),
+			);
+			if ($("iso").checked) {
+				const linked = new Set(edges.flatMap((e) => [e.s, e.t]));
+				nodes = nodes.filter((n) => linked.has(n.id) || n.id === selected);
+			}
+			return { nodes, edges };
+		}
+
+		function draw() {
+			const { nodes, edges } = filtered();
+			const box = $("canvas").getBoundingClientRect();
+			const w = Math.max(box.width, 320),
+				h = Math.max(box.height, 320);
+			const simNodes = nodes.map((n) => ({ ...n }));
+			const simIndex = new Map(simNodes.map((n) => [n.id, n]));
+			const simEdges = edges.map((e) => ({
+				...e,
+				source: simIndex.get(e.s),
+				target: simIndex.get(e.t),
+			}));
+			const sim = d3
+				.forceSimulation(simNodes)
+				.force("link", d3.forceLink(simEdges).distance(95).strength(0.25))
+				.force("charge", d3.forceManyBody().strength(-260).distanceMax(600))
+				.force(
+					"collide",
+					d3.forceCollide().radius((n) => radius(n) + 8),
+				)
+				.force("x", d3.forceX(0).strength(0.04))
+				.force("y", d3.forceY(0).strength(0.06))
+				.stop();
+			// Settled before the first frame: the page is complete at rest, no animation.
+			for (let i = 0; i < 400; i++) sim.tick();
+			current = { nodes: simNodes, edges: simEdges };
+			$("shown").textContent =
+				`表示 ${fmt(simNodes.length)} ノード · ${fmt(simEdges.length)} 組`;
+
+			gEdges
+				.selectAll("line")
+				.data(simEdges, (e) => e.id)
+				.join("line")
+				.attr("x1", (e) => e.source.x)
+				.attr("y1", (e) => e.source.y)
+				.attr("x2", (e) => e.target.x)
+				.attr("y2", (e) => e.target.y)
+				.attr("stroke", (e) =>
+					e.docs.length > 1 ? "var(--edge-cross)" : "var(--edge)",
+				)
+				.attr("stroke-width", (e) => 1 + Math.log2(e.m));
+			gNodes
+				.selectAll("circle")
+				.data(simNodes, (n) => n.id)
+				.join("circle")
+				.attr("cx", (n) => n.x)
+				.attr("cy", (n) => n.y)
+				.attr("r", radius)
+				.attr("fill", fill)
+				.attr("stroke", "var(--surface)")
+				.attr("stroke-width", 2)
+				.attr("tabindex", 0)
+				.attr("role", "button")
+				.attr(
+					"aria-label",
+					(n) => `${n.label}、言及 ${n.m}、文書 ${n.docs.length}`,
+				)
+				.style("cursor", "pointer")
+				.on("click", (ev, n) => select(n.id))
+				.on("keydown", (ev, n) => {
+					if (ev.key === "Enter" || ev.key === " ") {
+						ev.preventDefault();
+						select(n.id);
+					}
+				})
+				.on("mouseenter", (ev, n) => tip(ev, n))
+				.on("mousemove", (ev, n) => tip(ev, n))
+				.on("mouseleave", () => ($("tip").hidden = true));
+			// Fit the settled layout into the canvas (the legend strip at the bottom stays clear).
+			const xs = simNodes.map((n) => n.x),
+				ys = simNodes.map((n) => n.y);
+			if (simNodes.length) {
+				const x0 = Math.min(...xs) - 20,
+					x1 = Math.max(...xs) + 90,
+					y0 = Math.min(...ys) - 20,
+					y1 = Math.max(...ys) + 20;
+				const k = Math.min(2, (w - 24) / (x1 - x0), (h - 70) / (y1 - y0));
+				fitK = k;
+				svg.call(
+					zoom.transform,
+					d3.zoomIdentity
+						.translate(
+							(w - (x1 - x0) * k) / 2 - x0 * k,
+							(h - 50 - (y1 - y0) * k) / 2 - y0 * k,
+						)
+						.scale(k),
+				);
+			}
+			labels();
+			emphasize();
+		}
+		// Labels go to the nodes with the most mentions first, and a label that would overlap one already
+		// placed is left out (its node still shows its name on hover and in the inspector).
+		function labels() {
+			const near = new Set(selected ? [selected] : []);
+			if (selected)
+				for (const e of current.edges) {
+					if (e.s === selected) near.add(e.t);
+					if (e.t === selected) near.add(e.s);
+				}
+			const order = [...current.nodes].sort(
+				(a, b) =>
+					near.has(b.id) - near.has(a.id) ||
+					b.m - a.m ||
+					b.docs.length - a.docs.length,
+			);
+			const placed = [];
+			// Labels keep 12px on screen at the fitted zoom, so their boxes are measured at that scale.
+			const f = 1 / fitK;
+			const width = (t) =>
+				[...t].reduce((s, c) => s + (c.charCodeAt(0) > 0x2e7f ? 12 : 7), 0) * f;
+			const top = new Set(order.slice(0, 10).map((n) => n.id));
+			const shown = [];
+			for (const n of order) {
+				if (!near.has(n.id) && shown.length >= 40) break;
+				const t = clip(n.label, 20);
+				const b = {
+					x0: n.x + radius(n) + 2 * f,
+					y0: n.y - 8 * f,
+					x1: n.x + radius(n) + 4 * f + width(t),
+					y1: n.y + 8 * f,
+				};
+				const hitsLabel = placed.some(
+					(p) => b.x0 < p.x1 && p.x0 < b.x1 && b.y0 < p.y1 && p.y0 < b.y1,
+				);
+				// The ten nodes with the most mentions are labelled even over a neighbouring node.
+				const hitsNode =
+					!top.has(n.id) &&
+					current.nodes.some(
+						(o) =>
+							o !== n &&
+							o.x + radius(o) > b.x0 &&
+							o.x - radius(o) < b.x1 &&
+							o.y + radius(o) > b.y0 &&
+							o.y - radius(o) < b.y1,
+					);
+				if (n.id !== selected && (hitsLabel || hitsNode)) continue;
+				placed.push(b);
+				shown.push({ n, t });
+			}
+			gLabels
+				.selectAll("text")
+				.data(shown, (d) => d.n.id)
+				.join("text")
+				.attr("x", (d) => d.n.x + radius(d.n) + 3 * f)
+				.attr("y", (d) => d.n.y + 4 * f)
+				.text((d) => d.t)
+				.attr("font-size", 12 * f)
+				.attr("fill", "var(--ink)")
+				.attr("stroke", "var(--surface)")
+				.attr("stroke-width", 3 * f)
+				.attr("paint-order", "stroke")
+				.style("pointer-events", "none");
+		}
+		const clip = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+		function tip(ev, n) {
+			const t = $("tip"),
+				box = $("canvas").getBoundingClientRect();
+			t.innerHTML = `<strong>${esc(n.label)}</strong><br><span class="num">言及 ${n.m} · 文書 ${n.docs.length}</span>`;
+			t.hidden = false;
+			const x = Math.min(ev.clientX - box.left + 12, box.width - 270),
+				y = Math.max(ev.clientY - box.top - 40, 8);
+			t.style.left = `${x}px`;
+			t.style.top = `${y}px`;
+		}
+		function emphasize() {
+			const near = new Set();
+			if (selected) {
+				near.add(selected);
+				for (const e of current.edges) {
+					if (e.s === selected) near.add(e.t);
+					if (e.t === selected) near.add(e.s);
+				}
+			}
+			const q = $("q").value.trim().toLowerCase();
+			const hit = (n) => q && n.names.some((x) => x.toLowerCase().includes(q));
+			gNodes
+				.selectAll("circle")
+				.attr("opacity", (n) =>
+					selected ? (near.has(n.id) ? 1 : 0.18) : q ? (hit(n) ? 1 : 0.25) : 1,
+				)
+				.attr("stroke", (n) =>
+					n.id === selected || hit(n) ? "var(--ink)" : "var(--surface)",
+				);
+			gEdges
+				.selectAll("line")
+				.attr("opacity", (e) =>
+					selected
+						? e.s === selected || e.t === selected
+							? 1
+							: 0.08
+						: q
+							? 0.3
+							: 0.9,
+				);
+			gLabels
+				.selectAll("text")
+				.attr("opacity", (d) => (selected ? (near.has(d.n.id) ? 1 : 0.2) : 1));
+		}
+		function select(id) {
+			selected = id;
+			inspect(id ? byId.get(id) : null);
+			// The layout is kept unless the chosen node is not drawn (a search can pick a filtered-out node).
+			if (id && !current.nodes.some((n) => n.id === id)) draw();
+			else {
+				labels();
+				emphasize();
+			}
+		}
+		function inspect(n) {
+			const el = $("inspector");
+			if (!n) {
+				el.innerHTML = `<p class="empty">ノードを選ぶと、名前の表記・種類・現れる文書・関係をここに出します。</p><p class="empty">ノード 1 つは、モデルが「同じ実体」と判断した言及のまとまりです。判断が食い違った組（same と different）はつないでいません。</p>`;
+				return;
+			}
+			const out = D.edges
+				.filter((e) => e.s === n.id || e.t === n.id)
+				.sort((a, b) => b.m - a.m);
+			const rel = out
+				.map((e) => {
+					const other = byId.get(e.s === n.id ? e.t : e.s);
+					const arrow =
+						e.s === e.t ? "↺" : !e.dir ? "—" : e.s === n.id ? "→" : "←";
+					const q = [
+						e.neg ? "否定" : null,
+						e.cert !== "stated"
+							? e.cert === "uncertain"
+								? "不確か"
+								: "仮定"
+							: null,
+					]
+						.filter(Boolean)
+						.join("・");
+					const end =
+						e.s === e.t
+							? `<span class="meta">同じノードの中</span>`
+							: `<button type="button" data-id="${esc(other.id)}">${esc(other.label)}</button>`;
+					return `<li><span>${arrow} <strong>${esc(e.rel)}</strong>${q ? `（${esc(q)}）` : ""} ${end}</span><span class="meta num">言及 ${e.m} · ${e.docs.map((d) => esc(docTitle(d))).join(" / ")}</span></li>`;
+				})
+				.join("");
+			el.innerHTML = `
+			<div><span class="label">ノード</span><h3 style="font-size:17px">${esc(n.label)}</h3><span class="num label">言及 ${n.m} · 文書 ${n.docs.length}</span></div>
+			<div><span class="label">書かれた名前</span><div class="chips">${n.names.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div></div>
+			<div><span class="label">抽出時の種類</span><div class="chips">${n.types.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div></div>
+			<div><span class="label">現れる文書</span><div>${n.docs.map((d) => esc(docTitle(d))).join("<br>")}</div></div>
+			${n.summary ? `<div><span class="label">要約（モデルが作った派生データ。根拠ではない）</span><p class="summary">${esc(n.summary)}</p></div>` : ""}
+			<div><span class="label">関係 ${out.length} 件</span>${out.length ? `<ul class="rel">${rel}</ul>` : `<p class="empty">関係はありません。</p>`}</div>
+			<button type="button" id="clear" class="chip" style="justify-self:start;cursor:pointer;background:none">選択を外す</button>`;
+			el.querySelectorAll("button[data-id]").forEach((b) =>
+				b.addEventListener("click", () => select(b.dataset.id)),
+			);
+			$("clear").addEventListener("click", () => select(null));
+		}
+		["minm", "doc", "cross", "iso"].forEach((id) =>
+			$(id).addEventListener("change", draw),
+		);
+		$("q").addEventListener("input", emphasize);
+		$("q").addEventListener("keydown", (ev) => {
+			if (ev.key !== "Enter") return;
+			const q = $("q").value.trim().toLowerCase();
+			const hit = D.nodes
+				.filter((n) => n.names.some((x) => x.toLowerCase().includes(q)))
+				.sort((a, b) => b.m - a.m)[0];
+			if (hit) {
+				$("minm").value = "1";
+				select(hit.id);
+			}
+		});
+		let resizeTimer;
+		window.addEventListener("resize", () => {
+			clearTimeout(resizeTimer);
+			resizeTimer = setTimeout(draw, 200);
+		});
+		inspect(null);
+		draw();
+
+		// --- evaluation -----------------------------------------------------------
+		const ev = D.evaluation;
+		const s = ev.summary;
+		$("evalnote").innerHTML =
+			`正解表は、素材を書いた側が先に決めた実体 ${s.entitiesInCorpus} 件と関係 ${D.evaluation.relations.length} 件です。ノードの名前のどれかが別名と一致すれば「見つかった」とします。実体の再現 <strong class="num">${pct(s.entityRecall)}</strong>、複数の文書に出る実体 ${s.crossDocumentEntities} 件のうち 1 つのノードにまとまったもの <strong class="num">${s.mergedIntoOneNode}</strong> 件、関係の再現 <strong class="num">${pct(s.relationRecall)}</strong>、混ぜてはいけない組を混ぜたもの <strong class="num">${s.distinctViolations}</strong> 件。`;
+		const mark = (b) =>
+			b ? `<span class="ok">✓ あり</span>` : `<span class="ng">✕ なし</span>`;
+		$("t-ent").innerHTML =
+			`<thead><tr><th>実体</th><th class="n">出る文書</th><th>ノード</th><th class="n">分かれた数</th><th class="n">1 ノードの被覆</th></tr></thead><tbody>${ev.entities
+				.filter((e) => e.expectedDocuments > 0)
+				.map(
+					(e) =>
+						`<tr><td>${esc(e.id)}${e.labels.length ? `<br><span class="label">${esc(e.labels.slice(0, 3).join(" / "))}</span>` : ""}</td><td class="n">${e.expectedDocuments}</td><td>${mark(e.found)}</td><td class="n">${e.nodes}</td><td class="n">${pct(e.bestNodeCoverage)}</td></tr>`,
+				)
+				.join("")}</tbody>`;
+		$("t-rel").innerHTML =
+			`<thead><tr><th>つながるべき関係</th><th>辺</th><th>取り出された関係名</th></tr></thead><tbody>${ev.relations.map((x) => `<tr><td>${esc(x.about)}</td><td>${x.hit ? mark(true) : x.endpointsFound ? `<span class="ng">✕ 端点はある</span>` : mark(false)}</td><td>${esc(x.relations.slice(0, 3).join(" / "))}</td></tr>`).join("")}</tbody>`;
+
+		// --- node table (the table view of the graph) -----------------------------
+		const top = [...D.nodes]
+			.sort((a, b) => b.m - a.m || b.docs.length - a.docs.length)
+			.slice(0, 60);
+		$("t-nodes").innerHTML =
+			`<thead><tr><th>ノード</th><th class="n">言及</th><th class="n">文書</th><th class="n">関係</th><th class="n">名前の数</th><th>種類</th></tr></thead><tbody>${top.map((n) => `<tr><td>${esc(n.label)}</td><td class="n">${n.m}</td><td class="n">${n.docs.length}</td><td class="n">${D.edges.filter((e) => e.s === n.id || e.t === n.id).length}</td><td class="n">${n.names.length}</td><td>${esc(n.types.slice(0, 2).join(" / "))}</td></tr>`).join("")}</tbody>`;
+	})();
+</script>
