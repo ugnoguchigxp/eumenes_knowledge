@@ -30,7 +30,7 @@
 | 測定の状態 | 開発機（ベクトル・FTS の表は単独実行。並行ジョブなし）、ページキャッシュは書込み直後で温かい。**cold cache は未測定**。単一プロセス・単一スレッド |
 | 乱数 | 固定 seed の mulberry32。ベクトルは一様乱数 [-1,1] を L2 正規化 |
 
-実行コマンド（`/Users/y.noguchi/Code/eumenes_knowledge/p0/spikes/search/` で。一時 DB は `SPIKE_TMP` または OS の一時ディレクトリに作り、各スクリプトが削除する）:
+実行コマンド（`p0/spikes/search/` で。一時 DB は `SPIKE_TMP` または OS の一時ディレクトリに作り、各スクリプトが削除する）:
 
 ```text
 bun test                                   # 試験 132 件

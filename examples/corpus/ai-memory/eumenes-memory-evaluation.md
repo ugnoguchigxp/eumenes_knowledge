@@ -198,7 +198,7 @@ mem0 の調査は「[mem0 のアーキテクチャ転換が何をもたらすか
 
 ファイルを読んだだけで、試験もモデルも実行していません。件数と数値は記録の値です。個人データと資格情報は読んでいません。
 
-**eumenes_memory**（`/Users/y.noguchi/Code/eumenes_memory`、HEAD `2966c06`、未コミットの変更なし）
+**eumenes_memory**（`../eumenes_memory`、HEAD `2966c06`、未コミットの変更なし）
 
 - 設計と状態: `README.md`、`spec/full-system-design.md`、`spec/improvement-design.md`、`spec/verification-status.md`、`spec/host/implementation.md`、`spec/host/contracts.md`
 - 利用の手引き: `docs/host-guide.md`、`docs/cli-mcp.md`
@@ -208,7 +208,7 @@ mem0 の調査は「[mem0 のアーキテクチャ転換が何をもたらすか
 - 検証の記録（git の管理外）: `verification-reports/quality-80/` の `completion.json`・`answer-summary.json`・`model-metrics.json`・`performance.json`、`verification-reports/host/`
 - 配布物: `artifacts/` の tgz と sha256
 
-**Eumenes**（`/Users/y.noguchi/Code/eumenes`）
+**Eumenes**（`../eumenes`）
 
 - `docs/memory.md`（役割の分担、`read_memory`）
 - `api/domains/memory/service/turn-recall.ts`（turn の想起）

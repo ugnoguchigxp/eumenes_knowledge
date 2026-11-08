@@ -44,7 +44,7 @@ spike の実行結果（最終版）:
 
 ## 2. spike の構成
 
-`/Users/y.noguchi/Code/eumenes_knowledge/p0/spikes/package/`
+`p0/spikes/package/`
 
 ```text
 package.json  bunfig.toml  tsconfig.json  tsconfig.build.json  .oxlintrc.json  bun.lock
@@ -302,7 +302,7 @@ spike の `LICENSE`・`THIRD_PARTY_NOTICES.md` は同梱確認用のプレース
 ## 11. 再現コマンド
 
 ```sh
-cd /Users/y.noguchi/Code/eumenes_knowledge/p0/spikes/package
+cd p0/spikes/package
 bun install
 bun fmt --check && node_modules/.bin/oxlint --deny-warnings && bun check && bun check -p tsconfig.build.json && bun test
 bun scripts/import-probe.ts              # 15 PASS

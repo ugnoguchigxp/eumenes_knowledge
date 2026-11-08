@@ -72,6 +72,8 @@ Eumenes の `api/domains/larm/service/{provider-connection,playground-provider,c
 
 - 2026-11-07 23:15 から 239.1 分（UTC）。LARM の profile `lfm2.5`。llm は `ornith1.5-strix`（推論 off、出力の上限 16,384 token）、埋め込みは `multilingual-e5-small`（384 次元）。
 - 素材は 4 文書で 59,978 byte、断片は 76 件。
+  - 実行の後、`eumenes-memory-evaluation.md` の「参照した資料」にあった手元の絶対パス 2 か所を、相対パス（`../eumenes_memory`、`../eumenes`）に替えた（38 byte 減る）。
+  - 記録はそれより前の本文（sha256 `d49818c2…`、commit `6d65b04` の版）に対するもの。この文書の引用 423 件のうち、byte 18,383 以降にかかる 27 件は、今の本文では位置がずれる。ほかの 3 文書は変えていない。
 - 記録は `verification/kg-ai-memory/20261107T231544-lfm2.5/` にある。`graph.json` はグラフ API の応答そのもの、`report.json` は数と評価、`graph.html` は見るためのページ（`bun scripts/kg-view.ts <dir>` で作る）。
 - 1 回だけの実行で、品質の基準値ではない。
 

@@ -246,7 +246,7 @@ eumenes_knowledge/
 
 ## 11. 今回の成果と残作業
 
-- [x] `/Users/y.noguchi/Code/eumenes_knowledge` を新規作成する。
+- [x] `eumenes_knowledge` を `../eumenes` の隣に新規作成する。
 - [x] 技術親和性、データの集約、LightRAG部分利用、examples、CLI/MCP、tgz、検証と段階を本書へ記録する。
 - [x] P0の詳細契約・採用範囲・測定条件を確定する（[p0.md](p0.md)、2026-11-07承認）。
 - [ ] P1〜P5を実装し、mock環境とclean tgz受入を通す。

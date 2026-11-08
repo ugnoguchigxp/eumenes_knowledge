@@ -183,7 +183,7 @@ tokenizer を使わない置換の候補（ネイティブ依存なし。割合�
 
 ### 4.4 出力形式と対象の同一視
 
-構造化出力へ置き換える影響（参考: `/Users/y.noguchi/Code/eumenes/node_modules/eumenes-pipeline/dist/ports.d.ts` の `InferenceRequest`／`InferencePort`）:
+構造化出力へ置き換える影響（参考: `../eumenes/node_modules/eumenes-pipeline/dist/ports.d.ts` の `InferenceRequest`／`InferencePort`）:
 
 - `InferenceRequest` は `{purpose, system?, prompt, outputSchema?}`。`outputSchema` は「プロバイダが制約付き出力に対応するとき」の任意項目で、応答は `text`。したがって schema を渡しても、返った本文を `JSON.parse` して Zod 4 で検証する層は必須。上流の `json_repair` による復元は採らず、検証に落ちた断片は「失敗・partial」として記録し、既存の正常な索引を壊さない（plan §7.3 の不正JSON）。再試行の回数は host の予算に従う。
 - 会話履歴（`history_messages`）を渡す口が `ports.d.ts` には無い。上流の gleaning は直前の user／応答を履歴として再送する（`operate.py:4290-`）。移植では「直前の抽出結果をプロンプト本文へ入れる」形になり、入力が増える。gleaning の採否は費用と取りこぼし率の測定で決める（既定は1回追加）。
