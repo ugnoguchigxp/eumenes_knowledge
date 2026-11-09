@@ -155,7 +155,50 @@ export function chunkMarkdown(
 		if (size(s, e) <= max) emit(s, e);
 		else pack(blockUnits(section.l0, section.l1), splitBlock);
 	}
-	return fragments;
+	return absorbBlankFragments(fragments, max);
+}
+
+/**
+ * A fragment of white space only (the blank line left after a long paragraph was split by
+ * lines) joins its previous neighbour, or else its next one, when the joined fragment stays
+ * within `max`: it holds nothing to search or embed (an embedder may refuse it). Coverage and
+ * order are kept; ordinals are numbered again. A body of white space only stays one fragment.
+ */
+function absorbBlankFragments(fragments: Fragment[], max: number): Fragment[] {
+	const blank = (f: Fragment) => f.text.trim().length === 0;
+	if (!fragments.some(blank) || fragments.length < 2) return fragments;
+	const out: Fragment[] = [];
+	for (let i = 0; i < fragments.length; i++) {
+		const f = fragments[i] as Fragment;
+		const prev = out.at(-1);
+		const next = fragments[i + 1];
+		if (
+			blank(f) &&
+			prev &&
+			prev.byteEnd === f.byteStart &&
+			f.byteEnd - prev.byteStart <= max
+		) {
+			out[out.length - 1] = {
+				...prev,
+				byteEnd: f.byteEnd,
+				text: prev.text + f.text,
+			};
+		} else if (
+			blank(f) &&
+			next &&
+			next.byteStart === f.byteEnd &&
+			next.byteEnd - f.byteStart <= max
+		) {
+			fragments[i + 1] = {
+				...next,
+				byteStart: f.byteStart,
+				text: f.text + next.text,
+			};
+		} else {
+			out.push(f);
+		}
+	}
+	return out.map((f, ordinal) => ({ ...f, ordinal }));
 }
 
 /** `text` is exactly `bytes` decoded as UTF-8 with the BOM kept (so it holds no lone surrogate). */

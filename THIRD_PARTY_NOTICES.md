@@ -59,3 +59,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Wikipedia articles (repository material, not in the package)
+
+- Material: 20 articles of the Japanese Wikipedia (ja.wikipedia.org), starting from 「大規模言語モデル」 and following its links, retrieved on 2026-11-09.
+- Where: `examples/corpus/wiki-llm/*.md` (the articles), and quotations of them in `verification/kg-wiki-llm/` (the evaluation records, for example `edge-judgments.md`).
+- License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0), https://creativecommons.org/licenses/by-sa/4.0/. These files are distributed under that license, not under this repository's MIT license.
+- Attribution: the title, URL and revision id of every article are listed in `examples/corpus/wiki-llm/SOURCES.json`; the authors of each article are listed in its history on Wikipedia.
+- Changes: the plain text of each article (the TextExtracts API) was converted to Markdown headings; the sections of notes, sources, references, external links and related articles were removed; nothing else was changed.
+- Use: evaluation of the model-free knowledge graph (kg2.md §7.8). The package itself does not contain this material.

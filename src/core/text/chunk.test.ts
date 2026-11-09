@@ -582,3 +582,51 @@ test("a BOM before the first heading does not hide it: headingPath includes it",
 		}
 	}
 });
+
+describe("fragments of white space only", () => {
+	test("the blank line left after a long paragraph joins a neighbour (found on Wikipedia text)", () => {
+		// A paragraph over the bound is split by lines; its last line is the blank one.
+		const para = Array.from({ length: 6 }, (_, i) =>
+			`行${i}の本文。`.repeat(4),
+		).join("\n");
+		const md = `# 題\n\n${para}\n\n### 次の節\n\n本文。\n`;
+		const bytes = Buffer.from(md, "utf8");
+		// At 64 bytes each line fills a fragment to the byte, so its newline has nowhere to go (the
+		// random test below allows exactly that); with room, the blank line always joins.
+		for (const maxBytes of [100, 128, 200, 2048]) {
+			const fragments = chunk(md, maxBytes);
+			expect(fragments.some((f) => f.text.trim().length === 0)).toBe(false);
+			expect(verifyFragments(bytes, fragments, { maxBytes })).toEqual([]);
+			expect(fragments.map((f) => f.text).join("")).toBe(md);
+			expect(fragments.map((f) => f.ordinal)).toEqual(
+				fragments.map((_, i) => i),
+			);
+		}
+	});
+
+	test("random bodies: no blank fragment unless the body is white space only", () => {
+		for (let seed = 1; seed <= 200; seed++) {
+			const md = randomMarkdown(seed);
+			if (md.trim().length === 0) continue;
+			for (const maxBytes of [16, 64, 256]) {
+				const fragments = chunk(md, maxBytes);
+				const bytes = Buffer.from(md, "utf8");
+				expect(verifyFragments(bytes, fragments, { maxBytes })).toEqual([]);
+				// A blank fragment stays only when neither neighbour has room for it.
+				for (const [i, f] of fragments.entries()) {
+					if (f.text.trim().length > 0) continue;
+					const prev = fragments[i - 1];
+					const next = fragments[i + 1];
+					if (prev)
+						expect(f.byteEnd - prev.byteStart).toBeGreaterThan(maxBytes);
+					if (next)
+						expect(next.byteEnd - f.byteStart).toBeGreaterThan(maxBytes);
+				}
+			}
+		}
+	});
+
+	test("a body of white space only stays one fragment", () => {
+		expect(chunk("\n\n  \n").map((f) => f.text)).toEqual(["\n\n  \n"]);
+	});
+});

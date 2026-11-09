@@ -1,0 +1,314 @@
+{
+	"corpus": "wiki-llm",
+	"about": "日本語版 Wikipedia の「大規模言語モデル」から、本文に名前が多く出るリンク先 19 記事をたどった 20 文書（2026-11-09 取得、CC BY-SA 4.0、出典は SOURCES.json）の正解表。実体は 2 文書以上に出る固有名と用語。表記の揺れ（OpenAI／オープンAI、ディープラーニング／深層学習、大規模言語モデル／LLM）は別名にした。関係は Claude が事実として知っているもので、この素材の同じ文書に両方の名前が出るものだけ。同じ文に書かれているかでは選んでいない（4 本は同じ文にない: AlphaGo–DeepMind、アモデイ–Anthropic、RLHF–ChatGPT、DALL-E–OpenAI）。",
+	"entities": [
+		{
+			"id": "openai",
+			"aliases": ["OpenAI", "オープンAI", "オープンエーアイ"]
+		},
+		{
+			"id": "google",
+			"aliases": ["Google", "グーグル"]
+		},
+		{
+			"id": "anthropic",
+			"aliases": ["Anthropic", "アンソロピック"]
+		},
+		{
+			"id": "chatgpt",
+			"aliases": ["ChatGPT"]
+		},
+		{
+			"id": "gpt-3",
+			"aliases": ["GPT-3"]
+		},
+		{
+			"id": "gpt-4",
+			"aliases": ["GPT-4"]
+		},
+		{
+			"id": "gpt-2",
+			"aliases": ["GPT-2"]
+		},
+		{
+			"id": "transformer",
+			"aliases": ["Transformer", "トランスフォーマー"]
+		},
+		{
+			"id": "bert",
+			"aliases": ["BERT"]
+		},
+		{
+			"id": "claude",
+			"aliases": ["Claude"]
+		},
+		{
+			"id": "gemini",
+			"aliases": ["Gemini"]
+		},
+		{
+			"id": "microsoft",
+			"aliases": ["Microsoft", "マイクロソフト"]
+		},
+		{
+			"id": "deepmind",
+			"aliases": ["DeepMind", "Google DeepMind", "ディープマインド"]
+		},
+		{
+			"id": "alphago",
+			"aliases": ["AlphaGo"]
+		},
+		{
+			"id": "amazon",
+			"aliases": ["Amazon", "アマゾン"]
+		},
+		{
+			"id": "nvidia",
+			"aliases": ["NVIDIA", "Nvidia", "エヌビディア"]
+		},
+		{
+			"id": "altman",
+			"aliases": ["サム・アルトマン", "アルトマン", "Sam Altman"]
+		},
+		{
+			"id": "musk",
+			"aliases": ["イーロン・マスク", "Elon Musk"]
+		},
+		{
+			"id": "amodei",
+			"aliases": ["ダリオ・アモデイ", "アモデイ"]
+		},
+		{
+			"id": "nlp",
+			"aliases": ["自然言語処理", "NLP"]
+		},
+		{
+			"id": "ml",
+			"aliases": ["機械学習"]
+		},
+		{
+			"id": "rl",
+			"aliases": ["強化学習"]
+		},
+		{
+			"id": "dl",
+			"aliases": ["ディープラーニング", "深層学習"]
+		},
+		{
+			"id": "nn",
+			"aliases": ["ニューラルネットワーク"]
+		},
+		{
+			"id": "rlhf",
+			"aliases": ["RLHF", "人間のフィードバックによる強化学習"]
+		},
+		{
+			"id": "llm",
+			"aliases": ["大規模言語モデル", "LLM"]
+		},
+		{
+			"id": "lm",
+			"aliases": ["言語モデル"]
+		},
+		{
+			"id": "corpus",
+			"aliases": ["コーパス"]
+		},
+		{
+			"id": "mt",
+			"aliases": ["機械翻訳"]
+		},
+		{
+			"id": "sentiment",
+			"aliases": ["感情分析"]
+		},
+		{
+			"id": "supervised",
+			"aliases": ["教師あり学習"]
+		},
+		{
+			"id": "prompt",
+			"aliases": ["プロンプトエンジニアリング"]
+		},
+		{
+			"id": "copilot",
+			"aliases": ["Copilot", "Microsoft Copilot"]
+		},
+		{
+			"id": "android",
+			"aliases": ["Android"]
+		},
+		{
+			"id": "youtube",
+			"aliases": ["YouTube"]
+		},
+		{
+			"id": "genai",
+			"aliases": ["生成AI", "生成的人工知能"]
+		},
+		{
+			"id": "agi",
+			"aliases": ["汎用人工知能", "AGI"]
+		},
+		{
+			"id": "dall-e",
+			"aliases": ["DALL-E"]
+		},
+		{
+			"id": "codex",
+			"aliases": ["Codex"]
+		},
+		{
+			"id": "palm",
+			"aliases": ["PaLM"]
+		}
+	],
+	"relations": [
+		{
+			"a": ["chatgpt"],
+			"b": ["openai"],
+			"about": "ChatGPT は OpenAI が提供する"
+		},
+		{
+			"a": ["gpt-4"],
+			"b": ["openai"],
+			"about": "GPT-4 は OpenAI のモデル"
+		},
+		{
+			"a": ["gpt-3"],
+			"b": ["openai"],
+			"about": "GPT-3 は OpenAI のモデル"
+		},
+		{
+			"a": ["gpt-2"],
+			"b": ["openai"],
+			"about": "GPT-2 は OpenAI のモデル"
+		},
+		{
+			"a": ["claude"],
+			"b": ["anthropic"],
+			"about": "Claude は Anthropic のモデル"
+		},
+		{
+			"a": ["gemini"],
+			"b": ["google"],
+			"about": "Gemini は Google のモデル"
+		},
+		{
+			"a": ["bert"],
+			"b": ["google"],
+			"about": "BERT は Google が開発した"
+		},
+		{
+			"a": ["transformer"],
+			"b": ["google"],
+			"about": "Transformer は Google の研究者が提案した"
+		},
+		{
+			"a": ["deepmind"],
+			"b": ["google"],
+			"about": "DeepMind は Google の研究所"
+		},
+		{
+			"a": ["alphago"],
+			"b": ["deepmind"],
+			"about": "AlphaGo は DeepMind が開発した"
+		},
+		{
+			"a": ["anthropic"],
+			"b": ["amazon"],
+			"about": "Amazon が Anthropic に出資した"
+		},
+		{
+			"a": ["anthropic"],
+			"b": ["google"],
+			"about": "Google が Anthropic に出資した"
+		},
+		{
+			"a": ["openai"],
+			"b": ["microsoft"],
+			"about": "Microsoft が OpenAI に出資した"
+		},
+		{
+			"a": ["altman"],
+			"b": ["openai"],
+			"about": "サム・アルトマンは OpenAI の CEO"
+		},
+		{
+			"a": ["musk"],
+			"b": ["openai"],
+			"about": "イーロン・マスクは OpenAI の共同創業者"
+		},
+		{
+			"a": ["amodei"],
+			"b": ["anthropic"],
+			"about": "ダリオ・アモデイは Anthropic の創業者"
+		},
+		{
+			"a": ["amodei"],
+			"b": ["openai"],
+			"about": "ダリオ・アモデイは OpenAI にいた"
+		},
+		{
+			"a": ["chatgpt"],
+			"b": ["gpt-4"],
+			"about": "ChatGPT は GPT-4 を使う"
+		},
+		{
+			"a": ["gpt-3"],
+			"b": ["transformer"],
+			"about": "GPT-3 は Transformer のモデル"
+		},
+		{
+			"a": ["copilot"],
+			"b": ["microsoft"],
+			"about": "Copilot は Microsoft の製品"
+		},
+		{
+			"a": ["android"],
+			"b": ["google"],
+			"about": "Android は Google の OS"
+		},
+		{
+			"a": ["youtube"],
+			"b": ["google"],
+			"about": "YouTube は Google の傘下"
+		},
+		{
+			"a": ["rlhf"],
+			"b": ["chatgpt"],
+			"about": "ChatGPT は RLHF で調整された"
+		},
+		{
+			"a": ["dall-e"],
+			"b": ["openai"],
+			"about": "DALL-E は OpenAI のモデル"
+		},
+		{
+			"a": ["codex"],
+			"b": ["openai"],
+			"about": "Codex は OpenAI のモデル"
+		},
+		{
+			"a": ["palm"],
+			"b": ["google"],
+			"about": "PaLM は Google のモデル"
+		},
+		{
+			"a": ["bert"],
+			"b": ["transformer"],
+			"about": "BERT は Transformer のモデル"
+		}
+	],
+	"distinct": [
+		["gpt-3", "gpt-4"],
+		["gpt-2", "gpt-3"],
+		["openai", "anthropic"],
+		["chatgpt", "claude"],
+		["google", "deepmind"],
+		["llm", "lm"],
+		["microsoft", "openai"],
+		["rl", "supervised"],
+		["ml", "dl"]
+	]
+}

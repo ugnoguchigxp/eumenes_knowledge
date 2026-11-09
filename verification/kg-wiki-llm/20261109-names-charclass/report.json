@@ -1,0 +1,1171 @@
+{
+	"kind": "kg-live",
+	"note": "Synthetic notes ingested with the model-free extractor (names and same-sentence relations from a tokenizer and rules, mentions joined by identity key when read) and embedded through LARM; no model was asked. A single run: not a benchmark.",
+	"corpusName": "wiki-llm",
+	"extract": "names",
+	"extractor": "names:charclass@rules5",
+	"startedAt": "2026-11-09T08:10:26.566Z",
+	"elapsedMinutes": 0.5,
+	"elapsedSeconds": 30.7,
+	"finished": true,
+	"relinkedFrom": null,
+	"instructions": {
+		"extract": null,
+		"link": null,
+		"summarize": null
+	},
+	"linkOptions": null,
+	"jobs": {
+		"knowledge.sync-page:completed": 1,
+		"knowledge.ingest-next:completed": 20,
+		"knowledge.link-next:completed": 20
+	},
+	"documents": [
+		{
+			"documentId": "wiki-35161a6243a2443da34c429b5b05df52",
+			"path": "wiki-llm/Anthropic.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-1f5ab2622e48978f5f3e9843dd12b6cb",
+			"path": "wiki-llm/GPT-3.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-64ddcb191b26d6dd21f2d77c276c365f",
+			"path": "wiki-llm/GPT-4.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-17881e36b66b51f67e13e457e8e3e3b7",
+			"path": "wiki-llm/Google.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-0d1ba58f8b9570121d282086a4e181bb",
+			"path": "wiki-llm/OpenAI.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-8cb2534e9199b8006db05e4b43665e81",
+			"path": "wiki-llm/コーパス.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-0e26a8164fd6ec00365778a07baff853",
+			"path": "wiki-llm/ディープラーニング.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-30f36aef3fe05d5e800002d87953c9ea",
+			"path": "wiki-llm/プロンプトエンジニアリング.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-6aabdf530b0576b5646c72f835ab8a25",
+			"path": "wiki-llm/大規模言語モデル.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-3afcfe7d452a741708d6a9783b23ade0",
+			"path": "wiki-llm/強化学習.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-ef7360e8a63828ad161e17692db0fa9e",
+			"path": "wiki-llm/感情分析.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-93d2d81db50ab41e8ab917d0bef43637",
+			"path": "wiki-llm/教師あり学習.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-a741d52287eb08bdb2ecbcfc0a9fc23e",
+			"path": "wiki-llm/整数.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-2369451003942e80e9a86c95e4feb9ff",
+			"path": "wiki-llm/機械翻訳.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-ad3f49ecbc795db293b63a1878e51eb0",
+			"path": "wiki-llm/生成エンジン最適化.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-72f7e47f2814b19305a312200c7e827e",
+			"path": "wiki-llm/確率分布.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-9d7569dc89c658f0b3c9b9963aca7eed",
+			"path": "wiki-llm/自然言語処理.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-ff026928bbd4ade67460941b4ed36667",
+			"path": "wiki-llm/英語.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-c7bad10edcf1de216d6e5b783d88a11c",
+			"path": "wiki-llm/言語モデル.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-ebdb18944b44cfbc0d29fbc900e7e049",
+			"path": "wiki-llm/訓練・検証・テストデータセット.md",
+			"state": "current"
+		}
+	],
+	"larm": {
+		"profile": "lfm2.5",
+		"catalogRevision": "73bfa004e4f37de8a989a756b5464a99b3d8143f13d907fb6e9364a2de74debf",
+		"llm": {
+			"name": "llm",
+			"model": "ornith1.5-strix",
+			"contextWindow": {
+				"maxTokens": 200000,
+				"outputReserveTokens": 4096,
+				"outputLimit": "remaining-context"
+			}
+		},
+		"embedding": {
+			"name": "embedding",
+			"model": "multilingual-e5-small",
+			"space": {
+				"modelId": "intfloat/multilingual-e5-small",
+				"revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+				"artifactDigest": "63bc913284590439c0fdadcd5f61ee9ad9630591075314bc975fb190983ed62c",
+				"dimension": 384,
+				"queryPrefix": "query: ",
+				"passagePrefix": "passage: "
+			}
+		},
+		"reasoning": "off"
+	},
+	"corpus": [
+		{
+			"path": "wiki-llm/Anthropic.md",
+			"bytes": 9311
+		},
+		{
+			"path": "wiki-llm/GPT-3.md",
+			"bytes": 22071
+		},
+		{
+			"path": "wiki-llm/GPT-4.md",
+			"bytes": 8702
+		},
+		{
+			"path": "wiki-llm/Google.md",
+			"bytes": 67819
+		},
+		{
+			"path": "wiki-llm/OpenAI.md",
+			"bytes": 40238
+		},
+		{
+			"path": "wiki-llm/コーパス.md",
+			"bytes": 7073
+		},
+		{
+			"path": "wiki-llm/ディープラーニング.md",
+			"bytes": 33648
+		},
+		{
+			"path": "wiki-llm/プロンプトエンジニアリング.md",
+			"bytes": 23276
+		},
+		{
+			"path": "wiki-llm/大規模言語モデル.md",
+			"bytes": 50259
+		},
+		{
+			"path": "wiki-llm/強化学習.md",
+			"bytes": 40250
+		},
+		{
+			"path": "wiki-llm/感情分析.md",
+			"bytes": 35297
+		},
+		{
+			"path": "wiki-llm/教師あり学習.md",
+			"bytes": 21533
+		},
+		{
+			"path": "wiki-llm/整数.md",
+			"bytes": 17576
+		},
+		{
+			"path": "wiki-llm/機械翻訳.md",
+			"bytes": 31142
+		},
+		{
+			"path": "wiki-llm/生成エンジン最適化.md",
+			"bytes": 8600
+		},
+		{
+			"path": "wiki-llm/確率分布.md",
+			"bytes": 13257
+		},
+		{
+			"path": "wiki-llm/自然言語処理.md",
+			"bytes": 9824
+		},
+		{
+			"path": "wiki-llm/英語.md",
+			"bytes": 28956
+		},
+		{
+			"path": "wiki-llm/言語モデル.md",
+			"bytes": 12722
+		},
+		{
+			"path": "wiki-llm/訓練・検証・テストデータセット.md",
+			"bytes": 10634
+		}
+	],
+	"inference": {},
+	"larmStats": {
+		"calls": 21,
+		"ok": 21,
+		"failures": {},
+		"inputTokens": 0,
+		"outputTokens": 0,
+		"reasoningTokens": 0,
+		"totalMs": 29063
+	},
+	"store": {
+		"fragments": 555,
+		"extractionsOk": 555,
+		"extractionsFailed": 0,
+		"droppedItems": 30886,
+		"entityMentions": 19155,
+		"relationMentions": 64507,
+		"linksSame": 0,
+		"linksDifferent": 0,
+		"linksUnsure": 0,
+		"summariesOk": 0
+	},
+	"linking": {
+		"decisionsByNames": {},
+		"largestSameComponent": 1
+	},
+	"status": {
+		"complete": true,
+		"partialReasons": []
+	},
+	"graph": {
+		"request": {
+			"maxNodes": 1000,
+			"maxEdges": 2000
+		},
+		"complete": false,
+		"partialReasons": [
+			"nodes_truncated",
+			"edges_truncated",
+			"relations_truncated"
+		],
+		"nodes": 339,
+		"edges": 411,
+		"singletonNodes": 0,
+		"multiDocumentNodes": 333,
+		"nodesWithSummary": 0,
+		"multiMentionEdges": 411,
+		"crossDocumentEdges": 282,
+		"maxNamesPerNode": 2,
+		"nodesWithFiveNamesOrMore": 0,
+		"topNodes": [
+			{
+				"label": "使用",
+				"mentions": 110,
+				"documents": 14,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "場合",
+				"mentions": 90,
+				"documents": 17,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "モデル",
+				"mentions": 77,
+				"documents": 14,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "発表",
+				"mentions": 70,
+				"documents": 9,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "問題",
+				"mentions": 64,
+				"documents": 15,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "Google",
+				"mentions": 62,
+				"documents": 9,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "OpenAI",
+				"mentions": 58,
+				"documents": 7,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "必要",
+				"mentions": 57,
+				"documents": 19,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "学習",
+				"mentions": 54,
+				"documents": 14,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "利用",
+				"mentions": 53,
+				"documents": 18,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "テキスト",
+				"mentions": 52,
+				"documents": 11,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "訓練",
+				"mentions": 50,
+				"documents": 10,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "研究",
+				"mentions": 48,
+				"documents": 14,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "英語",
+				"mentions": 48,
+				"documents": 10,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "人間",
+				"mentions": 46,
+				"documents": 12,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "LLM",
+				"mentions": 45,
+				"documents": 10,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "意味",
+				"mentions": 42,
+				"documents": 14,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "存在",
+				"mentions": 41,
+				"documents": 15,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "手法",
+				"mentions": 41,
+				"documents": 12,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "出力",
+				"mentions": 41,
+				"documents": 10,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "生成",
+				"mentions": 40,
+				"documents": 12,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "開発",
+				"mentions": 39,
+				"documents": 11,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "可能性",
+				"mentions": 38,
+				"documents": 13,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "方法",
+				"mentions": 38,
+				"documents": 13,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "displaystyle",
+				"mentions": 38,
+				"documents": 4,
+				"types": [
+					"名詞"
+				]
+			}
+		]
+	},
+	"evidence": {
+		"valid": 2239,
+		"stale": 0,
+		"unavailable": 0,
+		"mismatch": 0,
+		"not_available": 0
+	},
+	"evaluation": {
+		"summary": {
+			"entitiesInCorpus": 40,
+			"entityRecall": 0.575,
+			"crossDocumentEntities": 40,
+			"mergedIntoOneNode": 13,
+			"meanBestNodeCoverage": 0.5128841991341992,
+			"meanNodesPerFoundEntity": 1.0869565217391304,
+			"relationRecall": 0.2222222222222222,
+			"relationEndpointsFound": 13,
+			"distinctViolations": 0,
+			"impureNodes": 0
+		},
+		"entities": [
+			{
+				"id": "openai",
+				"expectedDocuments": 7,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"OpenAI"
+				]
+			},
+			{
+				"id": "google",
+				"expectedDocuments": 10,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.9,
+				"unionCoverage": 0.9,
+				"labels": [
+					"Google"
+				]
+			},
+			{
+				"id": "anthropic",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Anthropic"
+				]
+			},
+			{
+				"id": "chatgpt",
+				"expectedDocuments": 10,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"ChatGPT"
+				]
+			},
+			{
+				"id": "gpt-3",
+				"expectedDocuments": 5,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"GPT-3"
+				]
+			},
+			{
+				"id": "gpt-4",
+				"expectedDocuments": 6,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"GPT-4"
+				]
+			},
+			{
+				"id": "gpt-2",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"GPT-2"
+				]
+			},
+			{
+				"id": "transformer",
+				"expectedDocuments": 8,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.75,
+				"unionCoverage": 0.75,
+				"labels": [
+					"Transformer"
+				]
+			},
+			{
+				"id": "bert",
+				"expectedDocuments": 5,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"BERT"
+				]
+			},
+			{
+				"id": "claude",
+				"expectedDocuments": 5,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Claude"
+				]
+			},
+			{
+				"id": "gemini",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "microsoft",
+				"expectedDocuments": 9,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.5555555555555556,
+				"unionCoverage": 0.5555555555555556,
+				"labels": [
+					"マイクロソフト"
+				]
+			},
+			{
+				"id": "deepmind",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "alphago",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "amazon",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "nvidia",
+				"expectedDocuments": 6,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "altman",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"アルトマン"
+				]
+			},
+			{
+				"id": "musk",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "amodei",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "nlp",
+				"expectedDocuments": 11,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.8181818181818182,
+				"unionCoverage": 0.8181818181818182,
+				"labels": [
+					"自然言語処理"
+				]
+			},
+			{
+				"id": "ml",
+				"expectedDocuments": 10,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.9,
+				"unionCoverage": 0.9,
+				"labels": [
+					"機械学習"
+				]
+			},
+			{
+				"id": "rl",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"強化学習"
+				]
+			},
+			{
+				"id": "dl",
+				"expectedDocuments": 6,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"ディープラーニング",
+					"深層学習"
+				]
+			},
+			{
+				"id": "nn",
+				"expectedDocuments": 9,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.7777777777777778,
+				"unionCoverage": 0.7777777777777778,
+				"labels": [
+					"ニューラルネットワーク"
+				]
+			},
+			{
+				"id": "rlhf",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "llm",
+				"expectedDocuments": 11,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.9090909090909091,
+				"unionCoverage": 1,
+				"labels": [
+					"LLM",
+					"大規模言語モデル"
+				]
+			},
+			{
+				"id": "lm",
+				"expectedDocuments": 12,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.6666666666666666,
+				"unionCoverage": 0.6666666666666666,
+				"labels": [
+					"言語モデル"
+				]
+			},
+			{
+				"id": "corpus",
+				"expectedDocuments": 6,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.6666666666666666,
+				"unionCoverage": 0.6666666666666666,
+				"labels": [
+					"コーパス"
+				]
+			},
+			{
+				"id": "mt",
+				"expectedDocuments": 6,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"機械翻訳"
+				]
+			},
+			{
+				"id": "sentiment",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"感情分析"
+				]
+			},
+			{
+				"id": "supervised",
+				"expectedDocuments": 6,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "prompt",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "copilot",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "android",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "youtube",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "genai",
+				"expectedDocuments": 7,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.5714285714285714,
+				"unionCoverage": 0.5714285714285714,
+				"labels": [
+					"生成AI"
+				]
+			},
+			{
+				"id": "agi",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "dall-e",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "codex",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "palm",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			}
+		],
+		"relations": [
+			{
+				"about": "ChatGPT は OpenAI が提供する",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "GPT-4 は OpenAI のモデル",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "GPT-3 は OpenAI のモデル",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "GPT-2 は OpenAI のモデル",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Claude は Anthropic のモデル",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "Gemini は Google のモデル",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "BERT は Google が開発した",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Transformer は Google の研究者が提案した",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "DeepMind は Google の研究所",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "AlphaGo は DeepMind が開発した",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Amazon が Anthropic に出資した",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Google が Anthropic に出資した",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Microsoft が OpenAI に出資した",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "サム・アルトマンは OpenAI の CEO",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "イーロン・マスクは OpenAI の共同創業者",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "ダリオ・アモデイは Anthropic の創業者",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "ダリオ・アモデイは OpenAI にいた",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "ChatGPT は GPT-4 を使う",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "GPT-3 は Transformer のモデル",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Copilot は Microsoft の製品",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Android は Google の OS",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "YouTube は Google の傘下",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "ChatGPT は RLHF で調整された",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "DALL-E は OpenAI のモデル",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Codex は OpenAI のモデル",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "PaLM は Google のモデル",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "BERT は Transformer のモデル",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			}
+		],
+		"distinct": [
+			{
+				"pair": [
+					"gpt-3",
+					"gpt-4"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"gpt-2",
+					"gpt-3"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"openai",
+					"anthropic"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"chatgpt",
+					"claude"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"google",
+					"deepmind"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"llm",
+					"lm"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"microsoft",
+					"openai"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"rl",
+					"supervised"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"ml",
+					"dl"
+				],
+				"merged": []
+			}
+		],
+		"impureNodes": []
+	},
+	"evaluationAllNames": {
+		"entitiesInCorpus": 40,
+		"entityRecall": 0.95,
+		"crossDocumentEntities": 40,
+		"mergedIntoOneNode": 20,
+		"meanBestNodeCoverage": 0.8170508658008659,
+		"meanNodesPerFoundEntity": 1.3421052631578947,
+		"relationRecall": 0.7037037037037037,
+		"relationEndpointsFound": 26,
+		"distinctViolations": 0,
+		"impureNodes": 0
+	}
+}

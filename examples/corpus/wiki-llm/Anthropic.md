@@ -1,0 +1,62 @@
+# Anthropic
+
+Anthropic, PBC（アンソロピック、アンスロピック）とは、OpenAIの元メンバーによって設立されたアメリカの人工知能（AI）のスタートアップ企業および公益法人である。
+Anthropic は、責任あるAIの使用を企業理念とし、汎用人工知能（AGI）を研究している。大規模言語モデル（LLM）であるClaudeを公開しており、OpenAIのChatGPT、GoogleのGemini、xAIのGrokと競合している。
+Amazonは累計80億ドルを出資し、Googleは5億ドル出資（さらに追加で15億ドル出資していく）している。その他、様々なベンチャーキャピタルなどから出資を受けている。2026年6月現在、同社の推定価値は9650億ドルに達した。
+
+### 2021年
+
+2021年1月、OpenAIの研究担当副社長を務めていたダリオ・アモデイとダニエラ・アモデイの兄妹を含むOpenAIの元従業員7名によって設立された。
+
+### 2022年
+
+2022年4月、5億8000万ドルの資金提供を受けたと発表。この資金のうち5億ドルはサム・バンクマン＝フリードが率いるFTX社からのものであった。
+2022年の夏、Claudeの最初のバージョンのトレーニングを終えたが、社内で追加の安全性テストが必要であることと、AIの開発競争が激化することによるリスクを避けたいと言及し、リリースしなかった。
+
+### 2023年
+
+2023年2月、テキサスに拠点を置くAnthrop LLCから登録商標「Anthropic A.I.」の使用で訴えられた。
+2023年3月14日、Claude 1をリリース。Notion、Quora、DuckDuckGo などがクローズドαで使用していた。
+2023年7月11日、Claude 2をリリース。
+2023年9月25日、AmazonはAnthropicとの提携を発表し、12.5億ドルを出資して少数株主となり、合計40億ドルの出資を計画。取引の一環として、Amazon Web Services（AWS）を主要なクラウドプロバイダーとして使用し、AWSの顧客がそのAIモデルを利用できるようにした。
+2023年10月27日、GoogleはAnthropicに5億ドルを出資し、さらに15億ドルの追加出資を約束した。
+
+### 2024年
+
+2024年3月4日、Claude 3をリリース。
+2024年3月27日、AmazonはAnthropicにさらに27.5億ドルを追加出資し、累計40億ドル出資した。
+2024年6月21日、Claude 3.5をリリース。
+2024年11月、AmazonはAnthropicに新たな40億ドルの出資（これまでの総出資額は80億ドル）を発表した。Anthropicの大規模言語モデルのトレーニングと実行にAmazonのAIチップの使用を増やす契約も含まれている。大規模言語モデル（LLM）と外部ツールや外部データソースとを結ぶ標準化されたインタフェースを提供するオープンソースなプロトコルであるモデルコンテキストプロトコル（英: Model Context Protocol, MCP）を発表した。
+2024年、Jan Leike、John Schulman、Durk KingmaなどOpenAIから著名な従業員を数人採用した。
+
+### 2025年
+
+Anthropicは、2025年3月にシリーズEの資金調達ラウンドで35億ドルを調達し、Lightspeed Venture Partnersを筆頭に複数の主要投資家が参加し、資金調達後の評価額は615億ドルに達した。同年3月、DatabricksとAnthropicは、ClaudeをDatabricks Data Intelligence Platformに統合することを発表した。
+2025年5月、Claude Opus 4とClaude Sonnet 4を導入した。これらのバージョンはコーディング機能の向上やその他の新機能が搭載されている。また、Model Context Protocol（MCP）コネクタを含む新しいAPI機能も導入された。 同月、Anthropicは初の開発者会議を開催した。また5月、AnthropicはClaudeがインターネットからリアルタイムの情報にアクセスできるようにするWeb検索APIをリリースした。AnthropicのコーディングアシスタントであるClaude Codeは、研究プレビューから一般提供に移行し、VS CodeおよびJetBrains IDEとの統合とGitHub Actionsのサポートをしている。
+2025年9月、AnthropicはシリーズFの資金調達ラウンドを完了し、130億ドルを調達した。資金調達後の評価額は1,830億ドルに達した。このラウンドは、Iconiq Capital、Fidelity Management & Research、Lightspeed Venture Partnersが共同で主導し、カタール投資庁などの投資家も参加した。同月、Anthropicは国家安全保障上の懸念から、中国、ロシア、イラン、または北朝鮮の組織が過半数を所有するグループへの製品販売を停止すると発表した。
+2025年10月、AnthropicはGoogleとのクラウドパートナーシップを発表し、最大100万個のGoogleカスタムTPU（Tensor Processing Unit）へのアクセスを可能にした。Anthropicによると、この提携により2026年までに1ギガワット以上のAIコンピューティング能力がオンライン化される予定。
+2025年10月、Anthropicは日本法人「Anthropic Japan合同会社」の設立および東京オフィスの開設を発表した。
+2025年11月、NVIDIA、Microsoft、Anthropicは提携契約を発表した。NVIDIAとMicrosoftはAnthropicに最大150億ドルを投資する予定で、AnthropicはNVIDIAのAIシステム上で稼働するMicrosoft Azureから300億ドル相当のコンピューティング能力を購入すると発表した。
+2025年11月、Anthropicは、中国政府の支援を受けたハッカーがClaudeを利用して、約30のグローバル組織に対して自動サイバー攻撃を実行したと発表した。ハッカーたちは、Claudeを防御テストと偽装し、自動サブタスクを実行させた。
+2025年12月、AnthropicはClaude Codeの速度と安定性を向上させるため、Bun社を買収した。
+2025年12月、AnthropicはSnowflakeと複数年にわたる2億ドルの提携契約を締結した。これは、AIツールとエージェントのエンタープライズ展開を拡大する中で、Snowflakeのプラットフォームを通じてClaudeモデルを提供することを目的としてた。
+2025年12月31日、AnthropicがCoatueとGICが主導する100億ドルの資金調達ラウンドの契約書に署名したことが確認された。評価額は3,500億ドルに達した。
+
+### 2026年
+
+2026年1月、Claudeが守るべき原則文書「Claude's Constitution（クロードの憲法）」が一般公開された。
+2026年2月、DeepSeek・Moonshot AI・MiniMaxが大規模な蒸留攻撃をしたと発表した。3社に対し、自社モデルAIを高めるためにClaudeを不正利用したと非難している。
+2026年2月、年初にアメリカ合衆国がベネズエラに対して行った軍事作戦に米国防総省がClaudeを使用していたことが発覚。軍事用途のために全機能を制限なく使用させるよう求める米国防総省からの要求をAnthropicが拒否。米国防総省はAnthropicをサプライチェーン上のリスクに指定すると宣言し、3月にはAnthropicが米国防総省を提訴。
+2026年4月7日、新モデル「Claude Mythos Preview」を発表。既存のAIモデルを大きく上回る性能を備えているが、OSやブラウザの脆弱性を自律的に発見し攻撃するコードを作る能力まで持っているという危険性があるため一般公開はしないことになった。
+2026年5月、xAIのColossus 1データセンターを使用する契約を発表した。
+2026年7月、TeraWulf Inc.によるとAnthropicはケンタッキー州ホースビルのJustified Dataと呼ばれるキャンパスで開発中のデータセンターの20年間のリース契約を締結したと発表した。 AMDは、Anthropicと提携し、2ギガワットのAMD Instinct MI450 GPUを提供し、Claudeを採用し、Anthropicに最大50億ドルを投資すると発表した。
+2026年8月、Nscaleと約450億ドルのクラウドコンピューティング契約を締結した。この契約に基づき、Anthropicはウェストバージニア州にあるNscaleのデータセンター開発施設で約460メガワットのコンピューティング能力をリースすることになり、この施設は2027年後半に稼働開始予定である。この施設ではNvidiaのVera Rubinチップが使用される予定である。
+2026年8月、AnthropicはAIが物理的な機器を操作するための共通仕様「Model Hardware Standard」（MHS）を発表した。
+
+### Claude
+
+OpenAIのChatGPTに関与した元研究者で構成されたAnthropicは、Claudeという名前の独自のAIチャットボットの開発を始めた。 ChatGPTと同様に、Claudeはユーザーが質問やリクエストを送信し、非常に詳細で関連性の高い応答を受け取ることができるユーザインタフェースを備えている。
+
+### Interpretability research
+
+Transformerアーキテクチャに焦点を当てた、機械学習システムのInterpretability researchに関する研究も発表した。
