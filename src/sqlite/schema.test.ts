@@ -55,3 +55,23 @@ VALUES ('docling', 'd1', ?, 0, 0, 'wiki', 3, 'published', 1, 'x', 0)`,
 	).toHaveLength(1);
 	db.close();
 });
+
+test("the truncation migration adds the column, 0 for the versions written before it (kg2.md §7.10)", () => {
+	const db = new Database(":memory:");
+	for (const m of migrations.slice(0, 5)) db.exec(m);
+	db.exec("PRAGMA foreign_keys = OFF");
+	db.run(
+		`INSERT INTO knowledge_versions (source_namespace, document_id, markdown_sha256, generation,
+ ingest_retry, namespace, byte_length, state, expected_fragments, instruction_digest, created_at)
+VALUES ('docling', 'd1', ?, 0, 0, 'wiki', 3, 'published', 1, 'x', 0)`,
+		["a".repeat(64)],
+	);
+	db.exec(migrations[5] as string);
+	expect(
+		db.query("SELECT extraction_truncated AS t FROM knowledge_versions").all(),
+	).toEqual([{ t: 0 }]);
+	expect(() =>
+		db.run("UPDATE knowledge_versions SET extraction_truncated = 2"),
+	).toThrow();
+	db.close();
+});

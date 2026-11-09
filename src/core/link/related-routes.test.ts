@@ -148,6 +148,33 @@ describe("related documents by two routes (kg2.md G5)", () => {
 		expect(one.results.map((x) => x.documentId)).toEqual([docId(3)]);
 	});
 
+	test("documents that share only names of IDF 0 come after those the embedding found (kg2.md §7.10)", async () => {
+		const env = await names({ ...DOCS, 5: "設計とまったく別の段落。" });
+		// 2 and 4 are of another embedding space: the embedding route does not see them, and they
+		// share 設計 alone (in every fragment: IDF 0). 5 shares it too, and the embedding finds it.
+		env.db.run(
+			`INSERT INTO knowledge_embedding_spaces (space_key, model_id, revision, artifact_digest, dimension,
+ query_prefix, passage_prefix)
+SELECT 'other', model_id, revision, artifact_digest, dimension, query_prefix, passage_prefix
+FROM knowledge_embedding_spaces LIMIT 1`,
+		);
+		env.db.run(
+			`UPDATE knowledge_versions SET space_key = 'other' WHERE version_id IN
+ (SELECT published_version_id FROM knowledge_documents WHERE document_id IN (?, ?))`,
+			[docId(2), docId(4)],
+		);
+		const r = readRelated(deps(env, true), access("wiki"), {
+			documentId: docId(1),
+		});
+		expect(r.results.map((x) => [x.documentId, x.routes])).toEqual([
+			[docId(3), ["entities", "embedding"]],
+			[docId(5), ["embedding"]],
+			[docId(2), ["entities"]],
+			[docId(4), ["entities"]],
+		]);
+		expect(r.partialReasons).toContain("vector_unavailable");
+	});
+
 	test("an index that cannot run gives vector_unavailable; without the embedding route it is not asked", async () => {
 		const env = await names(DOCS);
 		const tooSmall = {

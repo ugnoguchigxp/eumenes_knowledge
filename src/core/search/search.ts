@@ -5,6 +5,7 @@ import {
 	SOURCE_NAMESPACE_DOCLING,
 	embeddingSpaceKey,
 	searchRequestSchema,
+	searchPartialReasons,
 	searchResponseSchema,
 	searchRoutes,
 	type AccessContext,
@@ -506,26 +507,13 @@ function searchInSnapshot(
 		});
 	}
 
-	const order = [
-		"no_complete_scan",
-		"scan_in_progress",
-		"stale_documents",
-		"unverified_documents",
-		"unavailable_documents",
-		"failed_documents",
-		"extraction_incomplete",
-		"vector_unavailable",
-		"route_budget_exhausted",
-		"route_skipped",
-		"response_truncated",
-		"deadline_exceeded",
-	] as const;
 	if (queryVector && !queryVector.ok) {
 		reasons.add("vector_unavailable");
 		if (queryVector.reason === "embedding_timeout")
 			reasons.add("deadline_exceeded");
 	}
-	const partialReasons = order.filter((r) => reasons.has(r));
+	// The contract's order: a reason added there is never dropped here.
+	const partialReasons = searchPartialReasons.filter((r) => reasons.has(r));
 	return {
 		contractVersion: CONTRACT_VERSION,
 		results,

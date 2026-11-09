@@ -201,6 +201,41 @@ function absorbBlankFragments(fragments: Fragment[], max: number): Fragment[] {
 	return out.map((f, ordinal) => ({ ...f, ordinal }));
 }
 
+/**
+ * Where a Markdown body holds code and its frontmatter, as `chunkMarkdown` reads its structure:
+ * UTF-16 ranges `[start, end)`, line terminators included. A fenced code block runs from its
+ * opening fence line through its closing one (to the end of the body when it is not closed);
+ * the frontmatter is its lines, the two rules included. What the model-free names leave out
+ * (kg2.md §7.10).
+ */
+export function markdownStructure(text: string): {
+	code: { start: number; end: number }[];
+	frontmatter: { start: number; end: number } | null;
+} {
+	const lines = scanLines(text);
+	const { flags, frontmatterLines } = classifyLines(text, lines);
+	const lineStart = (i: number) =>
+		i < lines.count ? (lines.start[i] as number) : text.length;
+	const code: { start: number; end: number }[] = [];
+	let open = -1;
+	for (let i = 0; i < lines.count; i++) {
+		const f = flags[i] as number;
+		if (f === F_FENCE_OPEN) open = i;
+		else if (f === F_FENCE_CLOSE && open >= 0) {
+			code.push({ start: lineStart(open), end: lineStart(i + 1) });
+			open = -1;
+		}
+	}
+	if (open >= 0) code.push({ start: lineStart(open), end: text.length });
+	return {
+		code,
+		frontmatter:
+			frontmatterLines > 0
+				? { start: 0, end: lineStart(frontmatterLines) }
+				: null,
+	};
+}
+
 /** `text` is exactly `bytes` decoded as UTF-8 with the BOM kept (so it holds no lone surrogate). */
 function isDecodingOf(bytes: Uint8Array, text: string): boolean {
 	try {

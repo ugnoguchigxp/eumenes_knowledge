@@ -73,9 +73,10 @@ const RRF_K = 60;
  *   off), the nearest fragments by that index (`RELATED_LIMITS.nearestPerFragment` per
  *   fragment), without a threshold. An index that cannot run, a document without vectors, or
  *   documents of another embedding space in scope give `vector_unavailable`.
- * Documents that share an entity come first, then those the embedding alone found; within each,
- * a document's place is its best pair of fragments, equal scores by document id. Documents that
- * share only names of IDF 0 come after the other documents that share entities. Each result
+ * Documents that share an entity come first, then those the embedding alone found, then those
+ * that share only names of IDF 0 (a name in every fragment, or of a cluster cut at its cap: it
+ * says nothing of the two documents, kg2.md §7.10); within each, a document's place is its best
+ * pair of fragments, equal scores by document id. Each result
  * lists its best pairs (`passages`) and the routes that found any of its pairs.
  *
  * Shared entities: one per (cluster component, other document), the most specific first. The pair
@@ -487,9 +488,12 @@ function compute(db: Tx, p: Params): RelatedResponse {
 			pairs.push({ mine, other });
 			pairsOf.set(other.versionId, pairs);
 		}
-	// A document joined only by entities of IDF 0 comes after the ranked ones (score 0).
+	// A document joined only by entities of IDF 0 comes after the ranked ones (score 0), those
+	// the embedding found included.
+	const weakOnly = new Set<number>();
 	for (const [v, list] of found.weak) {
 		if (pairsOf.has(v)) continue;
+		weakOnly.add(v);
 		const seen = new Set<string>();
 		const pairs: Pair[] = [];
 		for (const w of list) {
@@ -518,20 +522,24 @@ function compute(db: Tx, p: Params): RelatedResponse {
 					x.mine - y.mine ||
 					x.other.ordinal - y.other.ordinal,
 			);
+			// 0: shares an entity that ranks; 1: found by the embedding alone; 2: IDF 0 names alone.
+			const tier = weakOnly.has(v)
+				? 2
+				: sorted.some((x) => x.other.routes.includes("entities"))
+					? 0
+					: 1;
 			return {
 				versionId: v,
 				pairs: sorted,
 				best: sorted[0]?.other.score ?? 0,
-				byEntities: sorted.some((x) => x.other.routes.includes("entities")),
+				tier,
 			};
 		})
 		.sort((x, y) => {
 			const dx = documents.get(x.versionId)?.documentId ?? "";
 			const dy = documents.get(y.versionId)?.documentId ?? "";
 			return (
-				Number(y.byEntities) - Number(x.byEntities) ||
-				y.best - x.best ||
-				(dx < dy ? -1 : dx > dy ? 1 : 0)
+				x.tier - y.tier || y.best - x.best || (dx < dy ? -1 : dx > dy ? 1 : 0)
 			);
 		})
 		.slice(0, p.limit);

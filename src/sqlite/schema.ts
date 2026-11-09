@@ -292,4 +292,9 @@ ALTER TABLE knowledge_versions ADD COLUMN reextract_failures INTEGER NOT NULL DE
 CREATE INDEX knowledge_versions_reextract ON knowledge_versions(extractor, version_id) WHERE state = 'published' AND extractor <> '';`,
 	// KG2 G8: a graph reads the relations of the mentions it returns, found from their source.
 	`CREATE INDEX knowledge_relation_mentions_source ON knowledge_relation_mentions(version_id, fragment_ordinal, source_local_id);`,
+	// kg2.md §7.10: whether a published version lost a proper name at a fragment's limit
+	// of names (`proper_over_limit`, from rules version 7). A version published before
+	// this has none: a model's answer over the limits is invalid, never cut, and a model-free
+	// version of an older rules version is extracted again (G7) and recorded then.
+	`ALTER TABLE knowledge_versions ADD COLUMN extraction_truncated INTEGER NOT NULL DEFAULT 0 CHECK (extraction_truncated IN (0, 1));`,
 ];

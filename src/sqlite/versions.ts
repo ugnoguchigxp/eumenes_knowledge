@@ -50,7 +50,7 @@ export type VersionRow = DocumentKey & {
 	/** The vector space of the version, null until vectors were staged. */
 	spaceKey: string | null;
 	instructionDigest: string;
-	/** What extracted the version (`names:charclass@rules6`, ...); '' when not recorded. */
+	/** What extracted the version (`names:charclass@rules7`, ...); '' when not recorded. */
 	extractor: string;
 	/** At least one fragment's extraction failed. Set when the version is published. */
 	extractionPartial: boolean;
@@ -451,6 +451,18 @@ function checkExtraction(x: FragmentExtraction, expected: number): void {
 }
 
 /**
+ * A staging version becomes published: `extraction_partial` records whether any fragment's
+ * extraction failed, `extraction_truncated` whether any lost a proper name at its limit of names
+ * (`proper_over_limit`, kg2.md §7.10). ?1 the version, ?2 now.
+ */
+const PUBLISH_VERSION = `UPDATE knowledge_versions SET state = 'published', published_at = ?2,
+ extraction_partial = EXISTS (SELECT 1 FROM knowledge_extractions WHERE version_id = ?1 AND status = 'failed'),
+ extraction_truncated = EXISTS (SELECT 1 FROM knowledge_extractions e, json_each(e.dropped_json) d
+  WHERE e.version_id = ?1 AND e.status = 'ok'
+   AND json_extract(d.value, '$.reason') = 'proper_over_limit' AND json_extract(d.value, '$.count') > 0)
+WHERE version_id = ?1`;
+
+/**
  * Add the checked extraction of fragments to a staging version: one row per fragment (`ok` or
  * `failed`), and for `ok` the entity and relation mentions with their evidence ranges. Evidence
  * must name the fragment it belongs to and lie inside that fragment's `[byteStart, byteEnd]`
@@ -622,7 +634,7 @@ export function stageExtractionsInTransaction(
  * vectors and extractions were all written in the expected number. Then, in this call: the
  * document becomes `current` with the version as `published_version_id` (the registry columns
  * are those of `applyIngestedVersionInTransaction`), the previous published version becomes
- * `retired`, and `extraction_partial` records whether any fragment's extraction failed.
+ * `retired`, and `extraction_partial` and `extraction_truncated` are recorded (`PUBLISH_VERSION`).
  */
 export function publishVersionInTransaction(
 	db: Tx,
@@ -662,11 +674,7 @@ export function publishVersionInTransaction(
 			"UPDATE knowledge_versions SET state = 'retired', retired_at = ? WHERE version_id = ? AND state = 'published'",
 		).run(now, previous);
 	}
-	db.query(
-		`UPDATE knowledge_versions SET state = 'published', published_at = ?2,
- extraction_partial = EXISTS (SELECT 1 FROM knowledge_extractions WHERE version_id = ?1 AND status = 'failed')
-WHERE version_id = ?1`,
-	).run(versionId, now);
+	db.query(PUBLISH_VERSION).run(versionId, now);
 	return true;
 }
 
@@ -867,11 +875,7 @@ WHERE source_namespace = ?3 AND document_id = ?4 AND state = 'current' AND publi
 	db.query(
 		"UPDATE knowledge_versions SET state = 'retired', retired_at = ? WHERE version_id = ? AND state = 'published'",
 	).run(now, previous);
-	db.query(
-		`UPDATE knowledge_versions SET state = 'published', published_at = ?2,
- extraction_partial = EXISTS (SELECT 1 FROM knowledge_extractions WHERE version_id = ?1 AND status = 'failed')
-WHERE version_id = ?1`,
-	).run(versionId, now);
+	db.query(PUBLISH_VERSION).run(versionId, now);
 	bumpLinkGenerationInTransaction(db);
 	return true;
 }

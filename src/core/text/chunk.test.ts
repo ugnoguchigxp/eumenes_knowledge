@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { MAX_FRAGMENT_BYTES } from "../../contracts/index.js";
 import { sha256Hex } from "../bytes.js";
-import { chunkMarkdown } from "./chunk.js";
+import { chunkMarkdown, markdownStructure } from "./chunk.js";
 import {
 	buildMarkdown,
 	E_ACUTE_NFD,
@@ -628,5 +628,41 @@ describe("fragments of white space only", () => {
 
 	test("a body of white space only stays one fragment", () => {
 		expect(chunk("\n\n  \n").map((f) => f.text)).toEqual(["\n\n  \n"]);
+	});
+});
+
+describe("markdownStructure (what the model-free names leave out)", () => {
+	const slices = (text: string) => {
+		const s = markdownStructure(text);
+		return {
+			code: s.code.map((r) => text.slice(r.start, r.end)),
+			frontmatter: s.frontmatter
+				? text.slice(s.frontmatter.start, s.frontmatter.end)
+				: null,
+		};
+	};
+
+	test("fenced blocks of ``` and ~~~ with their fences, and the frontmatter with its rules", () => {
+		const md =
+			"---\ntitle: A\n---\n# A\ntext\n```ts\nconst a = 1;\n\n```\nmore\n  ~~~~\n# not a heading\n  ~~~~\nend";
+		expect(slices(md)).toEqual({
+			code: [
+				"```ts\nconst a = 1;\n\n```\n",
+				"  ~~~~\n# not a heading\n  ~~~~\n",
+			],
+			frontmatter: "---\ntitle: A\n---\n",
+		});
+	});
+
+	test("an unclosed fence runs to the end; a shorter or other fence does not close it; CRLF", () => {
+		expect(slices("a\n````\nx\n```\ny").code).toEqual(["````\nx\n```\ny"]);
+		expect(slices("a\r\n```\r\nx\r\n```\r\nb").code).toEqual([
+			"```\r\nx\r\n```\r\n",
+		]);
+		// Indented four spaces is no fence; a backtick in the info string of ``` is no fence.
+		expect(slices("    ```\nx\n").code).toEqual([]);
+		expect(slices("``` a`b\nx\n").code).toEqual([]);
+		expect(slices("no structure")).toEqual({ code: [], frontmatter: null });
+		expect(slices("")).toEqual({ code: [], frontmatter: null });
 	});
 });

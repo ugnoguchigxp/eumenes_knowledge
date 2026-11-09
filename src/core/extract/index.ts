@@ -11,11 +11,13 @@ export {
 	createCharclassTokenizer,
 	NAME_RULES_VERSION,
 	blankOut,
+	blankStructure,
 	namesFromTokens,
 } from "./names.js";
-export type { NameCandidate } from "./names.js";
+export type { NameCandidate, NameStructure, TextRange } from "./names.js";
 export {
 	extractNames,
+	fragmentStructures,
 	NAME_TYPES,
 	NAMES_LIMITS,
 	nameKey,

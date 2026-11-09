@@ -5,6 +5,7 @@ import type { TokenizerPort } from "../contracts/ports.js";
 import {
 	getDocumentInTransaction,
 	getPublishedVersionInSnapshot,
+	readStatusInSnapshot,
 } from "../sqlite/index.js";
 import {
 	listEntityMentionsInSnapshot,
@@ -81,7 +82,7 @@ describe("ingest with the model-free extractor (kg2.md G3)", () => {
 			fragments.map((f) => f.text),
 		);
 		expect(extractions.map((x) => [x.status, x.model])).toEqual(
-			fragments.map(() => ["ok", "names:charclass@rules6"]),
+			fragments.map(() => ["ok", "names:charclass@rules7"]),
 		);
 		expect(names).toEqual(
 			expect.arrayContaining([
@@ -144,7 +145,7 @@ describe("ingest with the model-free extractor (kg2.md G3)", () => {
 		expect(seen).toHaveLength(fragments.length);
 		expect(seen.join("")).not.toContain("example.com");
 		expect(new Set(extractions.map((x) => x.model))).toEqual(
-			new Set(["names:host-analyzer@rules6"]),
+			new Set(["names:host-analyzer@rules7"]),
 		);
 	});
 
@@ -197,6 +198,56 @@ describe("ingest with the model-free extractor (kg2.md G3)", () => {
 				i === 1 ? ["failed", "invalid_tokens"] : ["ok", null],
 			),
 		);
+	});
+
+	test("code blocks and frontmatter keys give no name, though a block spans fragments (rules 7)", async () => {
+		const env = makeEnv({ maxFragmentBytes: 64, extractor: "names" });
+		const body = [
+			"---",
+			"title: Lantern",
+			"---",
+			"Lantern は MySQL を使う。",
+			"```ts",
+			"const pool = await createPool(config);",
+			"export function connectDatabase(options) {}",
+			"```",
+			"Mira Okafor が書いた。",
+			"",
+		].join("\n");
+		env.source.put(makeDoc(1, body));
+		await syncAll(env);
+		const { fragments, names } = published(env);
+		// The block is cut between fragments: each part is still code.
+		expect(
+			fragments.filter((f) => /createPool|connectDatabase/.test(f.text)).length,
+		).toBeGreaterThan(1);
+		expect(new Set(names)).toEqual(
+			new Set(["Lantern", "MySQL", "Mira Okafor"]),
+		);
+	});
+
+	test("a version that left out names at a fragment's limit is reported (extraction_truncated)", async () => {
+		const env = makeEnv({ extractor: "names" });
+		const many = Array.from({ length: 120 }, (_, i) => `N${i + 100}`).join(" ");
+		env.source.put(makeDoc(1, `${many}。`));
+		env.source.put(makeDoc(2, "Lantern と MySQL。"));
+		await syncAll(env);
+		const status = (namespaces: string[]) =>
+			readStatusInSnapshot(
+				env.db,
+				{ principal: "p", namespaces },
+				env.clock.t,
+				{
+					verifiedWithinMs: 10 ** 12,
+				},
+			);
+		expect(status(["wiki"]).partialReasons).toEqual(["extraction_truncated"]);
+		// Only versions that left out something count.
+		env.db.run(
+			`UPDATE knowledge_documents SET state = 'removed' WHERE document_id = ?`,
+			[docId(1)],
+		);
+		expect(status(["wiki"]).partialReasons).toEqual([]);
 	});
 
 	test("an unknown extractor is refused when the handler is made", () => {

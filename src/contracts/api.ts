@@ -39,6 +39,16 @@ export const partialReasons = [
 	"failed_documents",
 	/** Current documents whose published version has fragments whose extraction failed (p2.md §4). */
 	"extraction_incomplete",
+	/**
+	 * Current documents whose published version left out names or pairs at a fragment's limits
+	 * (kg2.md §7.10): a missing name or edge may be one of them.
+	 */
+	"extraction_truncated",
+	/**
+	 * The current documents were extracted by more than one extractor (a re-extraction is under
+	 * way, or the extractor changed): the names of one may not join those of another (kg2.md §7.10).
+	 */
+	"extractor_mixed",
 ] as const;
 
 /** GET status. Counts only the documents in the caller's namespaces. */

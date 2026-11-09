@@ -60,6 +60,8 @@ import {
 	verifyExtraction,
 	createCharclassTokenizer,
 	extractNames,
+	fragmentStructures,
+	type NameStructure,
 	TokenizerFailure,
 } from "../extract/index.js";
 import {
@@ -277,6 +279,7 @@ function buildHandler(
 	 */
 	async function extractFragment(
 		fragment: Fragment,
+		structure: NameStructure | undefined,
 		signal: AbortSignal,
 		jobDeadlineAtMs: number | null,
 	): Promise<FragmentExtraction> {
@@ -286,7 +289,7 @@ function buildHandler(
 			await new Promise<void>((resolve) => setImmediate(resolve));
 			signal.throwIfAborted();
 			try {
-				return extractNames(fragment, tokenizer);
+				return extractNames(fragment, tokenizer, structure);
 			} catch (error) {
 				// A tokenizer that throws: the host's port failed, not the fragment (the ingest ends
 				// as a temporary failure; the job's error code is `tokenizer`). Tokens that do not
@@ -711,9 +714,19 @@ function buildHandler(
 			if (items.length === 0) return;
 			await write((tx) => stageExtractionsInTransaction(tx, versionId, items));
 		};
-		for (const fragment of fragments) {
+		// The model-free names read the body's structure (code, frontmatter) across fragments.
+		const structures =
+			extractor === "names"
+				? fragmentStructures(fragments.map((f) => f.text))
+				: [];
+		for (const [i, fragment] of fragments.entries()) {
 			signal.throwIfAborted();
-			const extraction = await extractFragment(fragment, signal, deadlineAtMs);
+			const extraction = await extractFragment(
+				fragment,
+				structures[i],
+				signal,
+				deadlineAtMs,
+			);
 			if (extraction.status === "ok") {
 				stats.extractionsOk += 1;
 				for (const d of extraction.dropped) stats.dropped += d.count;

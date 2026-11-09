@@ -155,6 +155,31 @@ describe("status", () => {
 		expect(s.complete).toBe(true);
 	});
 
+	test("current documents of two extractors are mixed; a version of no recorded extractor is not counted", async () => {
+		const env = makeEnv();
+		env.source.put(makeDoc(1, "a"));
+		env.source.put(makeDoc(2, "b"));
+		env.source.put(makeDoc(3, "c", { namespace: "team" }));
+		env.source.namespaces = ["wiki", "team"];
+		await syncAll(env);
+		expect(status(env, ["wiki", "team"]).partialReasons).toEqual([]);
+		const setExtractor = (n: number, extractor: string) =>
+			env.db.run(
+				`UPDATE knowledge_versions SET extractor = ? WHERE version_id =
+ (SELECT published_version_id FROM knowledge_documents WHERE document_id = ?)`,
+				[extractor, docId(n)],
+			);
+		setExtractor(3, "names:other@rules1");
+		expect(status(env, ["wiki", "team"]).partialReasons).toEqual([
+			"extractor_mixed",
+		]);
+		// Only the caller's namespaces count.
+		expect(status(env, ["wiki"]).partialReasons).toEqual([]);
+		expect(status(env, ["team"]).partialReasons).toEqual([]);
+		setExtractor(3, "");
+		expect(status(env, ["wiki", "team"]).partialReasons).toEqual([]);
+	});
+
 	test("a running scan is in progress", async () => {
 		const env = makeEnv();
 		env.source.pageSize = 1;

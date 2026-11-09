@@ -133,6 +133,11 @@ export const extractionDropReasons = [
 	"duplicate_id",
 	/** Beyond a fragment's limit of the model-free extractor (kg2.md G3), or too far apart to quote. */
 	"over_limit",
+	/**
+	 * A proper name beyond a fragment's limit of names (the model-free extractor, kg2.md §7.10):
+	 * no search by name finds it. The version is `extraction_truncated`.
+	 */
+	"proper_over_limit",
 ] as const;
 export type ExtractionDropReason = (typeof extractionDropReasons)[number];
 

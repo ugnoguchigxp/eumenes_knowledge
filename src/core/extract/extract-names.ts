@@ -9,10 +9,17 @@ import {
 } from "../../contracts/index-data.js";
 import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
 import { sha256Hex } from "../bytes.js";
+import { markdownStructure } from "../text/chunk.js";
 import { normalizeForSearch } from "../text/normalize.js";
-import { blankOut, NAME_RULES_VERSION, namesFromTokens } from "./names.js";
+import {
+	blankOut,
+	blankStructure,
+	NAME_RULES_VERSION,
+	type NameStructure,
+	namesFromTokens,
+} from "./names.js";
 
-/** Limits of one fragment's model-free extraction; what is beyond is counted as `over_limit`. */
+/** Limits of one fragment's model-free extraction; what is beyond is counted as `over_limit` or `proper_over_limit`. */
 export const NAMES_LIMITS = {
 	entities: 100,
 	relations: 200,
@@ -51,6 +58,46 @@ export class TokenizerFailure extends Error {
 }
 
 type Span = { start: number; end: number };
+
+/**
+ * The structure of each fragment (fragment-local ranges), read from the whole body: a fenced
+ * code block or a frontmatter may span fragments, and a fragment alone cannot tell that it starts
+ * inside one. `texts` are the fragments' texts in order; together they are the body.
+ */
+export function fragmentStructures(texts: readonly string[]): NameStructure[] {
+	const body = texts.join("");
+	const whole = markdownStructure(body);
+	const clip = (r: Span, from: number, to: number): Span | null => {
+		const start = Math.max(r.start, from);
+		const end = Math.min(r.end, to);
+		return start < end ? { start: start - from, end: end - from } : null;
+	};
+	/**
+	 * The frontmatter's part of a fragment from its first whole line: keys are found at line
+	 * starts, and a fragment cut inside a long line starts with no key.
+	 */
+	const frontmatterOf = (from: number, to: number): Span | null => {
+		const part = whole.frontmatter && clip(whole.frontmatter, from, to);
+		if (!part || from === 0) return part;
+		const before = body[from - 1];
+		if (before === "\n" || before === "\r") return part;
+		const text = body.slice(from, from + part.end);
+		const lineEnd = text.search(/\r\n?|\n/);
+		if (lineEnd < 0) return null;
+		const next = lineEnd + (text.startsWith("\r\n", lineEnd) ? 2 : 1);
+		return next < part.end ? { start: next, end: part.end } : null;
+	};
+	let from = 0;
+	return texts.map((text) => {
+		const to = from + text.length;
+		const code = whole.code
+			.map((r) => clip(r, from, to))
+			.filter((r): r is Span => r !== null);
+		const frontmatter = frontmatterOf(from, to);
+		from = to;
+		return { code, frontmatter };
+	});
+}
 
 /**
  * Sentences of a text (UTF-16 spans without surrounding white space): a sentence ends after
@@ -144,15 +191,20 @@ function evidenceOf(
  * the original text; two occurrences of one name are one entity.
  *
  * What does not fit is counted in `dropped`:
- * - `over_limit`: a name longer than `nameChars`; entities beyond the limit, proper names kept
- *   first, then in the order they first occur; two names of one sentence too far apart to be
- *   quoted; relations beyond the limit, pairs of two common nouns dropped first (an English
- *   sentence makes every word a noun, and its pairs grow with the square of its length), then
- *   in the order of their first sentence.
+ * - `over_limit`: a name longer than `nameChars`; common nouns beyond the limit of entities
+ *   (proper names are kept first, then names in the order they first occur); two names of one
+ *   sentence too far apart to be quoted; relations beyond the limit of relations (pairs of two
+ *   proper names are kept first, then in the order of their first sentence: what is beyond is a
+ *   sentence of many names, an enumeration). A dense fragment has many: not reported as a loss.
+ * - `proper_over_limit` (kg2.md §7.10): proper names beyond the limit of entities, which no
+ *   search by name finds. The version is reported `extraction_truncated`.
  * - `no_evidence`: a name with no quotation (one that crosses a sentence end).
  * Only a pair with a proper name at one end at least is a relation (two common nouns make none;
  * rules version 6), and never a pair of two names with one key. Relations are only made between
  * kept entities; the pairs a dropped entity would have made are not counted.
+ *
+ * `structure` (`fragmentStructures`) names the fragment's code and frontmatter: code is no
+ * prose and holds no name (rules version 7). Without it the fragment is read as prose.
  *
  * Throws `TokenizerFailure` when the tokenizer throws. Tokens that do not describe the text (the
  * tokenizer's contract broken, the same for every attempt) fail this fragment alone
@@ -161,9 +213,12 @@ function evidenceOf(
 export function extractNames(
 	fragment: Pick<Fragment, "ordinal" | "byteStart" | "text">,
 	tokenizer: TokenizerPort,
+	structure?: NameStructure,
 ): FragmentExtraction {
 	const model = namesModel(tokenizer);
-	const blanked = blankOut(fragment.text);
+	const blanked = structure
+		? blankStructure(blankOut(fragment.text), structure)
+		: blankOut(fragment.text);
 	let tokens: NameToken[];
 	try {
 		tokens = tokenizer.tokenize(blanked);
@@ -220,11 +275,15 @@ export function extractNames(
 	const withQuotes = quoted.filter((e) => e.evidence.length > 0);
 	drop(quoted.length - withQuotes.length, "no_evidence");
 	// Proper names first (a stable sort), then back to the order of first occurrence.
-	const kept = [...withQuotes]
-		.sort((x, y) => Number(y.proper) - Number(x.proper))
+	const byProper = [...withQuotes].sort(
+		(x, y) => Number(y.proper) - Number(x.proper),
+	);
+	const kept = byProper
 		.slice(0, NAMES_LIMITS.entities)
 		.sort((x, y) => x.order - y.order);
-	drop(withQuotes.length - kept.length);
+	const left = byProper.slice(NAMES_LIMITS.entities);
+	drop(left.filter((e) => e.proper).length, "proper_over_limit");
+	drop(left.filter((e) => !e.proper).length);
 	const idOf = new Map(kept.map((e, i) => [e, `e${i + 1}`]));
 	const entities: VerifiedEntity[] = kept.map((e) => {
 		const first = e.occurrences[0] as Span;
@@ -317,10 +376,11 @@ export function extractNames(
 	const withEvidence = [...pairs.values()].filter((p) => p.spans.length > 0);
 	drop(pairs.size - withEvidence.length);
 	// A stable sort: within one count of proper names, the order of the first sentence stays.
-	const keptPairs = [...withEvidence]
-		.sort((x, y) => y.proper - x.proper)
-		.slice(0, NAMES_LIMITS.relations);
-	drop(withEvidence.length - keptPairs.length);
+	const sortedPairs = [...withEvidence].sort((x, y) => y.proper - x.proper);
+	const keptPairs = sortedPairs.slice(0, NAMES_LIMITS.relations);
+	// More than the limit is a sentence of many names (an enumeration): its pairs say little.
+	const leftPairs = sortedPairs.slice(NAMES_LIMITS.relations);
+	drop(leftPairs.length);
 	const relations: VerifiedRelation[] = keptPairs.map((p, i) => ({
 		id: `r${i + 1}`,
 		source: `e${p.source + 1}`,

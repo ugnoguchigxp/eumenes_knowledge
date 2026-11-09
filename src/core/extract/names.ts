@@ -6,7 +6,10 @@ import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
  * measured in kg2.md §7.1–7.3; version 5 (§7.4) blanks only the ASCII characters of a URL or a
  * path, and also e-mail addresses and secret-like strings (`scripts/kg-alt/sudachi_nouns.py` is
  * version 5 in Python); version 6 (§7.9, from real text) adds math, citation lines, the middle
- * dot, plain words for the space join, the identifier boundary and glosses in parentheses.
+ * dot, plain words for the space join, the identifier boundary and glosses in parentheses;
+ * version 7 (kg2.md §7.10) changes no rule of names: it blanks more secrets (a URL of any
+ * scheme, system paths, base64 keys, PEM blocks, `Bearer` credentials) and, given the Markdown
+ * structure, fenced code blocks and the keys of the frontmatter.
  *
  * - A name is a run of adjacent noun tokens (nouns, prefixes, noun-like suffixes) and ASCII
  *   words. Two plain capitalized words (a capital, then small letters: "Temporal Reasoning")
@@ -16,12 +19,15 @@ import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
  *   Japanese word ("GPT-4カスタムモデル" is GPT-4 and カスタムモデル). Leading prefixes and trailing
  *   suffixes are dropped.
  * - Full-width ASCII and the ideographic space become ASCII one for one first (offsets stay;
- *   ．！？ stay). Then URLs, e-mail addresses, paths under a home or temporary directory or a
- *   Windows drive, secret-like strings (API keys of a known form, JWTs, the value after
- *   `password=` and the like) are blanked out: their ASCII characters only, so the Japanese text
- *   written right after one stays, and a trailing full stop or comma stays. Math (TeX: a
+ *   ．！？ stay). Then URLs (any scheme), e-mail addresses, paths under a home, temporary or
+ *   system directory or a Windows drive, secret-like strings (API keys of a known form, JWTs,
+ *   base64 keys of 32 characters or more, PEM blocks, the value after `password=`, `Bearer` and
+ *   the like) are blanked out: their ASCII characters only, so the Japanese text written right
+ *   after one stays, and a trailing full stop or comma stays. Math (TeX: a
  *   `{\displaystyle …}` group, `$$…$$`, `\(…\)`, `\[…\]`, a TeX command) and every line that
- *   cites (an ISBN, ISSN, DOI or arXiv number) are blanked out too.
+ *   cites (an ISBN, ISSN, DOI or arXiv number) are blanked out too. Given the Markdown
+ *   structure (`blankStructure`), fenced code blocks and the frontmatter's keys are blanked out
+ *   (inline code stays: it often names the subject).
  * - No name: a run of one character, or of digits and symbols only; a formal noun (こと, もの,
  *   ...) ends a run; a single English function word or note marker (TODO); a command-line
  *   option (--full); a number with a unit (16GB); a token-like ASCII string (32 characters or
@@ -35,7 +41,7 @@ import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
  * The lists are general (function words, formal nouns, markers), never names of a subject
  * (plan.md §5.3 as approved for KG2).
  */
-export const NAME_RULES_VERSION = 6;
+export const NAME_RULES_VERSION = 7;
 
 /** A name found in a text: where it is (UTF-16 offsets), how it is keyed, and whether proper. */
 export type NameCandidate = {
@@ -59,17 +65,45 @@ const NUMBER_UNIT = /^\d+(?:[.,]\d+)?[A-Za-z]{1,3}$/;
 const LOWER_WORD = /^[a-z]+$/;
 const SENTENCE_END = /[。．！？!?\n]|\.(?=\s)/g;
 const KANA = /[ぁ-ゟ゠-ヿ]/;
-/** ASCII only, so a Japanese text written right after one is not taken with it. */
-const URL = /(?:https?:\/\/|www\.)[A-Za-z0-9\-._~:/?#@!$&'*+,;=%]+/g;
+/**
+ * ASCII only, so a Japanese text written right after one is not taken with it. Any scheme
+ * (rules version 7): a connection string (`postgres://user:pw@host/db`) holds a password.
+ */
+const URL =
+	/(?:[A-Za-z][A-Za-z0-9+.-]{0,30}:\/\/|www\.)[A-Za-z0-9\-._~:/?#@!$&'*+,;=%]+/g;
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
+/**
+ * A path under a home, temporary or system directory (rules version 7 adds the system ones and
+ * wants the path to start there: `src/opt/x` is a relative path, not `/opt/x`).
+ */
 const LOCAL_PATH =
-	/(?:~\/|\/(?:Users|home|private|var\/folders|tmp)\/|(?<![A-Za-z0-9])[A-Za-z]:\\)[A-Za-z0-9._\-/\\~+@%]*/g;
+	/(?:~\/|(?<![A-Za-z0-9._-])\/(?:Users|home|private|var|tmp|etc|opt|srv|root|mnt|usr|Volumes)\/|(?<![A-Za-z0-9])[A-Za-z]:\\)[A-Za-z0-9._\-/\\~+@%]*/g;
 /** API keys of a known form and JWTs. */
 const SECRET =
 	/(?<![A-Za-z0-9])(?:(?:sk|pk|rk)-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[abprs]-[A-Za-z0-9-]{10,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+)/g;
 /** The value written after `password=`, `token: ` and the like. */
 const SECRET_VALUE =
-	/(?<![A-Za-z0-9])((?:password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key)\s*[=:]\s*)([!-~]+)/gi;
+	/(?<![A-Za-z0-9])((?:password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key|private[_-]?key)\s*[=:]\s*)([!-~]+)/gi;
+/**
+ * The credential after `Bearer` on the same line (an HTTP header): 8 characters or more with a
+ * digit, so prose (`Bearer token`, `the Bearer of bad news`) stays.
+ */
+const BEARER =
+	/(?<![A-Za-z0-9])(Bearer[ \t]+)((?=[A-Za-z0-9\-._~+/]*[0-9])[A-Za-z0-9\-._~+/]{8,}=*)/g;
+/**
+ * A key of no known form (rules version 7): 32 characters or more of base64 or its URL form
+ * (letters, digits, `+ / _ -`) with a capital, a small letter and a digit, as an AWS secret key
+ * (`wJalr…/K7MDENG/…`), and a part of 16 letters and digits or more between those marks
+ * (`SECRET_PART`): a slug or a relative path of short words
+ * (`Getting-Started-With-Kubernetes-v2-Guide`) is not one, nor a long identifier of small
+ * letters (`a_b_c_v2`).
+ */
+const SECRET_LIKE =
+	/(?<![A-Za-z0-9+/=_-])(?=[A-Za-z0-9+/_-]*[A-Z])(?=[A-Za-z0-9+/_-]*[a-z])(?=[A-Za-z0-9+/_-]*[0-9])[A-Za-z0-9+/_-]{32,}={0,2}(?![A-Za-z0-9+/=_-])/g;
+const SECRET_PART = /[A-Za-z0-9]{16,}/;
+/** A PEM block (a private key or a certificate), at most 20,000 characters. */
+const PEM =
+	/-----BEGIN [A-Z0-9 ]{1,40}-----[\s\S]{0,20000}?-----END [A-Z0-9 ]{1,40}-----/g;
 const TRAILING_PUNCTUATION = /[.,;:!?']+$/;
 /** A book or paper number: ISBN, ISSN, DOI or arXiv, each with its number. */
 const CITATION =
@@ -201,13 +235,71 @@ export function blankOut(text: string): string {
 		.replace(URL, blankBody)
 		.replace(EMAIL, blank)
 		.replace(LOCAL_PATH, blankBody)
+		.replace(PEM, blankKeepingLines)
 		.replace(SECRET, blank)
+		.replace(BEARER, (_, key: string, value: string) => key + blank(value))
+		.replace(SECRET_LIKE, (m) => (SECRET_PART.test(m) ? blank(m) : m))
 		.replace(
 			SECRET_VALUE,
 			(_, key: string, value: string) => key + blank(value),
 		)
 		.replace(/^[\s\S]*$/, blankMath)
 		.replace(/^[\s\S]*$/, blankCitations);
+}
+
+/** A UTF-16 range `[start, end)` of a text. */
+export type TextRange = { start: number; end: number };
+
+/** Where a text holds code and its frontmatter (`markdownStructure` of the Markdown body). */
+export type NameStructure = {
+	code: readonly TextRange[];
+	frontmatter: TextRange | null;
+};
+
+/**
+ * A key of a frontmatter line (`title:`, `- tags:`): a word of ASCII letters, digits, `_ . -`
+ * (at most 64) before `: ` or `:` at the end. Prose of a block scalar
+ * (`  Uses Redis for caching: fast`) is no key.
+ */
+const FRONTMATTER_KEY =
+	/^[ \t]*(?:-[ \t]+)?[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}:(?=[ \t\r]|$)/gm;
+
+/**
+ * The structure's code (fenced blocks, fences included) becomes spaces, and so do the keys of the
+ * frontmatter's lines (its values stay: a title, tags, aliases); line breaks stay, so the
+ * length and the lines never change (rules version 7). Code is no prose: its keywords and
+ * variables made most of a technical text's names and pairs.
+ */
+export function blankStructure(text: string, structure: NameStructure): string {
+	const ranges = [
+		...structure.code.map((r) => ({ ...r, code: true })),
+		...(structure.frontmatter
+			? [{ ...structure.frontmatter, code: false }]
+			: []),
+	]
+		.map((r) => ({
+			start: Math.max(0, Math.min(text.length, r.start)),
+			end: Math.max(0, Math.min(text.length, r.end)),
+			code: r.code,
+		}))
+		.filter((r) => r.start < r.end)
+		.sort((x, y) => x.start - y.start);
+	const parts: string[] = [];
+	let done = 0;
+	for (const r of ranges) {
+		const start = Math.max(done, r.start);
+		if (start >= r.end) continue;
+		const part = text.slice(start, r.end);
+		parts.push(
+			text.slice(done, start),
+			r.code
+				? blankKeepingLines(part)
+				: part.replace(FRONTMATTER_KEY, blankKeepingLines),
+		);
+		done = r.end;
+	}
+	parts.push(text.slice(done));
+	return parts.join("");
 }
 
 /** Whether the sentence around text[start, end) is English: it has letters and no kana. */

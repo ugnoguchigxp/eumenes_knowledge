@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
 import {
 	blankOut,
+	blankStructure,
 	createCharclassTokenizer,
 	namesFromTokens,
 } from "./names.js";
@@ -348,5 +349,139 @@ describe("rules version 6 (kg2.md §7.9, from Wikipedia text)", () => {
 		).toEqual([
 			{ surface: "サム", start: 0, end: 2, key: "サム", proper: true },
 		]);
+	});
+});
+
+describe("what is blanked out (rules version 7)", () => {
+	// Built from parts so that no secret scanner takes the test for a leaked key.
+	const awsSecret = `wJalrXUtnFEMI/K7MDENG/${"bPxRfiCY"}EXAMPLEKEY`;
+
+	test("a URL of any scheme, system paths, base64 keys, PEM blocks and Bearer credentials", () => {
+		const text = [
+			`接続は postgres://admin:pw@db:5432/app と ${"mongodb+srv"}://u:p@c0.example.net/x です。`,
+			"設定は /etc/ssl/private/server.key と /opt/corp/app/config.yml にある。",
+			`aws_secret_access_key は ${awsSecret} です。`,
+			`-----BEGIN ${"PRIVATE"} KEY-----`,
+			"MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJTUt9Us8cKj",
+			`-----END ${"PRIVATE"} KEY-----`,
+			`Authorization: ${"Bearer"} abc.DEF-123_xyz と private_key=MIIabc123`,
+		].join("\n");
+		const blanked = blankOut(text);
+		expect(blanked.length).toBe(text.length);
+		expect(blanked.split("\n").length).toBe(text.split("\n").length);
+		for (const secret of [
+			"admin",
+			"5432",
+			"c0.example",
+			"ssl",
+			"server.key",
+			"corp",
+			"K7MDENG",
+			"MIIEvQ",
+			"abc.DEF",
+			"MIIabc",
+		])
+			expect(blanked).not.toContain(secret);
+		const found = names(text).map((n) => n.surface);
+		for (const n of ["admin", "pw", "db", "5432/app", "corp", "K7MDENG"])
+			expect(found.some((f) => f.includes(n))).toBe(false);
+		// The Japanese around them stays.
+		expect(found).toEqual(expect.arrayContaining(["接続", "設定"]));
+	});
+
+	test("prose of Bearer, slugs, relative paths and block scalars are not secrets or keys", () => {
+		const key = `${"Ab3"}${"x".repeat(37)}`;
+		const text = [
+			`Authorization: ${"Bearer"} ${key} and then Foo`,
+			"Bearer token と the Bearer of bad news と Bearer Authentication",
+			"GPT-4-Technical-Report-OpenAI-2023 と Getting-Started-With-Kubernetes-v2-Guide",
+			"docs/Architecture/Decision-Records/ADR-0007-Use-Postgres-v15/index.md と src/opt/foo と and/etc/bar",
+		].join("\n");
+		const blanked = blankOut(text);
+		expect(blanked).not.toContain(key.slice(0, 8));
+		for (const kept of [
+			"and then Foo",
+			"Bearer token",
+			"Bearer of bad news",
+			"Bearer Authentication",
+			"GPT-4-Technical-Report-OpenAI-2023",
+			"Getting-Started-With-Kubernetes-v2-Guide",
+			"docs/Architecture/Decision-Records/ADR-0007-Use-Postgres-v15/index.md",
+			"src/opt/foo",
+			"and/etc/bar",
+		])
+			expect(blanked).toContain(kept);
+		// A Bearer credential ends at the line: the next line stays.
+		expect(blankOut(`${"Bearer"}\nLantern2024abc`)).toBe(
+			`${"Bearer"}\nLantern2024abc`,
+		);
+		// A block scalar's prose in the frontmatter is no key.
+		const fm = "description: |\n  Uses Redis for caching: fast\n- Redis: cache";
+		expect(
+			blankStructure(fm, {
+				code: [],
+				frontmatter: { start: 0, end: fm.length },
+			}),
+		).toBe(
+			`${" ".repeat("description:".length)} |\n  Uses Redis for caching: fast\n${" ".repeat("- Redis:".length)} cache`,
+		);
+	});
+
+	test("a long identifier of small letters and a short mixed one stay", () => {
+		const text =
+			"eumenes_knowledge_integration_test_v2 と GPT-4o と src/core/extract/names.ts";
+		expect(blankOut(text)).toContain("eumenes_knowledge_integration_test_v2");
+		expect(blankOut(text)).toContain("GPT-4o");
+		expect(blankOut(text)).toContain("src/core/extract/names");
+	});
+
+	test("the structure's code becomes spaces, and the frontmatter's keys; lines stay", () => {
+		const text = [
+			"---",
+			"title: Lantern 設計",
+			"tags: [Lantern, MySQL]",
+			"---",
+			"Lantern は MySQL を使う。",
+			"```ts",
+			"const pool = await createPool(config);",
+			"```",
+			"Mira Okafor が書いた。",
+		].join("\n");
+		const lines = text.split("\n");
+		const at = (line: number) =>
+			lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0);
+		const structure = {
+			code: [{ start: at(5), end: at(8) }],
+			frontmatter: { start: 0, end: at(4) },
+		};
+		const blanked = blankStructure(text, structure);
+		expect(blanked.length).toBe(text.length);
+		expect(blanked.split("\n").map((l) => l.trim())).toEqual([
+			"---",
+			"Lantern 設計",
+			"[Lantern, MySQL]",
+			"---",
+			"Lantern は MySQL を使う。",
+			"",
+			"",
+			"",
+			"Mira Okafor が書いた。",
+		]);
+		const found = namesFromTokens(blanked, charclass.tokenize(blanked)).map(
+			(n) => n.surface,
+		);
+		for (const n of ["title", "tags", "const", "pool", "createPool", "config"])
+			expect(found).not.toContain(n);
+		expect(found).toEqual(
+			expect.arrayContaining(["Lantern", "MySQL", "Mira Okafor"]),
+		);
+		// Ranges are clipped to the text; none changes nothing.
+		expect(
+			blankStructure("abc", {
+				code: [{ start: 2, end: 99 }],
+				frontmatter: null,
+			}),
+		).toBe("ab ");
+		expect(blankStructure(text, { code: [], frontmatter: null })).toBe(text);
 	});
 });

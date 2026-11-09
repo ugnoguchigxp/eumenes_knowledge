@@ -7,6 +7,7 @@ import type { TokenizerPort } from "../../contracts/ports.js";
 import { sha256Hex } from "../bytes.js";
 import {
 	extractNames,
+	fragmentStructures,
 	NAME_TYPES,
 	NAMES_LIMITS,
 	SAME_SENTENCE_RELATION,
@@ -47,7 +48,7 @@ describe("model-free extraction of one fragment", () => {
 	test("names as entities, the model string, the types; the quotation is the sentence", () => {
 		const text = "# 設計\nLantern と ＭｙＳＱＬ を使う。\n\n日本語の説明。";
 		const x = extract(text);
-		expect(x.model).toBe("names:charclass@rules6");
+		expect(x.model).toBe("names:charclass@rules7");
 		expect(x.fragmentOrdinal).toBe(3);
 		expect(x.dropped).toEqual([]);
 		expect(
@@ -139,7 +140,7 @@ describe("model-free extraction of one fragment", () => {
 		]);
 	});
 
-	test("entities beyond the limit are dropped in order of first occurrence, counted over_limit", () => {
+	test("entities beyond the limit are dropped in order of first occurrence; proper ones are proper_over_limit", () => {
 		const names = Array.from(
 			{ length: 120 },
 			(_, i) => `N${String(i).padStart(3, "0")}`,
@@ -148,10 +149,10 @@ describe("model-free extraction of one fragment", () => {
 		expect(x.entities).toHaveLength(NAMES_LIMITS.entities);
 		expect(x.entities.at(-1)?.name).toBe("N099");
 		expect(x.relations).toEqual([]);
-		expect(x.dropped).toEqual([{ reason: "over_limit", count: 20 }]);
+		expect(x.dropped).toEqual([{ reason: "proper_over_limit", count: 20 }]);
 	});
 
-	test("relations beyond the limit are dropped, counted over_limit", () => {
+	test("relations beyond the limit are dropped, counted over_limit (an enumeration's pairs are no loss)", () => {
 		// 25 names in one sentence: 300 pairs.
 		const names = Array.from(
 			{ length: 25 },
@@ -369,8 +370,101 @@ describe("model-free extraction of one fragment", () => {
 				fragmentOrdinal: 3,
 				status: "failed",
 				errorCode: "invalid_tokens",
-				model: "names:wrong@rules6",
+				model: "names:wrong@rules7",
 			});
 		}
+	});
+});
+
+describe("the Markdown structure across fragments (rules version 7)", () => {
+	test("a code block or a frontmatter that spans fragments is code in each part", () => {
+		const texts = [
+			"---\ntitle: Lantern\n",
+			"---\nLantern は MySQL を使う。\n```ts\nconst pool = ",
+			"createPool(config);\n```\nMira Okafor が書いた。\n```\nlet Unclosed = 1;\n",
+		];
+		const structures = fragmentStructures(texts);
+		expect(structures).toEqual([
+			{ code: [], frontmatter: { start: 0, end: texts[0]!.length } },
+			{
+				code: [
+					{
+						start: texts[1]!.indexOf("```"),
+						end: texts[1]!.length,
+					},
+				],
+				frontmatter: { start: 0, end: 4 },
+			},
+			{
+				code: [
+					{ start: 0, end: texts[2]!.indexOf("Mira") },
+					{ start: texts[2]!.indexOf("```\nlet"), end: texts[2]!.length },
+				],
+				frontmatter: null,
+			},
+		]);
+		const namesOf = (i: number) =>
+			ok(
+				extractNames(
+					{ ordinal: i, byteStart: 0, text: texts[i] as string },
+					charclass,
+					structures[i],
+				),
+			).entities.map((e) => e.name);
+		expect(namesOf(0)).toEqual(["Lantern"]);
+		expect(namesOf(1)).toEqual(["Lantern", "MySQL"]);
+		expect(namesOf(2)).toEqual(["Mira Okafor"]);
+		// Without the structure the fragment is read as prose.
+		expect(
+			ok(
+				extractNames(
+					{ ordinal: 2, byteStart: 0, text: texts[2] as string },
+					charclass,
+				),
+			).entities.map((e) => e.name),
+		).toEqual(expect.arrayContaining(["createPool", "Unclosed"]));
+		expect(fragmentStructures([])).toEqual([]);
+	});
+
+	test("a fragment that starts inside a frontmatter line finds keys from its next line", () => {
+		const texts = [
+			"---\ndescription: a long",
+			" line: of prose\ntitle: X\n---\nbody",
+		];
+		const [, second] = fragmentStructures(texts);
+		expect(second?.frontmatter).toEqual({
+			start: " line: of prose\n".length,
+			end: " line: of prose\ntitle: X\n---\n".length,
+		});
+		// A fragment cut inside the last line of the frontmatter has nothing of it to read keys in.
+		expect(
+			fragmentStructures(["---\nab", "cd: e\n---\n"])[1]?.frontmatter,
+		).toEqual({ start: "cd: e\n".length, end: "cd: e\n---\n".length });
+		expect(
+			fragmentStructures(["---\nti", "tle: e\n---\n"].map((t) => t))[1]
+				?.frontmatter?.start,
+		).toBe("tle: e\n".length);
+	});
+});
+
+describe("what a fragment's limits leave out (kg2.md §7.10)", () => {
+	const dropped = (text: string) =>
+		Object.fromEntries(extract(text).dropped.map((d) => [d.reason, d.count]));
+
+	test("proper names beyond the limit are a loss (proper_over_limit); common nouns are not", () => {
+		const proper = Array.from({ length: 120 }, (_, i) => `N${i + 100}`);
+		// 20 names beyond the limit; the pairs of the 100 kept beyond the limit are over_limit.
+		const x = dropped(`${proper.join(" ")}。`);
+		expect(x.proper_over_limit).toBe(20);
+		expect(x.over_limit).toBeGreaterThan(0);
+		// Common nouns (small letters in an English sentence) beyond the limit: over_limit only.
+		const letters = "abcdefghij";
+		const common = Array.from(
+			{ length: 120 },
+			(_, i) => `zq${letters[Math.floor(i / 10)]}${letters[i % 10]}`,
+		);
+		const y = dropped(`Lantern ${common.join(" ")}.`);
+		expect(y.over_limit).toBeGreaterThanOrEqual(20);
+		expect(y.proper_over_limit).toBeUndefined();
 	});
 });
