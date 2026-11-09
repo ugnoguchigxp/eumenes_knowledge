@@ -27,10 +27,34 @@ export const scriptJson = (value: unknown): string =>
 		.replaceAll(String.fromCharCode(0x2028), "\\u2028")
 		.replaceAll(String.fromCharCode(0x2029), "\\u2029");
 
+/** The texts of the edges' part of the page (the S4 sample's by default). */
+export type EdgeTexts = {
+	heading: string;
+	/** What A, B and C mean. */
+	legend: readonly [string, string, string];
+	/** The buttons of A, B and C. */
+	buttons: readonly [string, string, string];
+};
+
+export const PAIR_EDGE_TEXTS: EdgeTexts = {
+	heading: "辺（同じ文に出た 2 つの固有名）",
+	legend: [
+		"A: 文が 2 つのあいだの関係を述べている",
+		"B: 並べて触れているだけ",
+		"C: 誤り（名前が違う、雑音）",
+	],
+	buttons: ["A 関係を述べている", "B 並べているだけ", "C 誤り"],
+};
+
 export function judgePage(
 	sampleDigest: string,
 	items: readonly JudgeItem[],
+	edgeTexts: EdgeTexts = PAIR_EDGE_TEXTS,
 ): string {
+	const hasNames = items.some((i) => i.kind === "name");
+	const hasEdges = items.some((i) => i.kind === "edge");
+	const escape = (t: string) =>
+		t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 	return `<!doctype html>
 <html lang="ja">
 <head>
@@ -61,19 +85,25 @@ textarea { width: 100%; min-height: 120px; margin-top: 12px; font: 12px/1.4 ui-m
 <main>
 <h1>名前と辺の判定</h1>
 <p>手元のメモから無作為に抜いた名前と辺です。このページはどこにも送られません。判定は、このブラウザの中にだけ残ります。終わったら「結果を書き出す」を押し、出たファイル（または下の欄の文字）を Claude に渡してください。</p>
-<h2>名前（日本語だけで書かれ、固有名とされたもの）</h2>
+${
+	hasNames
+		? `<h2>名前（日本語だけで書かれ、固有名とされたもの）</h2>
 <ul>
 <li>固有名: 人・組織・場所・製品・計画などの名前</li>
 <li>固有名でない: 一般の語、語の切れ方がおかしいもの</li>
 </ul>
-<div id="names"></div>
-<h2>辺（同じ文に出た 2 つの固有名）</h2>
+<div id="names"></div>`
+		: ""
+}
+${
+	hasEdges
+		? `<h2>${escape(edgeTexts.heading)}</h2>
 <ul>
-<li>A: 文が 2 つのあいだの関係を述べている</li>
-<li>B: 並べて触れているだけ</li>
-<li>C: 誤り（名前が違う、雑音）</li>
+${edgeTexts.legend.map((l) => `<li>${escape(l)}</li>`).join("\n")}
 </ul>
-<div id="edges"></div>
+<div id="edges"></div>`
+		: ""
+}
 <textarea id="out" readonly hidden></textarea>
 </main>
 <div class="bar"><span id="progress"></span><button id="export" type="button">結果を書き出す</button></div>
@@ -82,7 +112,7 @@ const DIGEST = ${scriptJson(sampleDigest)};
 const ITEMS = ${scriptJson(items)};
 const LABELS = {
 	name: [["proper", "固有名"], ["not_proper", "固有名でない"], ["unsure", "分からない"]],
-	edge: [["A", "A 関係を述べている"], ["B", "B 並べているだけ"], ["C", "C 誤り"], ["unsure", "分からない"]],
+	edge: [["A", ${scriptJson(edgeTexts.buttons[0])}], ["B", ${scriptJson(edgeTexts.buttons[1])}], ["C", ${scriptJson(edgeTexts.buttons[2])}], ["unsure", "分からない"]],
 };
 const KEY = "kg-heldout:" + DIGEST;
 let judgments = {};

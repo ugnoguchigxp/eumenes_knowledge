@@ -11,6 +11,7 @@ import { join, resolve } from "node:path";
 import type { TokenizerPort } from "../src/contracts/ports.js";
 import { createCharclassTokenizer } from "../src/core/extract/index.js";
 import {
+	drawEdges,
 	insideRepository,
 	japaneseOnly,
 	listNotes,
@@ -148,6 +149,56 @@ describe("kg-heldout", () => {
 			JSON.stringify({ sampleDigest: "other", judgments }),
 		);
 		expect(() => score(out, results)).toThrow("another sample");
+	});
+
+	test("edges: the best pairs by document NPMI, no hub, and as many at random, mixed and scored apart", () => {
+		const notes = temp();
+		// Lantern–Zircon in 4 documents together and nowhere else: the best pair. Hub is in every
+		// document (no pair of it is scored). Kafka–Redis in 2 only: no candidate, but drawable.
+		// 60 documents: a hub is in more than 6.
+		for (let n = 1; n <= 60; n++) {
+			const lines = [`Hub と Note${n} の話。`];
+			if (n <= 4) lines.push("Lantern と Zircon を使う。");
+			if (n <= 2) lines.push("Kafka と Redis の話。");
+			if (n >= 10 && n <= 14) lines.push(`MySQL と Tokyo${n % 2} の話。`);
+			writeFileSync(join(notes, `n${n}.md`), `${lines.join("\n")}\n`);
+		}
+		const out = temp();
+		const { summary, items, sets } = drawEdges({
+			notes,
+			out,
+			tokenizer: createCharclassTokenizer(),
+			sample: 2,
+		});
+		expect(summary).toMatchObject({ documents: 60, hubs: 1, sampledTop: 2 });
+		const top = items.filter((i) => sets[i.id] === "top");
+		expect(
+			top.map((i) => (i.kind === "edge" ? [i.source, i.target].sort() : [])),
+		).toContainEqual(["Lantern", "Zircon"]);
+		for (const i of items)
+			if (i.kind === "edge") expect([i.source, i.target]).not.toContain("Hub");
+		// Two documents' sentences at most.
+		const lz = items.find((i) => i.kind === "edge" && i.source === "Lantern");
+		expect(lz?.sentence.split("――")).toHaveLength(2);
+		const judgments = Object.fromEntries(
+			items.map((i) => [i.id, sets[i.id] === "top" ? "A" : "C"]),
+		);
+		const sample = JSON.parse(readFileSync(join(out, "sample.json"), "utf8"));
+		const results = join(out, "judgments.json");
+		writeFileSync(
+			results,
+			JSON.stringify({ sampleDigest: sample.sampleDigest, judgments }),
+		);
+		const s = score(out, results) as {
+			sets: Record<string, Record<string, unknown>>;
+		};
+		expect(s.sets.top).toMatchObject({ A: 2, C: 0, passed: false });
+		expect(s.sets.random?.C).toBe(
+			Object.values(sets).filter((x) => x === "random").length,
+		);
+		const page = readFileSync(join(out, "judge.html"), "utf8");
+		expect(page).toContain("A 関係が深い");
+		expect(page).not.toContain('id="names"');
 	});
 
 	test("helpers", () => {
