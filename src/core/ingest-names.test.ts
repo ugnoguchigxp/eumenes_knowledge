@@ -81,7 +81,7 @@ describe("ingest with the model-free extractor (kg2.md G3)", () => {
 			fragments.map((f) => f.text),
 		);
 		expect(extractions.map((x) => [x.status, x.model])).toEqual(
-			fragments.map(() => ["ok", "names:charclass@rules5"]),
+			fragments.map(() => ["ok", "names:charclass@rules6"]),
 		);
 		expect(names).toEqual(
 			expect.arrayContaining([
@@ -144,7 +144,7 @@ describe("ingest with the model-free extractor (kg2.md G3)", () => {
 		expect(seen).toHaveLength(fragments.length);
 		expect(seen.join("")).not.toContain("example.com");
 		expect(new Set(extractions.map((x) => x.model))).toEqual(
-			new Set(["names:host-analyzer@rules5"]),
+			new Set(["names:host-analyzer@rules6"]),
 		);
 	});
 

@@ -14,7 +14,7 @@ import {
 	readGraphEvidenceInSnapshot,
 	readGraphMentionsInSnapshot,
 	readGraphLinksInSnapshot,
-	readGraphRelationsInSnapshot,
+	readGraphRelationsAmongInSnapshot,
 	type GraphDocument,
 	type GraphLink,
 	type GraphMention,
@@ -370,9 +370,9 @@ function compute(db: Tx, p: Params): GraphResponse {
 			m.entityId,
 		);
 	}
-	const read2 = readGraphRelationsInSnapshot(
+	const read2 = readGraphRelationsAmongInSnapshot(
 		db,
-		[...new Set(keptMentions.map((m) => m.versionId))],
+		keptMentions.map((m) => m.entityId),
 		GRAPH_LIMITS.maxRelations,
 	);
 	if (read2.truncated) reasons.add("relations_truncated");
@@ -398,6 +398,8 @@ function compute(db: Tx, p: Params): GraphResponse {
 		let source = ordinalOf.get(all.ofEntity.get(s) as Component);
 		let target = ordinalOf.get(all.ofEntity.get(t) as Component);
 		if (source === undefined || target === undefined) continue;
+		// Both ends joined into one node (by key or by a link): a loop shows nothing.
+		if (source === target) continue;
 		if (!r.directed && source > target) {
 			[source, target] = [target, source];
 		}

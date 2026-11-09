@@ -783,7 +783,7 @@ describe("staging validation", () => {
 					{ ...rel("r2", "e1", "e3"), relation: "同じ文" },
 				],
 				dropped: [],
-				model: "names:charclass@rules5",
+				model: "names:charclass@rules6",
 			},
 		]);
 		expect(

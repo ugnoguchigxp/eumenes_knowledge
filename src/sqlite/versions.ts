@@ -50,7 +50,7 @@ export type VersionRow = DocumentKey & {
 	/** The vector space of the version, null until vectors were staged. */
 	spaceKey: string | null;
 	instructionDigest: string;
-	/** What extracted the version (`names:charclass@rules5`, ...); '' when not recorded. */
+	/** What extracted the version (`names:charclass@rules6`, ...); '' when not recorded. */
 	extractor: string;
 	/** At least one fragment's extraction failed. Set when the version is published. */
 	extractionPartial: boolean;

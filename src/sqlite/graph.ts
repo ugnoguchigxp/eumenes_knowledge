@@ -193,19 +193,22 @@ const parseKeywords = (json: string): string[] => {
 };
 
 /**
- * The relation mentions of the given versions in (version, fragment, local id) order, at most
- * `cap` (`truncated` says that more exist). The ends are local ids within the same version and
- * fragment; the caller maps them to entity mentions.
+ * The relation mentions whose two ends are both among `entityIds` (the mentions of the nodes a
+ * graph returns), in (version, fragment, local id) order, at most `cap` (`truncated` says that
+ * more exist). They are found from their source mention through an index, so a relation of
+ * mentions the graph does not return is never read (kg2.md §7.9). A relation between two mentions
+ * of one key is one node's loop and is not read either (it would only spend the cap). The ends
+ * are local ids within the same version and fragment; the caller maps them to entity mentions.
  */
-export function readGraphRelationsInSnapshot(
+export function readGraphRelationsAmongInSnapshot(
 	db: Tx,
-	versionIds: readonly number[],
+	entityIds: readonly number[],
 	cap: number,
 ): { relations: GraphRelation[]; truncated: boolean } {
-	if (!Array.isArray(versionIds) || !Number.isSafeInteger(cap) || cap < 1) {
+	if (!Array.isArray(entityIds) || !Number.isSafeInteger(cap) || cap < 1) {
 		return invalid();
 	}
-	if (versionIds.length === 0) return { relations: [], truncated: false };
+	if (entityIds.length === 0) return { relations: [], truncated: false };
 	const rows = db
 		.query<{
 			relation_id: number;
@@ -222,11 +225,17 @@ export function readGraphRelationsInSnapshot(
 		}>(
 			`SELECT r.relation_id, r.version_id, r.fragment_ordinal, r.source_local_id, r.target_local_id,
  r.directed, r.relation, r.keywords_json, r.qualifier_negated, r.qualifier_condition, r.qualifier_certainty
-FROM knowledge_relation_mentions r
-WHERE r.version_id IN (SELECT value FROM json_each(?1))
+FROM json_each(?1) k
+JOIN knowledge_entity_mentions s ON s.entity_id = k.value
+JOIN knowledge_relation_mentions r ON r.version_id = s.version_id
+ AND r.fragment_ordinal = s.fragment_ordinal AND r.source_local_id = s.local_id
+JOIN knowledge_entity_mentions t ON t.version_id = r.version_id
+ AND t.fragment_ordinal = r.fragment_ordinal AND t.local_id = r.target_local_id
+WHERE t.entity_id IN (SELECT value FROM json_each(?1))
+ AND NOT (s.name_key <> '' AND s.name_key = t.name_key)
 ORDER BY r.version_id, r.fragment_ordinal, r.local_id LIMIT ?2`,
 		)
-		.all(ids(versionIds), cap + 1);
+		.all(ids(entityIds), cap + 1);
 	return {
 		relations: rows.slice(0, cap).map((r) => ({
 			relationId: r.relation_id,

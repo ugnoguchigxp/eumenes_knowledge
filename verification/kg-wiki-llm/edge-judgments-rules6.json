@@ -1,0 +1,482 @@
+[
+ {
+  "view": "all",
+  "a": "Google",
+  "b": "懸念",
+  "documents": 1,
+  "label": "C",
+  "quote": "他方、IPOがGoogleの企業文化の変質につながるのではという懸念が存在した。"
+ },
+ {
+  "view": "all",
+  "a": "AI",
+  "b": "意味",
+  "documents": 2,
+  "label": "C",
+  "quote": "AIはディープラーニングにより「言葉の意味そのもの」を学習するわけではない"
+ },
+ {
+  "view": "all",
+  "a": "OpenAI",
+  "b": "テキスト",
+  "documents": 2,
+  "label": "C",
+  "quote": "2025年3月、OpenAIはChatGPTにGPT-4oのネイティブ画像生成機能を導入し、テキストや写真から画像を生成・変換できるようにした。"
+ },
+ {
+  "view": "all",
+  "a": "Google",
+  "b": "とも",
+  "documents": 1,
+  "label": "C",
+  "quote": "IPOの直前、ラリー・ペイジとセルゲイ・ブリン、エリック・シュミットの3人は、2004年から2024年までの20年間、Googleでともに働くことに合意していた。"
+ },
+ {
+  "view": "all",
+  "a": "言語モデル",
+  "b": "ChatGPT",
+  "documents": 2,
+  "label": "B",
+  "quote": "2023年12月、Googleは、OpenAIのChatGPTで使用される「GPT」と似たようなAIモデルである新しいLLM「Gemini (言語モデル)」を公開した。"
+ },
+ {
+  "view": "all",
+  "a": "必要",
+  "b": "MDP",
+  "documents": 1,
+  "label": "C",
+  "quote": "古典的な動的計画法と強化学習アルゴリズムとの主な違いは、後者はMDPの正確な数学的モデルの知識を必要とせず、正確な方法では実行不可能な大規模MDPを対象にできることである。"
+ },
+ {
+  "view": "all",
+  "a": "英語",
+  "b": "日本",
+  "documents": 1,
+  "label": "B",
+  "quote": "日本では、学校教育の場合、文部科学省が定める学習指導要領により、義務教育である中学校3年間と小学校5・6年生で英語が必修教科となっているが、「受験英語」という言葉があるように読解力が特に重視されていて、会話（英会話）があまり教えられていないため、受験（入学試験）が終わると英語に接する機会が少なく、非英語圏の先進国やアジ"
+ },
+ {
+  "view": "all",
+  "a": "モデル",
+  "b": "マイクロソフト",
+  "documents": 2,
+  "label": "C",
+  "quote": "一方、『ニューヨーク・タイムズ』のような他の新聞社は、AIモデルの訓練に自社のコンテンツを無断利用したことに対する著作権侵害で OpenAIとMicrosoftを訴えることを選択した。"
+ },
+ {
+  "view": "all",
+  "a": "学習",
+  "b": "GPT-3",
+  "documents": 1,
+  "label": "C",
+  "quote": "GPT-3は、ゼロショット、少数ショット、ワンショットの学習を行うことができる。"
+ },
+ {
+  "view": "all",
+  "a": "AI",
+  "b": "プロンプト",
+  "documents": 1,
+  "label": "A",
+  "quote": "プロンプト（prompt）とは、人工知能（AI）が実行すべきタスクを記述した自然言語によるテキスト（文章）のことである。"
+ },
+ {
+  "view": "all",
+  "a": "AI",
+  "b": "実行",
+  "documents": 2,
+  "label": "C",
+  "quote": "プロンプト（prompt）とは、人工知能（AI）が実行すべきタスクを記述した自然言語によるテキスト（文章）のことである。"
+ },
+ {
+  "view": "all",
+  "a": "Google",
+  "b": "2014年",
+  "documents": 1,
+  "label": "C",
+  "quote": "当初は1つのティッカーシンボル”GOOG”のもとで扱われていたGoogleの株式は、2014年にクラスC株式（無議決権株）である”GOOG”と、クラスA株式である”GOOGL”へと分割されていた。"
+ },
+ {
+  "view": "all",
+  "a": "OpenAI",
+  "b": "Transformer",
+  "documents": 3,
+  "label": "B",
+  "quote": "GPT-3（ジーピーティースリー、Generative Pre-trained Transformer 3）は、OpenAIが開発したGPTシリーズの大規模言語モデル (LLM) 。"
+ },
+ {
+  "view": "all",
+  "a": "Google",
+  "b": "はじめ",
+  "documents": 2,
+  "label": "C",
+  "quote": "また、Googleをはじめとした多くのIT企業が研究開発に力を入れている。"
+ },
+ {
+  "view": "all",
+  "a": "OpenAI",
+  "b": "可能性",
+  "documents": 1,
+  "label": "C",
+  "quote": "OpenAIは、そのような言語モデルのスケールアップは、予測言語モデルの基本的な機能制限に近づいたり遭遇したりする可能性があると警告した。"
+ },
+ {
+  "view": "all",
+  "a": "いくつ",
+  "b": "GPT-3",
+  "documents": 2,
+  "label": "C",
+  "quote": "OpenAIは、GPT-3が生成する有毒言語の量を制限するために、いくつかの戦略を実装した。"
+ },
+ {
+  "view": "all",
+  "a": "LLM",
+  "b": "一般公開",
+  "documents": 1,
+  "label": "C",
+  "quote": "大半のオープンソースのLLMは一般公開されているデータを利用しているが、非公開のデータで事前学習が行われることもある。"
+ },
+ {
+  "view": "all",
+  "a": "Google",
+  "b": "実現",
+  "documents": 1,
+  "label": "C",
+  "quote": "A4AIにおけるGoogleの役割は、国際連合ブロードバンド委員会が設定した、各国の平均月収の5％以下というコストでのブロードバンドインターネット接続を実現するため、インターネット接続のコストダウンに貢献する事とされた。"
+ },
+ {
+  "view": "all",
+  "a": "Google",
+  "b": "アメリカ",
+  "documents": 1,
+  "label": "A",
+  "quote": "Google LLC（グーグル）は、情報技術、検索エンジン、オンライン広告及び人工知能（AI）等の事業を行うアメリカの多国籍企業である。"
+ },
+ {
+  "view": "all",
+  "a": "LLM",
+  "b": "入力",
+  "documents": 2,
+  "label": "C",
+  "quote": "プロンプトLLMはに入力と出力の組みの例が提示され、入力が与えられた場合にその指示に従ったモデルが出力を生成するような命令を生成するよう求められる。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Google",
+  "b": "東京オフィス",
+  "documents": 1,
+  "label": "A",
+  "quote": "このため、Googleの東京オフィスは2019年度後期に一部が渋谷に戻ったこととなる（渋谷から六本木への移転は2010年夏に行われた）。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "イギリス",
+  "b": "中国政府",
+  "documents": 1,
+  "label": "B",
+  "quote": "この事態を受けて、Googleは中国政府と交渉を重ねたが折り合いがつかず、2010年3月23日には同国内からの検索事業を撤退し、この日以降は同国内の検索サイト (https://www.google.cn) にアクセスすると、元はイギリスの植民地であり、現在も表現の自由や報道の自由が保障されている特別行政区で、検閲がな"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "OpenAI",
+  "b": "ニューヨーク・タイムズ",
+  "documents": 1,
+  "label": "B",
+  "quote": "2024年10月、OpenAIの元研究者であるスチール・バラジは、『ニューヨーク・タイムズ』の取材に対し、OpenAIによる商用の大規模言語モデルの開発が米国著作権法に違反するとの見解を示した。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "GPT-4",
+  "b": "イリヤ・サツケバー",
+  "documents": 1,
+  "label": "A",
+  "quote": "これらの批判に対し、OpenAIの共同設立者・主任研究員であるイリヤ・サツケバーは、これまでOpenAIが人工知能研究に対してオープンソースのアプローチを取っていたのは全くの誤りだったとしており、「GPT-4はこれまでに比べると優れた言語モデルであるが、将来的にはさらに性能が向上することが予想され、そうすれば悪用され、"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "BBC",
+  "b": "フランス",
+  "documents": 1,
+  "label": "B",
+  "quote": "これをきっかけに批判が起こり、イギリス政府や英紙ガーディアンがYouTubeから広告を取り下げ、フランスのHavas（広告・マーケティング代理店、世界6位）は、GoogleのディスプレイネットワークとYouTubeから同社のイギリスの顧客の広告を撤退、 セインズベリーズ、トヨタ自動車、フォルクスワーゲン、 グラクソ・ス"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "GPT-3.5",
+  "b": "Codex",
+  "documents": 1,
+  "label": "B",
+  "quote": "これらには GPT-3.5 と Codex は含まれない。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Anthropic",
+  "b": "GPU",
+  "documents": 1,
+  "label": "A",
+  "quote": "AMDは、Anthropicと提携し、2ギガワットのAMD Instinct MI450 GPUを提供し、Claudeを採用し、Anthropicに最大50億ドルを投資すると発表した。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "ChatGPT",
+  "b": "xAI",
+  "documents": 1,
+  "label": "B",
+  "quote": "大規模言語モデル（LLM）であるClaudeを公開しており、OpenAIのChatGPT、GoogleのGemini、xAIのGrokと競合している。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Anthropic",
+  "b": "中国政府",
+  "documents": 1,
+  "label": "A",
+  "quote": "2025年11月、Anthropicは、中国政府の支援を受けたハッカーがClaudeを利用して、約30のグローバル組織に対して自動サイバー攻撃を実行したと発表した。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "GPT",
+  "b": "Gemini",
+  "documents": 1,
+  "label": "A",
+  "quote": "2023年12月、Googleは、OpenAIのChatGPTで使用される「GPT」と似たようなAIモデルである新しいLLM「Gemini (言語モデル)」を公開した。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "OpenAI",
+  "b": "日本市場",
+  "documents": 1,
+  "label": "A",
+  "quote": "2024年4月、OpenAI Japanのトップとして、元Amazon Web Services Japan社長の長崎忠雄を任命し、日本市場での商用展開体制を強化した。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "OpenAI",
+  "b": "function",
+  "documents": 1,
+  "label": "C",
+  "quote": "2023年6月13日、OpenAIは「gpt-3.5-turbo-16k」と関数呼び出し (function calling) を追加した。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "OpenAI",
+  "b": "GP",
+  "documents": 2,
+  "label": "C",
+  "quote": "OpenAI GP LLC：非営利法人OpenAI, Inc.はOpenAI GP LLCを完全所有している。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "GPT-4",
+  "b": "米国",
+  "documents": 1,
+  "label": "B",
+  "quote": "6月、マイクロソフトがAzure Governmentを通じて、国防総省やNASAといった米国の主要政府機関へのGPT-4の提供を発表。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "OpenAI",
+  "b": "NVIDIA",
+  "documents": 1,
+  "label": "B",
+  "quote": "同年7月27日、NVIDIAはOpenAIの暴走事故を受けてマイクロソフトやスペースX、パランティア・テクノロジーズなどとオープンソースのAIを活用するサイバー攻撃対策に向けた「Open Secure AI Alliance」を設立した。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "GPT-4",
+  "b": "API",
+  "documents": 2,
+  "label": "B",
+  "quote": "APIはGPT-4 Turboの半分の価格で2倍の速度を実現。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Gemini",
+  "b": "xAI",
+  "documents": 1,
+  "label": "B",
+  "quote": "大規模言語モデル（LLM）であるClaudeを公開しており、OpenAIのChatGPT、GoogleのGemini、xAIのGrokと競合している。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "マイクロソフト",
+  "b": "中国政府",
+  "documents": 1,
+  "label": "A",
+  "quote": "2006年2月15日のアメリカ合衆国議会下院国際関係委員会アジア・太平洋小委員会の公聴会で、Googleはマイクロソフトなど他のIT大手4社とともに「中国政府の圧政に加担している」と非難された。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "マイクロソフト",
+  "b": "NASA",
+  "documents": 1,
+  "label": "A",
+  "quote": "6月、マイクロソフトがAzure Governmentを通じて、国防総省やNASAといった米国の主要政府機関へのGPT-4の提供を発表。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "AI",
+  "b": "DALL-E",
+  "documents": 1,
+  "label": "B",
+  "quote": "現在のAIブームを牽引する主要な組織として、文章を生成するChatGPTや画像を生成するDALL-E、動画を生成するSoraなどを提供する。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "マイクロソフト",
+  "b": "Amazon",
+  "documents": 1,
+  "label": "B",
+  "quote": "Googleの親会社であるAlphabet Inc.はNVIDIA、マイクロソフト、Apple、Amazon、Metaと並びビッグ・テックの一角と見なされている。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Google",
+  "b": "Transformer",
+  "documents": 1,
+  "label": "B",
+  "quote": "Google DeepMindの2022年の研究では、両対数学習率のスケジュールで1エポックで自己回帰的な訓練を行ったTransformerの大規模言語モデルの場合のスケーリング則（Chinchillaスケーリング則）を次のように表している。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "BIG-bench",
+  "b": "GLUE",
+  "documents": 1,
+  "label": "B",
+  "quote": "たとえば、GLUE、SuperGLUE、MMLU、BIG-bench、HELMなどがある。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "BIG-bench",
+  "b": "TriviaQA",
+  "documents": 1,
+  "label": "B",
+  "quote": "BoolQ, PIQA, SIQA, HellaSwag, WinoGrande, ARC, OpenBookQA, NaturalQuestions, TriviaQA, RACE, MMLU (Measuring Massive Multitask Language Understanding), BIG-benc"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "OpenAI",
+  "b": "RLHF",
+  "documents": 1,
+  "label": "A",
+  "quote": "OpenAIのInstructGPTプロトコルでは、人間が作成したプロンプトと応答の組からなるデータセットによる教師ありファインチューニングと、それに続く、人間のフィードバックによる強化学習（RLHF）を伴っている。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "オープンソース",
+  "b": "PyTorch",
+  "documents": 1,
+  "label": "A",
+  "quote": "PyTorch - Meta（旧Facebook）のAI研究部門（FAIR）を中心に開発され、現在はLinux Foundation傘下で管理されているオープンソースのフレームワーク。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Transformer",
+  "b": "generative",
+  "documents": 1,
+  "label": "C",
+  "quote": "GPT（Generative pre-trained transformer）のような現代の言語モデルは、特定のタスクにおいて人間に匹敵する能力を発揮するが、認知モデルとしての妥当性は不確かになっている。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "ChatGPT",
+  "b": "GPT-3",
+  "documents": 1,
+  "label": "A",
+  "quote": "2022年11月30日に同社が発表した生成AIチャットボット「ChatGPT」用として、GPT-3をベースに人間との対話能力向上のためのファインチューニング（追加学習）を行ったモデルであり、ChatGPTリリース当時の基盤となった大規模言語モデル (LLM) である。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Anthropic",
+  "b": "LLC",
+  "documents": 1,
+  "label": "C",
+  "quote": "2023年2月、テキサスに拠点を置くAnthrop LLCから登録商標「Anthropic A.I.」の使用で訴えられた。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "AI",
+  "b": "OS",
+  "documents": 1,
+  "label": "B",
+  "quote": "既存のAIモデルを大きく上回る性能を備えているが、OSやブラウザの脆弱性を自律的に発見し攻撃するコードを作る能力まで持っているという危険性があるため一般公開はしないことになった。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "アメリカ合衆国",
+  "b": "オーストラリア",
+  "documents": 1,
+  "label": "B",
+  "quote": "また、北米でアメリカ合衆国が隣に位置していることから、旧英領であるとはいえ、オーストラリアやインドなどほかの旧英領植民地とは違い、比べるとカナダの英語発音はイギリス英語よりもアメリカ英語に近いが、単語の綴りとしてはイギリス英語式とアメリカ英語式が混在している。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "マイクロソフト",
+  "b": "Microsoft Copilot",
+  "documents": 2,
+  "label": "A",
+  "quote": "Microsoft Copilot for Microsoft 365 - Microsoft Office での提供"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "サム・アルトマン",
+  "b": "マイクロソフト",
+  "documents": 1,
+  "label": "B",
+  "quote": "取締役のイリヤ・サツケバー、前暫定CEOのミラ・ムラティ等、2023年11月20日14時10分の時点で770名中738名（96%）の従業員が、3名の社外取締役の退任を求め、サム・アルトマンとグレッグ・ブロックマンの復帰も求め、実現しなければ退社しマイクロソフトに移籍する可能性があると警告する文章に署名した。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "GPT-3",
+  "b": "Common Crawl",
+  "documents": 1,
+  "label": "A",
+  "quote": "GPT-3の重み付き事前学習データセットの60%は、Common Crawlのフィルタ処理された版から取得されたもので、4,100億バイト対符号化トークンで構成される。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "マイクロソフト",
+  "b": "米国防総省",
+  "documents": 1,
+  "label": "A",
+  "quote": "10月、OpenAIのツールが米国防総省とマイクロソフト間の契約により、Microsoft Azureを通じて米アフリカ軍に提供されていたことが調達文書で確認される。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "ChatGPT",
+  "b": "GPT-3.5",
+  "documents": 2,
+  "label": "A",
+  "quote": "ChatGPT は GPT-3.5 以降を使用している。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Google",
+  "b": "BBC",
+  "documents": 1,
+  "label": "A",
+  "quote": "BBCはGoogleを「世界で最も強力な企業」と表現しており、世界で最も価値のあるブランドの1つにも数えられている。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "OpenAI",
+  "b": "CEO",
+  "documents": 2,
+  "label": "C",
+  "quote": "2023年11月17日、創業者のサム・アルトマンが取締役会からOpenAI, Inc.のCEOを解任され、会社から離れた。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Google",
+  "b": "Google",
+  "documents": 1,
+  "label": "C",
+  "quote": "Google LLC（グーグル）は、情報技術、検索エンジン、オンライン広告及び人工知能（AI）等の事業を行うアメリカの多国籍企業である。"
+ },
+ {
+  "view": "proper-2docs",
+  "a": "Anthropic",
+  "b": "AGI",
+  "documents": 1,
+  "label": "A",
+  "quote": "Anthropic は、責任あるAIの使用を企業理念とし、汎用人工知能（AGI）を研究している。"
+ }
+]

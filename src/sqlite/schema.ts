@@ -290,4 +290,6 @@ CREATE INDEX knowledge_entity_mentions_name_key ON knowledge_entity_mentions(nam
 ALTER TABLE knowledge_versions ADD COLUMN reextract_not_before INTEGER NOT NULL DEFAULT 0 CHECK (reextract_not_before >= 0);
 ALTER TABLE knowledge_versions ADD COLUMN reextract_failures INTEGER NOT NULL DEFAULT 0 CHECK (reextract_failures >= 0);
 CREATE INDEX knowledge_versions_reextract ON knowledge_versions(extractor, version_id) WHERE state = 'published' AND extractor <> '';`,
+	// KG2 G8: a graph reads the relations of the mentions it returns, found from their source.
+	`CREATE INDEX knowledge_relation_mentions_source ON knowledge_relation_mentions(version_id, fragment_ordinal, source_local_id);`,
 ];

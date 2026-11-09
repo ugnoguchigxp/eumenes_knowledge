@@ -132,7 +132,7 @@ export {
 	readGraphEvidenceInSnapshot,
 	readGraphLinksInSnapshot,
 	readGraphMentionsInSnapshot,
-	readGraphRelationsInSnapshot,
+	readGraphRelationsAmongInSnapshot,
 } from "./graph.js";
 export type {
 	GraphDocument,

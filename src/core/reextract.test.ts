@@ -131,7 +131,7 @@ describe("the defaults of KG2 G7", () => {
 		await scanWith(env, h);
 		expect(env.inference.calls).toHaveLength(0);
 		expect(getPublishedVersionInSnapshot(env.db, key(1))).not.toBeNull();
-		expect(extractorOf(env, 1)).toBe("names:charclass@rules5");
+		expect(extractorOf(env, 1)).toBe("names:charclass@rules6");
 	});
 
 	test("without `summaries` the identity chain asks the model for no summary", async () => {
@@ -179,7 +179,7 @@ describe("re-extraction when the extractor changes (kg2.md G7)", () => {
 		await scanWith(env, second);
 		const after = getPublishedVersionInSnapshot(env.db, key(1));
 		expect(after?.versionId).not.toBe(before?.versionId);
-		expect(extractorOf(env, 1)).toBe("names:long-vowel@rules5");
+		expect(extractorOf(env, 1)).toBe("names:long-vowel@rules6");
 		expect(keysOf(env, 1)).toContain("サーバー");
 		expect(keysOf(env, 1)).not.toContain("サーバ");
 		// The body was neither read nor embedded again; fragments and vectors are the same.
@@ -284,7 +284,7 @@ describe("re-extraction when the extractor changes (kg2.md G7)", () => {
 		await scanWith(env, handlersOf(env, { extractor: "names" }, longVowel()));
 		// Read once (the new body), extracted with the new tokenizer.
 		expect(env.source.readCalls).toBe(reads + 1);
-		expect(extractorOf(env, 1)).toBe("names:long-vowel@rules5");
+		expect(extractorOf(env, 1)).toBe("names:long-vowel@rules6");
 		expect(keysOf(env, 1)).toContain("サーバー");
 	});
 
@@ -452,7 +452,7 @@ describe("re-extraction when the extractor changes (kg2.md G7)", () => {
 			expect(getPublishedVersionInSnapshot(env.db, key(n))?.versionId).not.toBe(
 				before[i],
 			);
-			expect(extractorOf(env, n)).toBe("names:long-vowel@rules5");
+			expect(extractorOf(env, n)).toBe("names:long-vowel@rules6");
 		}
 		// The new versions wait for the identity chain (compared without the model).
 		expect(

@@ -5,16 +5,23 @@ import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
  * recorded with every extraction (`names:<tokenizer>@rules<version>`). Version 4 is the one
  * measured in kg2.md §7.1–7.3; version 5 (§7.4) blanks only the ASCII characters of a URL or a
  * path, and also e-mail addresses and secret-like strings (`scripts/kg-alt/sudachi_nouns.py` is
- * the same rules in Python).
+ * version 5 in Python); version 6 (§7.9, from real text) adds math, citation lines, the middle
+ * dot, plain words for the space join, the identifier boundary and glosses in parentheses.
  *
  * - A name is a run of adjacent noun tokens (nouns, prefixes, noun-like suffixes) and ASCII
- *   words. Two capitalized ASCII words with one space between stay one run ("Temporal
- *   Reasoning"). Leading prefixes and trailing suffixes are dropped.
+ *   words. Two plain capitalized words (a capital, then small letters: "Temporal Reasoning")
+ *   with one space between stay one run; an identifier ("PaLM", "GPT-4") is not joined across a
+ *   space. Katakana words joined by a middle dot are one run ("サム・アルトマン"). A run is cut
+ *   between an identifier (a digit, a capital after the first letter, or capitals only) and a
+ *   Japanese word ("GPT-4カスタムモデル" is GPT-4 and カスタムモデル). Leading prefixes and trailing
+ *   suffixes are dropped.
  * - Full-width ASCII and the ideographic space become ASCII one for one first (offsets stay;
  *   ．！？ stay). Then URLs, e-mail addresses, paths under a home or temporary directory or a
  *   Windows drive, secret-like strings (API keys of a known form, JWTs, the value after
  *   `password=` and the like) are blanked out: their ASCII characters only, so the Japanese text
- *   written right after one stays, and a trailing full stop or comma stays.
+ *   written right after one stays, and a trailing full stop or comma stays. Math (TeX: a
+ *   `{\displaystyle …}` group, `$$…$$`, `\(…\)`, `\[…\]`, a TeX command) and every line that
+ *   cites (an ISBN, ISSN, DOI or arXiv number) are blanked out too.
  * - No name: a run of one character, or of digits and symbols only; a formal noun (こと, もの,
  *   ...) ends a run; a single English function word or note marker (TODO); a command-line
  *   option (--full); a number with a unit (16GB); a token-like ASCII string (32 characters or
@@ -22,12 +29,13 @@ import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
  *   digit). A sentence's full stop and a leading dot before a letter are not part of a name.
  * - Proper: a token the tokenizer tags a proper noun, or an ASCII word that is an identifier
  *   (has a digit or one of _ - . / + #) or is not a function word; a lower-case English word
- *   counts only outside an English sentence (one without kana).
+ *   counts only outside an English sentence (one without kana) and outside parentheses (there it
+ *   is a gloss of the word before: 「生成的事前学習（generative pre-training）」).
  *
  * The lists are general (function words, formal nouns, markers), never names of a subject
  * (plan.md §5.3 as approved for KG2).
  */
-export const NAME_RULES_VERSION = 5;
+export const NAME_RULES_VERSION = 6;
 
 /** A name found in a text: where it is (UTF-16 offsets), how it is keyed, and whether proper. */
 export type NameCandidate = {
@@ -63,6 +71,30 @@ const SECRET =
 const SECRET_VALUE =
 	/(?<![A-Za-z0-9])((?:password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key)\s*[=:]\s*)([!-~]+)/gi;
 const TRAILING_PUNCTUATION = /[.,;:!?']+$/;
+/** A book or paper number: ISBN, ISSN, DOI or arXiv, each with its number. */
+const CITATION =
+	/\b(?:ISBN(?:-1[03])?:?\s*[0-9][0-9Xx-]*|ISSN:?\s*[0-9][0-9Xx-]*|doi\s*:?\s*10\.[!-~]*|arXiv\s*:\s*[0-9][!-~]*)/gi;
+/** A part of a line up to a Japanese sentence end: the unit a citation blanks. */
+const CITATION_UNIT = /[^。！？\n]+/g;
+/** A unit longer than this is prose that cites, not a bibliography entry: only the number goes. */
+const CITATION_UNIT_CHARS = 300;
+const MATH_GROUP = /\{\\(?:displaystyle|textstyle|scriptstyle)(?![A-Za-z])/g;
+/** `$$…$$`, `\(…\)`, `\[…\]` within one paragraph (no blank line) and at most 1000 characters. */
+const MATH_DELIMITED =
+	/\$\$(?:[^$\n]|\$(?!\$)|\n(?![ \t]*\n)){1,1000}?\$\$|\\\((?:[^\n]|\n(?![ \t]*\n)){1,1000}?\\\)|\\\[(?:[^\n]|\n(?![ \t]*\n)){1,1000}?\\\]/g;
+/**
+ * A backslash and letters: a TeX command (`x\alpha` too). The parts of a Windows path or a regular
+ * expression go with them (`src\core`, `\w+`); they are no names either.
+ */
+const TEX_COMMAND = /\\[A-Za-z]+/g;
+const KATAKANA_WORD = /^[\p{Script=Katakana}ー]+$/u;
+const MIDDLE_DOT = new Set(["・", "･"]);
+/** A plain word: a capital, then small letters (hyphenated parts too: "Pre-trained"). */
+const PLAIN_WORD = /^[A-Z][a-z]+(?:-[A-Za-z][a-z]*)*$/;
+/** An identifier: a digit, a capital after the first letter, or capitals only (two or more). */
+const IDENTIFIER =
+	/^(?=.*[A-Za-z])(?:.*[0-9].*|.[^A-Z]*[A-Z].*|[A-Z][A-Z0-9_\-./+#]+)$/;
+const LOWER_ONLY = /^[a-z][a-z-]*$/;
 const TOKEN_LIKE =
 	/^(?:[0-9A-Fa-f]{32,}|(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[A-Za-z0-9]{32,})$/;
 /** Common English function words: every word of an English sentence is a noun to a Japanese tokenizer. */
@@ -81,7 +113,10 @@ const asciiProper = (t: NameToken) =>
 	asciiWord(t) &&
 	HAS_LETTER.test(t.surface) &&
 	(IDENTIFIER_MARK.test(t.surface) || !STOPWORDS.has(t.surface.toLowerCase()));
-const capitalized = (t: NameToken) => /^[A-Z]/.test(t.surface);
+const plainWord = (t: NameToken) => PLAIN_WORD.test(t.surface);
+const identifier = (t: NameToken) => asciiWord(t) && IDENTIFIER.test(t.surface);
+const japanese = (t: NameToken) => !asciiWord(t) && t.kind !== "space";
+const katakanaWord = (t: NameToken) => KATAKANA_WORD.test(t.surface);
 const nounish = (t: NameToken) =>
 	t.kind === "noun" || t.kind === "prefix" || t.kind === "suffix";
 
@@ -94,12 +129,64 @@ const onlyDigitsOrSymbols = (s: string): boolean =>
 		(c) => /\p{Nd}/u.test(c) || c === "_" || !/[\p{L}\p{N}]/u.test(c),
 	);
 
+/** Spaces for every character but line breaks (the lines stay where they were). */
+const blankKeepingLines = (m: string): string => m.replace(/[^\n]/g, " ");
+
+/**
+ * Math as TeX: `{\displaystyle …}` groups to their matching brace (to the line's end when
+ * unbalanced; `\{` and `\}` are no group braces), `$$…$$`, `\(…\)`, `\[…\]`, then any TeX command
+ * left. Linear: a group inside one already blanked is skipped.
+ */
+function blankMath(text: string): string {
+	const parts: string[] = [];
+	let done = 0;
+	for (const m of text.matchAll(MATH_GROUP)) {
+		if (m.index < done) continue;
+		let depth = 0;
+		let end = m.index;
+		for (; end < text.length; end++) {
+			const c = text[end];
+			if (c === "\n") break;
+			if (end > m.index && text[end - 1] === "\\") continue;
+			if (c === "{") depth++;
+			else if (c === "}" && --depth === 0) {
+				end++;
+				break;
+			}
+		}
+		parts.push(
+			text.slice(done, m.index),
+			blankKeepingLines(text.slice(m.index, end)),
+		);
+		done = end;
+	}
+	parts.push(text.slice(done));
+	return parts
+		.join("")
+		.replace(MATH_DELIMITED, blankKeepingLines)
+		.replace(TEX_COMMAND, blankKeepingLines);
+}
+
+/**
+ * A citation (rules version 6): the part of the line up to a Japanese sentence end that holds a
+ * book or paper number becomes spaces (its names are bibliography, not the subject); a part
+ * longer than `CITATION_UNIT_CHARS` is prose, and only the number goes.
+ */
+const blankCitations = (text: string): string =>
+	text.replace(CITATION_UNIT, (unit) => {
+		CITATION.lastIndex = 0;
+		if (!CITATION.test(unit)) return unit;
+		return unit.length <= CITATION_UNIT_CHARS
+			? " ".repeat(unit.length)
+			: unit.replace(CITATION, (m) => " ".repeat(m.length));
+	});
+
 /**
  * The text the rules read: full-width ASCII and the ideographic space become ASCII one for one,
  * then URLs, e-mail addresses, home, temporary and drive paths and secret-like strings become
- * spaces of the same length (a trailing full stop or comma of a URL or a path stays). The length
- * never changes, so an offset into it is an offset into the original text. ．！？ stay (sentence
- * ends).
+ * spaces of the same length (a trailing full stop or comma of a URL or a path stays), then math
+ * and citations (rules version 6). The length never changes, so an offset into it is
+ * an offset into the original text. ．！？ stay (sentence ends).
  */
 export function blankOut(text: string): string {
 	const blank = (m: string) => " ".repeat(m.length);
@@ -118,7 +205,9 @@ export function blankOut(text: string): string {
 		.replace(
 			SECRET_VALUE,
 			(_, key: string, value: string) => key + blank(value),
-		);
+		)
+		.replace(/^[\s\S]*$/, blankMath)
+		.replace(/^[\s\S]*$/, blankCitations);
 }
 
 /** Whether the sentence around text[start, end) is English: it has letters and no kana. */
@@ -170,6 +259,24 @@ export function namesFromTokens(
 			throw new RangeError("tokens do not describe the text");
 		cursor = t.end;
 	}
+	// How many pairs of parentheses closed within the line hold each offset (an unclosed "(", as
+	// in ":(", holds nothing).
+	const depth = new Int32Array(text.length + 1);
+	const open: number[] = [];
+	for (let i = 0; i < text.length; i++) {
+		const c = text[i];
+		if (c === "\n") open.length = 0;
+		else if (c === "(") open.push(i);
+		else if (c === ")") {
+			const at = open.pop();
+			if (at !== undefined) {
+				(depth[at + 1] as number)++;
+				(depth[i] as number)--;
+			}
+		}
+	}
+	for (let i = 1; i <= text.length; i++)
+		depth[i] = (depth[i] as number) + (depth[i - 1] as number);
 	const runs: NameToken[][] = [];
 	let current: NameToken[] = [];
 	const close = () => {
@@ -184,10 +291,27 @@ export function namesFromTokens(
 				t.surface === " " &&
 				prev &&
 				next &&
-				asciiWord(prev) &&
-				asciiWord(next) &&
-				capitalized(prev) &&
-				capitalized(next)
+				plainWord(prev) &&
+				plainWord(next)
+			) {
+				current.push(t);
+				return;
+			}
+			close();
+			return;
+		}
+		// A middle dot between two katakana words ("サム・アルトマン") stays in the run.
+		if (MIDDLE_DOT.has(t.surface)) {
+			const prev = current.at(-1);
+			const next = tokens[i + 1];
+			if (
+				prev &&
+				next &&
+				prev.end === t.start &&
+				next.start === t.end &&
+				katakanaWord(prev) &&
+				katakanaWord(next) &&
+				nounish(next)
 			) {
 				current.push(t);
 				return;
@@ -201,7 +325,14 @@ export function namesFromTokens(
 		}
 		if (nounish(t) || asciiWord(t)) {
 			const last = current.at(-1);
-			if (last && last.end !== t.start) close();
+			// An identifier and a Japanese word are two names ("GPT-4カスタムモデル").
+			if (
+				last &&
+				(last.end !== t.start ||
+					(identifier(last) && japanese(t)) ||
+					(japanese(last) && identifier(t)))
+			)
+				close();
 			current.push(t);
 		} else close();
 	});
@@ -209,7 +340,12 @@ export function namesFromTokens(
 	const out: NameCandidate[] = [];
 	for (let run of runs) {
 		while (run.length > 0 && run[0]?.kind === "prefix") run = run.slice(1);
-		while (run.length > 0 && run.at(-1)?.kind === "suffix")
+		// A suffix, or a middle dot left before one, is not part of the name.
+		while (
+			run.length > 0 &&
+			(run.at(-1)?.kind === "suffix" ||
+				MIDDLE_DOT.has(run.at(-1)?.surface ?? ""))
+		)
 			run = run.slice(0, -1);
 		const first = run[0];
 		const last = run.at(-1);
@@ -239,13 +375,19 @@ export function namesFromTokens(
 		if (cut > 0) key = key.replace(/\.+$/, "");
 		key = key.slice(lead);
 		const english = englishSentence(text, first.start, nameEnd);
-		const proper = run.some(
-			(t) =>
+		// Inside parentheses, small-letter English is a gloss of the word before (rules v6), even
+		// when the tokenizer tags it proper (Sudachi tags some unknown English words so).
+		const gloss = (depth[first.start] ?? 0) > 0;
+		const proper = run.some((t) => {
+			const bare = t.surface.replace(/^\.+|\.+$/g, "");
+			if (gloss && LOWER_ONLY.test(bare)) return false;
+			return (
 				t.proper ||
 				(asciiProper(t) &&
-					!(english && LOWER_WORD.test(t.surface.replace(/^\.+|\.+$/g, ""))) &&
-					!MARKERS.has(t.surface.toLowerCase())),
-		);
+					!(english && LOWER_WORD.test(bare)) &&
+					!MARKERS.has(t.surface.toLowerCase()))
+			);
+		});
 		const start = first.start + lead;
 		out.push({ surface, start, end: start + surface.length, key, proper });
 	}

@@ -150,8 +150,9 @@ function evidenceOf(
  *   sentence makes every word a noun, and its pairs grow with the square of its length), then
  *   in the order of their first sentence.
  * - `no_evidence`: a name with no quotation (one that crosses a sentence end).
- * Relations are only made between kept entities; the pairs a dropped entity would have made are
- * not counted.
+ * Only a pair with a proper name at one end at least is a relation (two common nouns make none;
+ * rules version 6), and never a pair of two names with one key. Relations are only made between
+ * kept entities; the pairs a dropped entity would have made are not counted.
  *
  * Throws `TokenizerFailure` when the tokenizer throws. Tokens that do not describe the text (the
  * tokenizer's contract broken, the same for every attempt) fail this fragment alone
@@ -278,6 +279,20 @@ export function extractNames(
 				const [b, sb] = list[j] as [number, Span];
 				const source = Math.min(a, b);
 				const target = Math.max(a, b);
+				// Two common nouns make no relation (rules v6, kg2.md §7.9): they were most of the
+				// pairs and of the noise, and none of the known relations needed them.
+				if (
+					!(kept[source] as { proper: boolean }).proper &&
+					!(kept[target] as { proper: boolean }).proper
+				)
+					continue;
+				// Two surfaces of one key are one entity when read ("Google" and "google", or a
+				// tokenizer's normal form: Sudachi gives グーグル the key of Google): no relation.
+				if (
+					(kept[source] as { key: string }).key ===
+					(kept[target] as { key: string }).key
+				)
+					continue;
 				const key = `${source} ${target}`;
 				const pair = pairs.get(key) ?? {
 					source,

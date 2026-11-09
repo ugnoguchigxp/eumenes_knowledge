@@ -10,7 +10,7 @@ import {
 	readGraphDocumentsInSnapshot,
 	readGraphEvidenceInSnapshot,
 	readGraphMentionsInSnapshot,
-	readGraphRelationsInSnapshot,
+	readGraphRelationsAmongInSnapshot,
 	readGraphLinksInSnapshot,
 } from "./graph.js";
 
@@ -123,23 +123,39 @@ describe("graph reads", () => {
 		expect(docs[0]).toMatchObject({ namespace: "wiki", path: "notes/1.md" });
 		expect(readGraphDocumentsInSnapshot(env.db, [])).toEqual([]);
 
-		// The scripted extraction has no relation: insert one for the first version.
-		env.db.run(
-			`INSERT INTO knowledge_relation_mentions (version_id, fragment_ordinal, local_id, source_local_id,
+		// The scripted extraction has no relation: insert one between two mentions of one fragment.
+		const byFragment = new Map<string, typeof mentions>();
+		for (const m of mentions) {
+			const k = `${m.versionId}:${m.fragmentOrdinal}`;
+			byFragment.set(k, [...(byFragment.get(k) ?? []), m]);
+		}
+		const [m1, m2] = [...byFragment.values()].find((g) => g.length >= 2) ?? [];
+		if (!m1 || !m2) throw new Error("no fragment with two mentions");
+		const insert = (localId: string, target: string, relation: string) =>
+			env.db.run(
+				`INSERT INTO knowledge_relation_mentions (version_id, fragment_ordinal, local_id, source_local_id,
  target_local_id, directed, relation, description, keywords_json, qualifier_negated, qualifier_condition, qualifier_certainty)
-VALUES (?, 0, 'r1', 'e1', 'e2', 1, 'partner', 'd', '["k","l"]', 1, 'if so', 'uncertain')`,
-			[versions[0]!],
-		);
-		const read = readGraphRelationsInSnapshot(env.db, versions, 10);
+VALUES (?, ?, ?, ?, ?, 1, ?, 'd', '["k","l"]', 1, 'if so', 'uncertain')`,
+				[
+					m1.versionId,
+					m1.fragmentOrdinal,
+					localId,
+					m1.localId,
+					target,
+					relation,
+				],
+			);
+		insert("r1", m2.localId, "partner");
+		const ids = mentions.map((m) => m.entityId);
+		const read = readGraphRelationsAmongInSnapshot(env.db, ids, 10);
 		expect(read.truncated).toBe(false);
-		const relations = read.relations;
-		expect(relations).toEqual([
+		expect(read.relations).toEqual([
 			{
 				relationId: expect.any(Number),
-				versionId: versions[0]!,
-				fragmentOrdinal: 0,
-				sourceLocalId: "e1",
-				targetLocalId: "e2",
+				versionId: m1.versionId,
+				fragmentOrdinal: m1.fragmentOrdinal,
+				sourceLocalId: m1.localId,
+				targetLocalId: m2.localId,
 				directed: true,
 				relation: "partner",
 				keywords: ["k", "l"],
@@ -148,28 +164,43 @@ VALUES (?, 0, 'r1', 'e1', 'e2', 1, 'partner', 'd', '["k","l"]', 1, 'if so', 'unc
 				certainty: "uncertain",
 			},
 		]);
-		expect(readGraphRelationsInSnapshot(env.db, [versions[1]!], 10)).toEqual({
+		// Only relations whose two ends are both among the mentions given are read.
+		expect(
+			readGraphRelationsAmongInSnapshot(env.db, [m1.entityId], 10),
+		).toEqual({
 			relations: [],
 			truncated: false,
 		});
-		// More relations than the cap: the first ones in (version, fragment, local id) order.
-		env.db.run(
-			`INSERT INTO knowledge_relation_mentions (version_id, fragment_ordinal, local_id, source_local_id,
- target_local_id, directed, relation, description, keywords_json, qualifier_negated, qualifier_condition, qualifier_certainty)
-VALUES (?, 0, 'r0', 'e1', 'e2', 0, 'x', 'd', '[]', 0, NULL, 'stated'),
- (?, 1, 'a', 'e1', 'e2', 0, 'y', 'd', '[]', 0, NULL, 'stated')`,
-			[versions[0]!, versions[0]!],
-		);
-		const cut = readGraphRelationsInSnapshot(env.db, versions, 2);
+		expect(readGraphRelationsAmongInSnapshot(env.db, [], 10)).toEqual({
+			relations: [],
+			truncated: false,
+		});
+		// A second relation of the same ends, and one whose target is no mention (never read).
+		insert("r0", m2.localId, "x");
+		insert("r2", "e999", "y");
+		const cut = readGraphRelationsAmongInSnapshot(env.db, ids, 1);
 		expect(cut.truncated).toBe(true);
-		expect(cut.relations.map((r) => [r.fragmentOrdinal, r.relation])).toEqual([
-			[0, "x"],
-			[0, "partner"],
-		]);
-		expect(readGraphRelationsInSnapshot(env.db, versions, 3).truncated).toBe(
-			false,
-		);
-		expect(() => readGraphRelationsInSnapshot(env.db, versions, 0)).toThrow();
+		expect(cut.relations.map((r) => r.relation)).toEqual(["x"]);
+		const both = readGraphRelationsAmongInSnapshot(env.db, ids, 2);
+		expect(both.truncated).toBe(false);
+		expect(both.relations.map((r) => r.relation)).toEqual(["x", "partner"]);
+		expect(() => readGraphRelationsAmongInSnapshot(env.db, ids, 0)).toThrow();
+		// Two ends of one key are one node's loop: not read, so they never spend the cap.
+		const setKey = (entityId: number, key: string) =>
+			env.db.run(
+				"UPDATE knowledge_entity_mentions SET name_key = ? WHERE entity_id = ?",
+				[key, entityId],
+			);
+		setKey(m1.entityId, "lantern");
+		setKey(m2.entityId, "lantern");
+		expect(readGraphRelationsAmongInSnapshot(env.db, ids, 1)).toEqual({
+			relations: [],
+			truncated: false,
+		});
+		setKey(m2.entityId, "mysql");
+		expect(
+			readGraphRelationsAmongInSnapshot(env.db, ids, 2).relations,
+		).toHaveLength(2);
 
 		const evidence = readGraphEvidenceInSnapshot(
 			env.db,
@@ -187,7 +218,7 @@ VALUES (?, 0, 'r0', 'e1', 'e2', 0, 'x', 'd', '[]', 0, NULL, 'stated'),
 			readGraphEvidenceInSnapshot(
 				env.db,
 				"relation",
-				[relations[0]!.relationId],
+				[read.relations[0]!.relationId],
 				3,
 			),
 		).toEqual([]);
