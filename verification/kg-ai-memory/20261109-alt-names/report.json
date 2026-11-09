@@ -1,0 +1,651 @@
+{
+	"kind": "kg-alt",
+	"note": "Ways to connect fragments across documents, on an earlier run's fragments. Related pairs come from expected.json aliases in the text. A single run: not a benchmark.",
+	"startedAt": "2026-11-09T01:32:49.439Z",
+	"from": "verification/kg-ai-memory/20261107T231544-lfm2.5/knowledge.db",
+	"specificShare": 0.2,
+	"sudachi": {
+		"sudachipy": "0.7.0",
+		"dictionary": "20261015"
+	},
+	"nlpVersion": 3,
+	"rules": 1,
+	"connections": [
+		{
+			"gold": "all",
+			"entities": 32,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.837,
+					"hit3": 0.983,
+					"mrr": 0.942
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0.02,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.76,
+					"hit3": 0.95,
+					"mrr": 0.881
+				},
+				{
+					"method": "nlp:noun",
+					"seconds": 0.13,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.83,
+					"hit3": 1,
+					"mrr": 0.972
+				},
+				{
+					"method": "nlp:proper",
+					"seconds": 0.13,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.887,
+					"hit3": 1,
+					"mrr": 0.944
+				},
+				{
+					"method": "embedding+nlp:proper",
+					"seconds": 0.13,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.933,
+					"hit3": 1,
+					"mrr": 0.992
+				},
+				{
+					"method": "embedding+nlp:noun",
+					"seconds": 0.13,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.883,
+					"hit3": 0.983,
+					"mrr": 0.963
+				}
+			]
+		},
+		{
+			"gold": "specific",
+			"entities": 27,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.367,
+					"hit3": 0.837,
+					"mrr": 0.661
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0.02,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.335,
+					"hit3": 0.674,
+					"mrr": 0.501
+				},
+				{
+					"method": "nlp:noun",
+					"seconds": 0.13,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.377,
+					"hit3": 0.907,
+					"mrr": 0.753
+				},
+				{
+					"method": "nlp:proper",
+					"seconds": 0.13,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.535,
+					"hit3": 0.814,
+					"mrr": 0.734
+				},
+				{
+					"method": "embedding+nlp:proper",
+					"seconds": 0.13,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.488,
+					"hit3": 0.93,
+					"mrr": 0.803
+				},
+				{
+					"method": "embedding+nlp:noun",
+					"seconds": 0.13,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.405,
+					"hit3": 0.86,
+					"mrr": 0.681
+				}
+			]
+		}
+	],
+	"mentions": {
+		"nlp:noun": {
+			"mentions": 2657,
+			"nodes": 861,
+			"multiDocumentNodes": 314,
+			"singletonNodes": 412,
+			"seconds": 0.129,
+			"evaluation": {
+				"entitiesInCorpus": 32,
+				"entityRecall": 0.9375,
+				"crossDocumentEntities": 18,
+				"mergedIntoOneNode": 17,
+				"meanBestNodeCoverage": 0.9444444444444444,
+				"meanNodesPerFoundEntity": 1.1333333333333333,
+				"relationRecall": 0.9411764705882353,
+				"relationEndpointsFound": 16,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"mem0-paper",
+				"state-key"
+			],
+			"notInOneNode": [
+				{
+					"id": "state-key",
+					"labels": []
+				}
+			]
+		},
+		"nlp:noun:sentence-edges": {
+			"nodePairs": 7273,
+			"nodePairsAcrossDocuments": 742,
+			"relationRecall": 0.7058823529411765
+		},
+		"nlp:proper": {
+			"mentions": 675,
+			"nodes": 286,
+			"multiDocumentNodes": 66,
+			"singletonNodes": 174,
+			"seconds": 0.129,
+			"evaluation": {
+				"entitiesInCorpus": 32,
+				"entityRecall": 0.90625,
+				"crossDocumentEntities": 18,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.8888888888888888,
+				"meanNodesPerFoundEntity": 1.0344827586206897,
+				"relationRecall": 0.9411764705882353,
+				"relationEndpointsFound": 16,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"mem0-paper",
+				"state-key",
+				"tombstone"
+			],
+			"notInOneNode": [
+				{
+					"id": "temporal-reasoning",
+					"labels": [
+						"Temporal Reasoning"
+					]
+				},
+				{
+					"id": "memory-decay",
+					"labels": [
+						"Memory Decay"
+					]
+				},
+				{
+					"id": "state-key",
+					"labels": []
+				}
+			]
+		},
+		"nlp:proper:sentence-edges": {
+			"nodePairs": 784,
+			"nodePairsAcrossDocuments": 51,
+			"relationRecall": 0.5882352941176471
+		}
+	},
+	"relationEdges": {},
+	"nameAliases": {
+		"space": {
+			"modelId": "intfloat/multilingual-e5-small",
+			"dimension": 384
+		},
+		"summary": {
+			"nodes": 286,
+			"mutualPairs": 69
+		},
+		"byThreshold": [
+			{
+				"threshold": 0.95,
+				"joinedPairs": 10,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.889,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			{
+				"threshold": 0.93,
+				"joinedPairs": 26,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.889,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			{
+				"threshold": 0.91,
+				"joinedPairs": 48,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.889,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			{
+				"threshold": 0.89,
+				"joinedPairs": 63,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.889,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			{
+				"threshold": 0.87,
+				"joinedPairs": 68,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.889,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			{
+				"threshold": 0.85,
+				"joinedPairs": 69,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.889,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			}
+		],
+		"pairs": [
+			{
+				"a": "eumenes_memory",
+				"b": "eumenes-memory",
+				"score": 0.9885
+			},
+			{
+				"a": "artifacts",
+				"b": "artifacts/",
+				"score": 0.978
+			},
+			{
+				"a": "vendor/eumenes-memory/",
+				"b": "vendor/eumenes-memory-host/",
+				"score": 0.9772
+			},
+			{
+				"a": "Temporal Reasoning",
+				"b": "Introducing Temporal Reasoning",
+				"score": 0.971
+			},
+			{
+				"a": "v2.0.0",
+				"b": "v2.0.0b0",
+				"score": 0.9659
+			},
+			{
+				"a": "fail",
+				"b": "failed",
+				"score": 0.9646
+			},
+			{
+				"a": "bytes",
+				"b": "byte",
+				"score": 0.9627
+			},
+			{
+				"a": "forgotten",
+				"b": "forget",
+				"score": 0.9625
+			},
+			{
+				"a": "Memory Decay",
+				"b": "Introducing Memory Decay",
+				"score": 0.9604
+			},
+			{
+				"a": "mem0",
+				"b": "mem0ai/mem0",
+				"score": 0.955
+			},
+			{
+				"a": "The Token-Efficient Memory Algorithm",
+				"b": "The Token-Efficient Memory Algorithm Now Has Temporal Reasoning",
+				"score": 0.95
+			},
+			{
+				"a": "Eumenes",
+				"b": "eumenes_knowledge",
+				"score": 0.9497
+			},
+			{
+				"a": "SQLite",
+				"b": "./sqlite",
+				"score": 0.9495
+			},
+			{
+				"a": "package",
+				"b": "package.json",
+				"score": 0.9488
+			},
+			{
+				"a": "main.py",
+				"b": "main",
+				"score": 0.9478
+			},
+			{
+				"a": "OSS",
+				"b": "OS",
+				"score": 0.9474
+			},
+			{
+				"a": "README",
+				"b": "README.md",
+				"score": 0.947
+			},
+			{
+				"a": "unavailable",
+				"b": "not_available",
+				"score": 0.9451
+			},
+			{
+				"a": "SDK",
+				"b": "Python SDK",
+				"score": 0.9442
+			},
+			{
+				"a": "M5",
+				"b": "MD5",
+				"score": 0.9409
+			},
+			{
+				"a": "superseded",
+				"b": "supersedes",
+				"score": 0.9384
+			},
+			{
+				"a": "quality-80",
+				"b": "verification-reports/quality-80/",
+				"score": 0.9377
+			},
+			{
+				"a": "examples/standalone/README.md",
+				"b": "examples/seeds/README.md",
+				"score": 0.9373
+			},
+			{
+				"a": "process",
+				"b": "Procedure",
+				"score": 0.932
+			},
+			{
+				"a": "user_confirmed",
+				"b": "user_edited",
+				"score": 0.9318
+			},
+			{
+				"a": "spec/host/implementation.md",
+				"b": "spec/host/contracts.md",
+				"score": 0.9301
+			},
+			{
+				"a": "partialReasons",
+				"b": "partial",
+				"score": 0.928
+			},
+			{
+				"a": "top_200",
+				"b": "top_50",
+				"score": 0.9272
+			},
+			{
+				"a": "memory",
+				"b": "Graph Memory",
+				"score": 0.9269
+			},
+			{
+				"a": "M4",
+				"b": "E4",
+				"score": 0.9268
+			},
+			{
+				"a": "ADD-only",
+				"b": "ADD",
+				"score": 0.9265
+			},
+			{
+				"a": "planForget",
+				"b": "applyForget",
+				"score": 0.9263
+			},
+			{
+				"a": "M1",
+				"b": "E1",
+				"score": 0.9258
+			},
+			{
+				"a": "MCP",
+				"b": "mcp.ts",
+				"score": 0.9245
+			},
+			{
+				"a": "delete",
+				"b": "delete_all",
+				"score": 0.9238
+			},
+			{
+				"a": "verify",
+				"b": "unverified",
+				"score": 0.9218
+			},
+			{
+				"a": "text",
+				"b": "history",
+				"score": 0.9216
+			},
+			{
+				"a": "docs/cli-mcp.md",
+				"b": "spec/memory-cli-mcp-package-adoption-2026-11-07.md",
+				"score": 0.9208
+			},
+			{
+				"a": "valid",
+				"b": "invalidated",
+				"score": 0.9205
+			},
+			{
+				"a": "api/application/memory-host.ts",
+				"b": "api/domains/memory/service/turn-recall.ts",
+				"score": 0.9192
+			},
+			{
+				"a": "v25",
+				"b": "BM25",
+				"score": 0.9187
+			},
+			{
+				"a": "active",
+				"b": "inactive",
+				"score": 0.9178
+			},
+			{
+				"a": "complete",
+				"b": "completion.json",
+				"score": 0.9172
+			},
+			{
+				"a": "1M",
+				"b": "10M",
+				"score": 0.9158
+			},
+			{
+				"a": "turn",
+				"b": "run",
+				"score": 0.9115
+			},
+			{
+				"a": "API",
+				"b": "AI",
+				"score": 0.9114
+			},
+			{
+				"a": "knowledge",
+				"b": "Research",
+				"score": 0.911
+			},
+			{
+				"a": "spec/full-system-design.md",
+				"b": "spec/improvement-design.md",
+				"score": 0.9109
+			},
+			{
+				"a": "CAS",
+				"b": "cache",
+				"score": 0.9084
+			},
+			{
+				"a": "State",
+				"b": "status",
+				"score": 0.907
+			},
+			{
+				"a": "Apache-2.0",
+				"b": "Apache AGE",
+				"score": 0.9068
+			},
+			{
+				"a": "enable_graph",
+				"b": "graph_store",
+				"score": 0.9064
+			},
+			{
+				"a": "retrieval.ts",
+				"b": "storage.ts",
+				"score": 0.906
+			},
+			{
+				"a": "json",
+				"b": "performance.json",
+				"score": 0.9054
+			},
+			{
+				"a": "custom_fact_extraction_prompt",
+				"b": "custom_update_memory_prompt",
+				"score": 0.9046
+			},
+			{
+				"a": "3b6091d1b1ea",
+				"b": "9c0e85aa2fa3",
+				"score": 0.902
+			},
+			{
+				"a": "clean",
+				"b": "Skill",
+				"score": 0.8992
+			},
+			{
+				"a": "embedding",
+				"b": "fastembed",
+				"score": 0.8981
+			},
+			{
+				"a": "allPlanQualityGoalsMet",
+				"b": "zeroUnsupportedAssertionGoalMet",
+				"score": 0.8962
+			},
+			{
+				"a": "new",
+				"b": "newreleases.io",
+				"score": 0.896
+			},
+			{
+				"a": "disputed",
+				"b": "conflicts",
+				"score": 0.8957
+			},
+			{
+				"a": "digest",
+				"b": "git",
+				"score": 0.8938
+			},
+			{
+				"a": "trigram",
+				"b": "trigger",
+				"score": 0.8904
+			},
+			{
+				"a": "retracted",
+				"b": "reset",
+				"score": 0.8883
+			},
+			{
+				"a": "retainRecord",
+				"b": "captureRecord",
+				"score": 0.8865
+			},
+			{
+				"a": "agent_inferred",
+				"b": "agency",
+				"score": 0.8858
+			},
+			{
+				"a": "gpt-6-luna",
+				"b": "gpt-4o",
+				"score": 0.8806
+			},
+			{
+				"a": "hash",
+				"b": "sha256",
+				"score": 0.876
+			},
+			{
+				"a": "Qdrant",
+				"b": "quickstart",
+				"score": 0.8559
+			}
+		]
+	},
+	"namedEdges": null
+}

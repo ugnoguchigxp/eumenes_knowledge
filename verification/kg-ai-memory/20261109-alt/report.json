@@ -1,0 +1,456 @@
+{
+	"kind": "kg-alt",
+	"note": "Ways to connect fragments across documents, on an earlier run's fragments. Related pairs come from expected.json aliases in the text. A single run: not a benchmark.",
+	"startedAt": "2026-11-09T00:42:44.879Z",
+	"from": "verification/kg-ai-memory/20261107T231544-lfm2.5/knowledge.db",
+	"specificShare": 0.2,
+	"sudachi": {
+		"sudachipy": "0.7.0",
+		"dictionary": "20261015"
+	},
+	"rules": 1,
+	"connections": [
+		{
+			"gold": "all",
+			"entities": 32,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5": 0.837,
+					"hit3": 0.983,
+					"mrr": 0.942
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0.02,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5": 0.76,
+					"hit3": 0.95,
+					"mrr": 0.881
+				},
+				{
+					"method": "nodes:20261107T231544-lfm2.5",
+					"seconds": 0.01,
+					"evaluable": 60,
+					"ranked": 56,
+					"baseRate": 0.398,
+					"p5": 0.703,
+					"hit3": 0.9,
+					"mrr": 0.828
+				},
+				{
+					"method": "nodes:20261108T100152-lfm2.5-relink",
+					"seconds": 0.01,
+					"evaluable": 60,
+					"ranked": 55,
+					"baseRate": 0.398,
+					"p5": 0.657,
+					"hit3": 0.9,
+					"mrr": 0.808
+				},
+				{
+					"method": "nodes:20261109-keys-nfkc-rules",
+					"seconds": 0,
+					"evaluable": 60,
+					"ranked": 56,
+					"baseRate": 0.398,
+					"p5": 0.683,
+					"hit3": 0.917,
+					"mrr": 0.85
+				},
+				{
+					"method": "nlp:noun",
+					"seconds": 0.12,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5": 0.83,
+					"hit3": 1,
+					"mrr": 0.972
+				},
+				{
+					"method": "nlp:proper",
+					"seconds": 0.12,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5": 0.887,
+					"hit3": 1,
+					"mrr": 0.944
+				},
+				{
+					"method": "embedding+nlp:proper",
+					"seconds": 0.12,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5": 0.933,
+					"hit3": 1,
+					"mrr": 0.992
+				},
+				{
+					"method": "embedding+nlp:noun",
+					"seconds": 0.12,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5": 0.883,
+					"hit3": 0.983,
+					"mrr": 0.963
+				}
+			]
+		},
+		{
+			"gold": "specific",
+			"entities": 27,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5": 0.367,
+					"hit3": 0.837,
+					"mrr": 0.661
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0.02,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5": 0.335,
+					"hit3": 0.674,
+					"mrr": 0.501
+				},
+				{
+					"method": "nodes:20261107T231544-lfm2.5",
+					"seconds": 0.01,
+					"evaluable": 43,
+					"ranked": 42,
+					"baseRate": 0.089,
+					"p5": 0.367,
+					"hit3": 0.744,
+					"mrr": 0.682
+				},
+				{
+					"method": "nodes:20261108T100152-lfm2.5-relink",
+					"seconds": 0.01,
+					"evaluable": 43,
+					"ranked": 41,
+					"baseRate": 0.089,
+					"p5": 0.326,
+					"hit3": 0.721,
+					"mrr": 0.628
+				},
+				{
+					"method": "nodes:20261109-keys-nfkc-rules",
+					"seconds": 0,
+					"evaluable": 43,
+					"ranked": 42,
+					"baseRate": 0.089,
+					"p5": 0.353,
+					"hit3": 0.698,
+					"mrr": 0.648
+				},
+				{
+					"method": "nlp:noun",
+					"seconds": 0.12,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5": 0.377,
+					"hit3": 0.907,
+					"mrr": 0.753
+				},
+				{
+					"method": "nlp:proper",
+					"seconds": 0.12,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5": 0.535,
+					"hit3": 0.814,
+					"mrr": 0.734
+				},
+				{
+					"method": "embedding+nlp:proper",
+					"seconds": 0.12,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5": 0.488,
+					"hit3": 0.93,
+					"mrr": 0.803
+				},
+				{
+					"method": "embedding+nlp:noun",
+					"seconds": 0.12,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5": 0.405,
+					"hit3": 0.86,
+					"mrr": 0.681
+				}
+			]
+		}
+	],
+	"mentions": {
+		"nlp:noun": {
+			"mentions": 2663,
+			"nodes": 877,
+			"multiDocumentNodes": 314,
+			"singletonNodes": 436,
+			"seconds": 0.124,
+			"evaluation": {
+				"entitiesInCorpus": 32,
+				"entityRecall": 0.9375,
+				"crossDocumentEntities": 18,
+				"mergedIntoOneNode": 17,
+				"meanBestNodeCoverage": 0.9444444444444444,
+				"meanNodesPerFoundEntity": 1.1333333333333333,
+				"relationRecall": 0.9411764705882353,
+				"relationEndpointsFound": 16,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"mem0-paper",
+				"state-key"
+			],
+			"notInOneNode": [
+				{
+					"id": "state-key",
+					"labels": []
+				}
+			]
+		},
+		"nlp:noun:sentence-edges": {
+			"nodePairs": 7337,
+			"nodePairsAcrossDocuments": 742,
+			"relationRecall": 0.7058823529411765
+		},
+		"nlp:proper": {
+			"mentions": 687,
+			"nodes": 307,
+			"multiDocumentNodes": 66,
+			"singletonNodes": 202,
+			"seconds": 0.124,
+			"evaluation": {
+				"entitiesInCorpus": 32,
+				"entityRecall": 0.90625,
+				"crossDocumentEntities": 18,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.8888888888888888,
+				"meanNodesPerFoundEntity": 1.0344827586206897,
+				"relationRecall": 0.9411764705882353,
+				"relationEndpointsFound": 16,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"mem0-paper",
+				"state-key",
+				"tombstone"
+			],
+			"notInOneNode": [
+				{
+					"id": "temporal-reasoning",
+					"labels": [
+						"Temporal Reasoning"
+					]
+				},
+				{
+					"id": "memory-decay",
+					"labels": [
+						"Memory Decay"
+					]
+				},
+				{
+					"id": "state-key",
+					"labels": []
+				}
+			]
+		},
+		"nlp:proper:sentence-edges": {
+			"nodePairs": 829,
+			"nodePairsAcrossDocuments": 51,
+			"relationRecall": 0.5882352941176471
+		}
+	},
+	"namedEdges": {
+		"instruction": {
+			"id": "relation",
+			"version": 1
+		},
+		"model": {
+			"profile": "lfm2.5",
+			"llm": "ornith1.5-strix"
+		},
+		"inference": {
+			"relation": {
+				"calls": 20,
+				"ok": 15,
+				"errors": {
+					"larm_unreachable": 5
+				},
+				"ms": 82978,
+				"inputTokens": 13973,
+				"outputTokens": 467
+			}
+		},
+		"summary": {
+			"asked": 20,
+			"named": 9,
+			"none": 6,
+			"invalid": 0,
+			"failed": 5,
+			"quoteVerbatim": 9
+		},
+		"edges": [
+			{
+				"a": "ExternalDependent",
+				"b": "mem0",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 6,
+				"relation": "mem0 の文書は ExternalDependent について触れていない",
+				"quote": "mem0 の文書はこの点に触れていません（M2）",
+				"quoteVerbatim": true
+			},
+			{
+				"a": "Eumenes",
+				"b": "stale",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 14,
+				"relation": null,
+				"quote": null,
+				"quoteVerbatim": null
+			},
+			{
+				"a": "Eumenes",
+				"b": "LLM",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 13,
+				"relation": "b と同じ作り方である",
+				"quote": "2 つのパッケージは、同じ作り方をしています。SQLite は Eumenes が持ち、LLM が判断してコードが照合し、出典を byte 範囲と digest で持ち、読める範囲を fail closed で限ります。",
+				"quoteVerbatim": true
+			},
+			{
+				"a": "plan",
+				"b": "quality-80",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 8,
+				"relation": "b と同じ予約の台帳で費用上限を守った",
+				"quote": "費用の上限を先に決め、quality-80 と同じく予約の台帳で守ります。",
+				"quoteVerbatim": true
+			},
+			{
+				"a": "eumenes_knowledge",
+				"b": "S1",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 16,
+				"relation": "b によって置き換えられる",
+				"quote": "S4 で版番号を上げた配布物に置き換えてから確定する",
+				"quoteVerbatim": true
+			},
+			{
+				"a": "origin",
+				"b": "World",
+				"document": "ai-memory/eumenes-memory-evaluation.md",
+				"ordinal": 26,
+				"relation": null,
+				"quote": null,
+				"quoteVerbatim": null
+			},
+			{
+				"a": "apply",
+				"b": "update",
+				"document": "ai-memory/eumenes-memory-evaluation.md",
+				"ordinal": 26,
+				"relation": null,
+				"quote": null,
+				"quoteVerbatim": null
+			},
+			{
+				"a": "byte",
+				"b": "State",
+				"document": "ai-memory/eumenes-memory-evaluation.md",
+				"ordinal": 11,
+				"relation": "b の一部である byte を限定する",
+				"quote": "State は出典の参照と UTF-8 の byte 範囲だけを持ち、引用が範囲の bytes と完全に一致しなければ受け付けません。",
+				"quoteVerbatim": true
+			},
+			{
+				"a": "mem0",
+				"b": "superseded",
+				"document": "ai-memory/eumenes-memory-evaluation.md",
+				"ordinal": 27,
+				"relation": "b（superseded）は eumenes_memory の設計概念の一部",
+				"quote": "eumenes_memory の「同じ鍵で有効なのは 1 件、古いものは superseded」",
+				"quoteVerbatim": true
+			},
+			{
+				"a": "bytes",
+				"b": "schema",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 6,
+				"relation": "b を含んでいる",
+				"quote": "本体は schema 8 で全文索引を外しており、その判断を守ります。",
+				"quoteVerbatim": true
+			},
+			{
+				"a": "BEAM",
+				"b": "DB",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 2,
+				"relation": "b を置き換えた",
+				"quote": "外部のグラフ DB は OSS から外され、実体は順位の手がかりに縮みました。",
+				"quoteVerbatim": true
+			},
+			{
+				"a": "DB",
+				"b": "eumenes_memory",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 2,
+				"relation": null,
+				"quote": null,
+				"quoteVerbatim": null
+			},
+			{
+				"a": "ADD-only",
+				"b": "eumenes_memory",
+				"document": "ai-memory/memory-research-map.md",
+				"ordinal": 1,
+				"relation": null,
+				"quote": null,
+				"quoteVerbatim": null
+			},
+			{
+				"a": "eumenes_knowledge",
+				"b": "knowledge",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 16,
+				"relation": null,
+				"quote": null,
+				"quoteVerbatim": null
+			},
+			{
+				"a": "Eumenes",
+				"b": "origin",
+				"document": "ai-memory/eumenes-memory-direction.md",
+				"ordinal": 11,
+				"relation": "mem0 の変更と比べられる",
+				"quote": "mem0 の変更のうち、取り入れないものです。",
+				"quoteVerbatim": true
+			}
+		]
+	}
+}

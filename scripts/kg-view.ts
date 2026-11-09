@@ -25,8 +25,8 @@ const calls = Object.values(
 
 const data = {
 	run: {
-		llm: report.larm.llm.model,
-		profile: report.larm.profile,
+		llm: report.larm?.llm?.model ?? "（不明なモデル）",
+		profile: report.larm?.profile ?? "?",
 		date: String(report.startedAt).slice(0, 10),
 		minutes: report.elapsedMinutes,
 		bytes: (report.corpus as { bytes: number }[]).reduce(
@@ -43,6 +43,11 @@ const data = {
 		evidenceValid: report.evidence.valid,
 		evidenceTotal,
 		calls,
+		relinked: Boolean(report.relinkedFrom),
+		// A kg-keys run: identity by equal name keys, no model asked (kg.md §8).
+		keys: report.kind === "kg-keys" ? (report.key as string) : null,
+		linkVersion: report.instructions?.link ?? null,
+		largestSameComponent: report.linking?.largestSameComponent ?? null,
 	},
 	documents: graph.documents.map((d) => ({ title: d.title, path: d.path })),
 	partialReasons: graph.partialReasons,

@@ -24,6 +24,7 @@ import type {
 	Clock,
 	DocumentSourcePort,
 	EmbeddingPort,
+	TokenizerPort,
 	EventSink,
 	InferencePort,
 } from "./ports.js";
@@ -99,6 +100,11 @@ export type IngestDeps = HandlerDeps & {
 	inference: InferencePort;
 	embedding: EmbeddingPort;
 	writer: HostWriter;
+	/**
+	 * The tokenizer of the model-free extractor (`extractor: "names"`, kg2.md §3.2). Default: the
+	 * package's `createCharclassTokenizer()` (no dictionary).
+	 */
+	tokenizer?: TokenizerPort;
 };
 
 export type IngestOptions = {
@@ -106,7 +112,14 @@ export type IngestOptions = {
 	maxDocumentBytes?: number;
 	/** Upper bound of one fragment in UTF-8 bytes. Default `MAX_FRAGMENT_BYTES`. */
 	maxFragmentBytes?: number;
-	/** Additional extraction passes per fragment (p0.md #4). Default 0. */
+	/**
+	 * How fragments are extracted (kg2.md §3.1). `model`: the model's answer for each fragment
+	 * (instruction `extract`, checked by `verifyExtraction`). `names`: no model; names from the
+	 * tokenizer by the package's rules, and two names in one sentence as the relation `同じ文`
+	 * (`extractNames`). Default `model` (KG2 G7 makes `names` the default).
+	 */
+	extractor?: "model" | "names";
+	/** Additional extraction passes per fragment (p0.md #4). Default 0; only for `model`. */
 	gleaning?: number;
 	/**
 	 * Unapplied attempts of one version, counted only for failures caused by the content (digest,
@@ -197,6 +210,12 @@ export type ReadEvidence = (
 export type LinkOptions = {
 	/** Candidates compared with one mention (several calls if above `LINK_LIMITS.candidatesPerCall`). Default 10. */
 	maxCandidatesPerMention?: number;
+	/**
+	 * Which mentions the mention full-text index adds after the equal names (kg.md §7): `name`,
+	 * those whose name contains the mention's name; `text`, also those whose type or description
+	 * contains it (P3). Default `name`.
+	 */
+	candidateMatch?: "name" | "text";
 	/** Mentions of one version compared per link of the chain. Default 200. */
 	maxMentionsPerVersion?: number;
 	/** An entity is summarized once this many current mentions from at least two documents are linked. Default 3. */

@@ -88,6 +88,13 @@ describe("IngestDeps", () => {
 		expect(typeof deps.writer.write).toBe("function");
 	});
 
+	test("tokenizer は指定したときだけ deps に入る", async () => {
+		const tokenizer = { id: "host-analyzer", tokenize: () => [] };
+		const { t, captured } = makeCapturingHost({ tokenizer });
+		await t.host.ready;
+		expect((captured[0] as IngestDeps).tokenizer).toBe(tokenizer);
+	});
+
 	test("statusOptions は maxUnappliedAttempts を含めてそのまま status の読み取りに渡る", async () => {
 		const seen: unknown[] = [];
 		const t = makeHost({

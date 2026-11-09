@@ -202,6 +202,13 @@ export type LinkCandidate = LinkMention & {
 	documentId: string;
 };
 
+/**
+ * Which mentions the full-text index may add after the equal names (kg.md §7): `name`, only those
+ * whose normalized name contains the mention's; `text`, also those whose type or description does
+ * (P3). A mention that is only described as related to the name is rarely the same entity.
+ */
+export type CandidateMatch = "name" | "text";
+
 const NOT_DECIDED = `NOT EXISTS (SELECT 1 FROM knowledge_entity_links l
   WHERE l.entity_a = MIN(?1, m.entity_id) AND l.entity_b = MAX(?1, m.entity_id))`;
 
@@ -209,18 +216,21 @@ const NOT_DECIDED = `NOT EXISTS (SELECT 1 FROM knowledge_entity_links l
  * Candidates to compare with one current mention: mentions of the published versions of
  * `current` documents (any namespace: the index is the host's, and what a caller sees is
  * narrowed when reading) whose normalized name equals the mention's, then those the mention
- * full-text index finds for the name as one phrase (best bm25 first, ids breaking ties). Other
- * documents' mentions qualify, and so do mentions of the same document's same version that sit
- * in a different fragment (a mention in the same fragment never does: it was told apart by the
- * one extraction that produced it). Both kinds share one ordering. A pair that already has a
- * decision is never returned. At most `limit`; empty when the mention is not current.
+ * full-text index finds for the name as one phrase (best bm25 first, ids breaking ties), kept as
+ * `match` says. Other documents' mentions qualify, and so do mentions of the same document's
+ * same version that sit in a different fragment (a mention in the same fragment never does: it
+ * was told apart by the one extraction that produced it). Both kinds share one ordering. A pair
+ * that already has a decision is never returned. At most `limit`; empty when the mention is not
+ * current.
  */
 export function readLinkCandidatesInTransaction(
 	db: Tx,
 	entityId: number,
 	limit: number,
+	match: CandidateMatch = "name",
 ): LinkCandidate[] {
 	if (!Number.isSafeInteger(limit) || limit < 1) return invalid();
+	if (match !== "name" && match !== "text") return invalid();
 	const self = db
 		.query<{
 			name_norm: string;
@@ -275,7 +285,7 @@ WHERE m.name_norm = ?4 AND ${others} ORDER BY m.entity_id LIMIT ?5`,
 				.query<RawMention & { source_namespace: string; document_id: string }>(
 					`SELECT ${columns} FROM knowledge_entity_fts
 JOIN knowledge_entity_mentions m ON m.entity_id = knowledge_entity_fts.rowid ${CURRENT_MENTION_JOIN}
-WHERE knowledge_entity_fts MATCH ?4 AND ${others}
+WHERE knowledge_entity_fts MATCH ?4 AND ${others} AND instr(m.name_norm, ?7) > 0
 ORDER BY bm25(knowledge_entity_fts), m.entity_id LIMIT ?5`,
 				)
 				.all(
@@ -285,10 +295,107 @@ ORDER BY bm25(knowledge_entity_fts), m.entity_id LIMIT ?5`,
 					phrase,
 					limit + picked.size,
 					self.fragment_ordinal,
+					// instr(x, '') is 1: with `text`, every match of the index is kept.
+					match === "name" ? normName : "",
 				),
 		);
 	}
 	return [...picked.values()];
+}
+
+export type LinkNeighbourhood = {
+	/** The decisions the mention already has with current mentions (any decision). */
+	decided: { other: number; decision: LinkDecision }[];
+	/**
+	 * The `same` and `different` links between current mentions that touch the mention, a mention
+	 * it has a decision with, or one of `candidateIds`; in (a, b) order.
+	 */
+	links: { a: number; b: number; decision: "same" | "different" }[];
+	/** Name and document namespace of every current mention named above. */
+	mentions: Map<number, { name: string; nameNorm: string; namespace: string }>;
+};
+
+/**
+ * What the choice of identity candidates looks at around one mention (kg.md §7.2): its own
+ * decisions, the links one step around it and around the candidates, and those mentions' names
+ * and namespaces. Links are found by their two indexed ends; whether their versions are current
+ * is checked against the current versions afterwards.
+ */
+export function readLinkNeighbourhoodInTransaction(
+	db: Tx,
+	entityId: number,
+	candidateIds: readonly number[],
+): LinkNeighbourhood {
+	if (!Number.isSafeInteger(entityId) || !Array.isArray(candidateIds))
+		return invalid();
+	const current = new Set(
+		db
+			.query<{ v: number }>(
+				"SELECT published_version_id AS v FROM knowledge_documents WHERE state = 'current' AND published_version_id IS NOT NULL",
+			)
+			.all()
+			.map((r) => r.v),
+	);
+	const decided = db
+		.query<{ other: number; decision: LinkDecision; version: number }>(
+			`SELECT entity_b AS other, decision, version_b AS version FROM knowledge_entity_links WHERE entity_a = ?1
+UNION ALL
+SELECT entity_a, decision, version_a FROM knowledge_entity_links WHERE entity_b = ?1`,
+		)
+		.all(entityId)
+		.filter((r) => current.has(r.version))
+		.map((r) => ({ other: r.other, decision: r.decision }));
+	const around = JSON.stringify([
+		entityId,
+		...decided.map((d) => d.other),
+		...candidateIds,
+	]);
+	const links = db
+		.query<{
+			a: number;
+			b: number;
+			decision: "same" | "different";
+			va: number;
+			vb: number;
+		}>(
+			`SELECT entity_a AS a, entity_b AS b, decision, version_a AS va, version_b AS vb
+FROM knowledge_entity_links
+WHERE entity_a IN (SELECT value FROM json_each(?1)) AND decision <> 'unsure'
+UNION
+SELECT entity_a, entity_b, decision, version_a, version_b FROM knowledge_entity_links
+WHERE entity_b IN (SELECT value FROM json_each(?1)) AND decision <> 'unsure'`,
+		)
+		.all(around)
+		.filter((l) => current.has(l.va) && current.has(l.vb))
+		.map((l) => ({ a: l.a, b: l.b, decision: l.decision }))
+		.sort((x, y) => x.a - y.a || x.b - y.b);
+	const named = new Set<number>([
+		entityId,
+		...decided.map((d) => d.other),
+		...candidateIds,
+	]);
+	for (const l of links) {
+		named.add(l.a);
+		named.add(l.b);
+	}
+	const mentions = new Map(
+		db
+			.query<{
+				id: number;
+				name: string;
+				name_norm: string;
+				namespace: string;
+			}>(
+				`SELECT m.entity_id AS id, m.name, m.name_norm, d.namespace FROM knowledge_entity_mentions m ${CURRENT_MENTION_JOIN}
+WHERE m.entity_id IN (SELECT value FROM json_each(?1))`,
+			)
+			.all(JSON.stringify([...named]))
+			.map((r) => [
+				r.id,
+				{ name: r.name, nameNorm: r.name_norm, namespace: r.namespace },
+			]),
+	);
+	return { decided, links, mentions };
 }
 
 // ---------------------------------------------------------------------------

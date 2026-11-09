@@ -15,21 +15,40 @@
 //   --docs a,b           only these corpus files (basename without .md)
 //   --max-minutes <n>    stop waiting after this long (default 240)
 //   --reasoning default  leave the model's reasoning setting as served (default: off)
+//   --candidate-match text  identity candidates also by type and description (default: name)
+//   --relink <file>      start from the knowledge.db of an earlier run: its extraction is kept,
+//                        its identity links and summaries are dropped and made again (kg.md §7)
+//   --corpus <name>      the corpus under examples/corpus (default ai-memory); its expected.json
+//   --extract none       no model extraction (kg2.md G6): the inference port answers every
+//                        extraction with no entity and no relation, so the run only splits and
+//                        embeds (LARM's embedding is still used); kg-alt.ts reads the result
+//   --extract names      the package's model-free extractor (kg2.md G3: names and same-sentence
+//                        relations from a tokenizer and rules); no model is asked and the identity
+//                        chain (knowledge.link-next) does no work (its jobs end at prepare; kg2.md
+//                        G4 replaces it), so the graph has no identity links: kg-keys.ts joins the
+//                        mentions by their keys from the knowledge.db
+//   --tokenizer <engine> with --extract names: charclass (default, no dictionary), sudachi-napi,
+//                        kuromoji or lindera (scripts/kg-alt/candidates.ts; all but charclass need
+//                        --js-modules <dir>, sudachi-napi also NAPI_SUDACHI_ROOT and SUDACHI_DICT_PATH)
+//
+// Every run leaves a copy of its database as knowledge.db in the output directory (not committed:
+// .gitignore), which a later run can relink.
+import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { createKnowledgeClient } from "../src/client/index.js";
 import type {
 	AccessContext,
-	EvidenceResponse,
-	GraphResponse,
 	InferencePort,
 	IngestDeps,
 	StatusOptions,
 } from "../src/contracts/index.js";
+import { instruction } from "../src/contexts/index.js";
 import {
 	createIngestNextHandler,
 	createLinkNextHandler,
+	namesModel,
 	createSyncPageHandler,
 	createVectorIndex,
 	readEvidence,
@@ -44,14 +63,29 @@ import {
 } from "../src/sqlite/index.js";
 import { createExampleHost } from "../examples/host/index.js";
 import { createLarm } from "../examples/larm/index.js";
+import { type Engine, loadTokenizer } from "./kg-alt/candidates.js";
 import {
 	createDoclingMock,
 	type MockDocumentInput,
 } from "../examples/mocks/docling.js";
 import { createDoclingSource } from "../examples/mocks/docling-source.js";
+import {
+	corpusDir,
+	type CorpusDocument,
+	accounted,
+	checkEvidence,
+	readGraphFitting,
+	env,
+	evaluate,
+	type Expected,
+	graphStats,
+	linkingStats,
+	log,
+	prepareRelink,
+	ROOT,
+	reportPath,
+} from "./kg-common.js";
 
-const ROOT = resolve(import.meta.dir, "..");
-const CORPUS = join(ROOT, "examples/corpus/ai-memory");
 const NAMESPACE = "notes";
 const TOKEN = "kg-live-token-0123456789abcdefghij";
 const DOCLING_CREDENTIAL = "docling-mock-credential-0123456789abcdef";
@@ -64,6 +98,12 @@ type Options = {
 	docs: string[] | null;
 	maxMinutes: number;
 	reasoning: "off" | "default";
+	candidateMatch: "name" | "text";
+	relink: string | null;
+	corpus: string;
+	extract: "model" | "none" | "names";
+	tokenizer: Engine | null;
+	jsModules: string | null;
 };
 
 function parseArgs(argv: readonly string[]): Options {
@@ -72,6 +112,12 @@ function parseArgs(argv: readonly string[]): Options {
 		docs: null,
 		maxMinutes: 240,
 		reasoning: "off",
+		candidateMatch: "name",
+		relink: null,
+		corpus: "ai-memory",
+		extract: "model",
+		tokenizer: null,
+		jsModules: null,
 	};
 	for (let i = 0; i < argv.length; i++) {
 		const flag = argv[i];
@@ -82,54 +128,81 @@ function parseArgs(argv: readonly string[]): Options {
 		else if (flag === "--max-minutes") options.maxMinutes = Number(value);
 		else if (flag === "--reasoning" && (value === "off" || value === "default"))
 			options.reasoning = value;
+		else if (
+			flag === "--candidate-match" &&
+			(value === "name" || value === "text")
+		)
+			options.candidateMatch = value;
+		else if (flag === "--relink") options.relink = resolve(value);
+		else if (flag === "--corpus" && /^[a-z0-9-]+$/.test(value))
+			options.corpus = value;
+		else if (flag === "--extract" && (value === "none" || value === "names"))
+			options.extract = value;
+		else if (flag === "--tokenizer" && ENGINES.includes(value as Engine))
+			options.tokenizer = value as Engine;
+		else if (flag === "--js-modules") options.jsModules = resolve(value);
 		else throw new Error(`unknown option ${flag}`);
 		i++;
 	}
 	if (!Number.isFinite(options.maxMinutes) || options.maxMinutes <= 0)
 		throw new Error("invalid --max-minutes");
+	if (options.relink && options.docs)
+		throw new Error("--relink keeps the earlier run's documents: no --docs");
+	// The stub would also answer the identity questions of a relink with an extraction.
+	if (options.relink && options.extract !== "model")
+		throw new Error(
+			`--relink and --extract ${options.extract} are not used together`,
+		);
+	if (options.extract !== "names" && (options.tokenizer || options.jsModules))
+		throw new Error("--tokenizer and --js-modules go with --extract names");
 	return options;
 }
 
-function env(name: string): string {
-	const value = process.env[name]?.trim();
-	if (!value) throw new Error(`${name} is not set`);
-	return value;
-}
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const clockText = () => new Date().toISOString().slice(11, 19);
-const log = (line: string) => console.log(`[${clockText()}] ${line}`);
-const norm = (s: string) => s.normalize("NFKC").toLowerCase().trim();
-
-/**
- * Whether the normalized text names the alias: an ASCII word character next to the match ends it
- * (`mem0` is not found inside `mem0g`); other scripts have no word boundary to check.
- */
-function mentions(normalizedText: string, alias: string): boolean {
-	const a = norm(alias);
-	const word = /[a-z0-9_]/;
-	for (
-		let i = normalizedText.indexOf(a);
-		i >= 0;
-		i = normalizedText.indexOf(a, i + 1)
-	) {
-		const before = normalizedText[i - 1] ?? "";
-		const after = normalizedText[i + a.length] ?? "";
-		const edgeOk = (c: string, inner: string | undefined) =>
-			!(inner && word.test(inner) && word.test(c));
-		if (edgeOk(before, a[0]) && edgeOk(after, a[a.length - 1])) return true;
-	}
-	return false;
-}
 
 // ---------------------------------------------------------------------------
-// Corpus and expected graph
+// Corpus
 // ---------------------------------------------------------------------------
 
-type CorpusDocument = { file: string; path: string; markdown: string };
+const ENGINES: readonly Engine[] = [
+	"charclass",
+	"sudachi-napi",
+	"kuromoji",
+	"lindera",
+];
 
-async function loadCorpus(only: string[] | null): Promise<CorpusDocument[]> {
-	const files = (await readdir(CORPUS)).filter((f) => f.endsWith(".md")).sort();
+/** --extract names: no model may be asked; a call would be a wiring fault, so it fails loudly. */
+const noModel: InferencePort = {
+	async complete() {
+		throw new Error("--extract names asks no model");
+	},
+};
+
+/** --extract none: every extraction answer holds no entity and no relation (no model is asked). */
+const noExtraction: InferencePort = {
+	async complete() {
+		return {
+			ok: true,
+			text: JSON.stringify({ entities: [], relations: [] }),
+			model: null,
+			usage: {
+				inputTokens: null,
+				cachedTokens: null,
+				outputTokens: null,
+				reasoningTokens: null,
+				calls: null,
+			},
+			durationMs: 0,
+		};
+	},
+};
+
+async function loadCorpus(
+	name: string,
+	only: string[] | null,
+): Promise<CorpusDocument[]> {
+	const dir = corpusDir(name);
+	const files = (await readdir(dir)).filter((f) => f.endsWith(".md")).sort();
 	const picked = only
 		? files.filter((f) => only.includes(f.replace(/\.md$/, "")))
 		: files;
@@ -137,184 +210,10 @@ async function loadCorpus(only: string[] | null): Promise<CorpusDocument[]> {
 	return Promise.all(
 		picked.map(async (file) => ({
 			file,
-			path: `ai-memory/${file}`,
-			markdown: await readFile(join(CORPUS, file), "utf8"),
+			path: `${name}/${file}`,
+			markdown: await readFile(join(dir, file), "utf8"),
 		})),
 	);
-}
-
-type Expected = {
-	entities: { id: string; aliases: string[] }[];
-	relations: { a: string[]; b: string[]; about: string }[];
-	distinct: [string, string][];
-};
-
-// ---------------------------------------------------------------------------
-// Inference with per-call accounting (no prompt or answer is kept)
-// ---------------------------------------------------------------------------
-
-type PurposeStats = {
-	calls: number;
-	ok: number;
-	errors: Record<string, number>;
-	ms: number;
-	inputTokens: number;
-	outputTokens: number;
-};
-
-function accounted(port: InferencePort) {
-	const byPurpose = new Map<string, PurposeStats>();
-	const wrapped: InferencePort = {
-		async complete(request, signal) {
-			const s = byPurpose.get(request.purpose) ?? {
-				calls: 0,
-				ok: 0,
-				errors: {},
-				ms: 0,
-				inputTokens: 0,
-				outputTokens: 0,
-			};
-			byPurpose.set(request.purpose, s);
-			s.calls++;
-			const started = Date.now();
-			try {
-				const result = await port.complete(request, signal);
-				const ms = Date.now() - started;
-				s.ms += ms;
-				s.inputTokens += result.usage.inputTokens ?? 0;
-				s.outputTokens += result.usage.outputTokens ?? 0;
-				if (result.ok) s.ok++;
-				else s.errors[result.error] = (s.errors[result.error] ?? 0) + 1;
-				log(
-					`${request.purpose} #${s.calls} ${result.ok ? "ok" : result.error} ${(ms / 1000).toFixed(1)}s in=${result.usage.inputTokens ?? "-"} out=${result.usage.outputTokens ?? "-"}`,
-				);
-				return result;
-			} catch (error) {
-				s.ms += Date.now() - started;
-				s.errors.thrown = (s.errors.thrown ?? 0) + 1;
-				log(`${request.purpose} #${s.calls} thrown`);
-				throw error;
-			}
-		},
-	};
-	return { port: wrapped, stats: () => Object.fromEntries(byPurpose) };
-}
-
-// ---------------------------------------------------------------------------
-// Evaluation against expected.json
-// ---------------------------------------------------------------------------
-
-type Node = GraphResponse["nodes"][number];
-
-function evaluate(
-	graph: GraphResponse,
-	expected: Expected,
-	corpus: readonly CorpusDocument[],
-	docIdByPath: ReadonlyMap<string, string>,
-) {
-	const aliasSets = new Map(
-		expected.entities.map((e) => [e.id, new Set(e.aliases.map(norm))]),
-	);
-	const nodesOf = (id: string): Node[] =>
-		graph.nodes.filter((n) =>
-			n.names.some((name) => aliasSets.get(id)?.has(norm(name))),
-		);
-	// A corpus document the store does not know (never listed) still counts: no node covers it.
-	const idOf = (path: string) => docIdByPath.get(path) ?? `missing:${path}`;
-	const normalizedText = new Map(corpus.map((d) => [d.path, norm(d.markdown)]));
-	const entities = expected.entities.map((e) => {
-		const expectedDocs = corpus
-			.filter((d) =>
-				e.aliases.some((a) => mentions(normalizedText.get(d.path) ?? "", a)),
-			)
-			.map((d) => idOf(d.path));
-		const nodes = nodesOf(e.id);
-		const covered = (docs: readonly string[]) =>
-			expectedDocs.filter((d) => docs.includes(d)).length;
-		const best = nodes.reduce((m, n) => Math.max(m, covered(n.documentIds)), 0);
-		const union = covered([...new Set(nodes.flatMap((n) => n.documentIds))]);
-		return {
-			id: e.id,
-			expectedDocuments: expectedDocs.length,
-			found: nodes.length > 0,
-			nodes: nodes.length,
-			bestNodeCoverage: expectedDocs.length ? best / expectedDocs.length : null,
-			unionCoverage: expectedDocs.length ? union / expectedDocs.length : null,
-			labels: nodes.map((n) => n.label),
-		};
-	});
-	const present = entities.filter((e) => e.expectedDocuments > 0);
-	const crossDoc = present.filter((e) => e.expectedDocuments >= 2);
-	const relations = expected.relations.map((r) => {
-		const a = new Set(r.a.flatMap((id) => nodesOf(id).map((n) => n.nodeId)));
-		const b = new Set(r.b.flatMap((id) => nodesOf(id).map((n) => n.nodeId)));
-		const edges = graph.edges.filter(
-			(e) =>
-				(a.has(e.source) && b.has(e.target)) ||
-				(a.has(e.target) && b.has(e.source)),
-		);
-		return {
-			about: r.about,
-			endpointsFound: a.size > 0 && b.size > 0,
-			hit: edges.length > 0,
-			relations: [...new Set(edges.map((e) => e.relation))],
-		};
-	});
-	const distinct = expected.distinct.map(([x, y]) => {
-		const xs = new Set(nodesOf(x).map((n) => n.nodeId));
-		const merged = nodesOf(y).filter((n) => xs.has(n.nodeId));
-		return { pair: [x, y], merged: merged.map((n) => n.label) };
-	});
-	const ratio = (n: number, d: number) => (d ? n / d : null);
-	return {
-		summary: {
-			entitiesInCorpus: present.length,
-			entityRecall: ratio(
-				present.filter((e) => e.found).length,
-				present.length,
-			),
-			crossDocumentEntities: crossDoc.length,
-			mergedIntoOneNode: crossDoc.filter((e) => e.bestNodeCoverage === 1)
-				.length,
-			meanBestNodeCoverage: ratio(
-				crossDoc.reduce((s, e) => s + (e.bestNodeCoverage ?? 0), 0),
-				crossDoc.length,
-			),
-			meanNodesPerFoundEntity: ratio(
-				present.filter((e) => e.found).reduce((s, e) => s + e.nodes, 0),
-				present.filter((e) => e.found).length,
-			),
-			relationRecall: ratio(
-				relations.filter((r) => r.hit).length,
-				relations.length,
-			),
-			relationEndpointsFound: relations.filter((r) => r.endpointsFound).length,
-			distinctViolations: distinct.filter((d) => d.merged.length > 0).length,
-		},
-		entities,
-		relations,
-		distinct,
-	};
-}
-
-function graphStats(graph: GraphResponse) {
-	const multiDoc = graph.nodes.filter((n) => n.documentIds.length >= 2);
-	return {
-		nodes: graph.nodes.length,
-		edges: graph.edges.length,
-		singletonNodes: graph.nodes.filter((n) => n.mentionCount === 1).length,
-		multiDocumentNodes: multiDoc.length,
-		nodesWithSummary: graph.nodes.filter((n) => n.summary !== null).length,
-		multiMentionEdges: graph.edges.filter((e) => e.mentionCount >= 2).length,
-		crossDocumentEdges: graph.edges.filter((e) => e.documentIds.length >= 2)
-			.length,
-		topNodes: graph.nodes.slice(0, 25).map((n) => ({
-			label: n.label,
-			mentions: n.mentionCount,
-			documents: n.documentIds.length,
-			types: n.types.slice(0, 3),
-		})),
-	};
 }
 
 // ---------------------------------------------------------------------------
@@ -347,23 +246,53 @@ async function main() {
 	if (!binding.embedding)
 		throw new Error("the profile has no embedding provider");
 
-	const corpus = await loadCorpus(options.docs);
+	// A relink keeps the earlier run's documents exactly as they were ingested.
+	const relinked = options.relink ? await prepareRelink(options.relink) : null;
+	const corpus: CorpusDocument[] = relinked
+		? relinked.documents.map((d) => ({
+				file: basename(d.path),
+				path: d.path,
+				markdown: d.markdown,
+			}))
+		: await loadCorpus(options.corpus, options.docs);
+	// A relinked database must hold the documents of --corpus (its expected.json grades them).
+	if (corpus.some((d) => !d.path.startsWith(`${options.corpus}/`)))
+		throw new Error(
+			`the documents are not of --corpus ${options.corpus} (pass the corpus the run used)`,
+		);
 	const expected = JSON.parse(
-		await readFile(join(CORPUS, "expected.json"), "utf8"),
+		await readFile(join(corpusDir(options.corpus), "expected.json"), "utf8"),
 	) as Expected;
 	const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
 	const out =
 		options.out ??
-		join(ROOT, "verification/kg-ai-memory", `${stamp}-${profile}`);
+		join(
+			ROOT,
+			`verification/kg-${options.corpus}`,
+			`${stamp}-${profile}${
+				options.extract === "none"
+					? "-no-extraction"
+					: options.extract === "names"
+						? `-names-${options.tokenizer ?? "charclass"}`
+						: ""
+			}`,
+		);
+	// Loaded before anything runs: a tokenizer that fails its check stops here.
+	const tokenizer =
+		options.extract === "names"
+			? await loadTokenizer(options.tokenizer ?? "charclass", options.jsModules)
+			: null;
 	await mkdir(out, { recursive: true });
 
 	const docling = createDoclingMock({
-		documents: corpus.map((d): MockDocumentInput => ({
-			namespace: NAMESPACE,
-			path: d.path,
-			title: d.markdown.match(/^# (.+)$/m)?.[1]?.trim() ?? d.file,
-			markdown: d.markdown,
-		})),
+		documents:
+			relinked?.documents ??
+			corpus.map((d): MockDocumentInput => ({
+				namespace: NAMESPACE,
+				path: d.path,
+				title: d.markdown.match(/^# (.+)$/m)?.[1]?.trim() ?? d.file,
+				markdown: d.markdown,
+			})),
 		namespaces: [NAMESPACE],
 		pageSize: 100,
 		credential: DOCLING_CREDENTIAL,
@@ -374,7 +303,13 @@ async function main() {
 		credential: DOCLING_CREDENTIAL,
 	});
 	const clock = { now: () => Date.now() };
-	const inference = accounted(larm.inference);
+	const inference = accounted(
+		options.extract === "none"
+			? noExtraction
+			: options.extract === "names"
+				? noModel
+				: larm.inference,
+	);
 	const principals: Record<string, AccessContext> = {
 		[TOKEN]: { principal: "kg-live", namespaces: [NAMESPACE] },
 	};
@@ -388,22 +323,41 @@ async function main() {
 	const ingestOptions = {
 		inferenceTimeoutMs: INFERENCE_TIMEOUT_MS,
 		transientRetryDelayMs: RETRY_DELAY_MS,
+		extractor:
+			options.extract === "names" ? ("names" as const) : ("model" as const),
 	};
 	const linkOptions = {
 		inferenceTimeoutMs: INFERENCE_TIMEOUT_MS,
 		transientRetryDelayMs: RETRY_DELAY_MS,
+		candidateMatch: options.candidateMatch,
 	};
 	const host = createExampleHost({
+		...(relinked ? { dir: relinked.dir } : {}),
 		keep: true,
 		source,
 		principals,
 		clock,
 		inference: inference.port,
 		embedding: larm.embedding,
+		...(tokenizer ? { tokenizer } : {}),
 		handlerFactories: [
 			(deps: IngestDeps) => createSyncPageHandler(deps, {}),
 			(deps: IngestDeps) => createIngestNextHandler(deps, ingestOptions),
-			(deps: IngestDeps) => createLinkNextHandler(deps, linkOptions),
+			// --extract names: the identity chain's jobs are still accepted (the host refuses a kind
+			// without a handler, which would fail the publication) and end at prepare without work;
+			// kg2.md G4 is its model-free replacement.
+			(deps: IngestDeps) => {
+				const link = createLinkNextHandler(deps, linkOptions);
+				return tokenizer
+					? {
+							...link,
+							prepareInTransaction: () => ({
+								status: "stale" as const,
+								reason: "names_extractor_no_identity_chain",
+							}),
+						}
+					: link;
+			},
 		],
 		readStatusInSnapshot,
 		readScanInSnapshot,
@@ -458,31 +412,8 @@ async function main() {
 		);
 
 		const status = await client.status();
-		const graph = await client.graph({
-			maxNodes: 1000,
-			maxEdges: 2000,
-		});
-		// Every quotation the graph returns, checked with the evidence API.
-		const evidence: Record<EvidenceResponse["status"], number> = {
-			valid: 0,
-			stale: 0,
-			unavailable: 0,
-			mismatch: 0,
-			not_available: 0,
-		};
-		for (const point of [
-			...graph.nodes.flatMap((n) => n.evidence),
-			...graph.edges.flatMap((e) => e.evidence),
-		]) {
-			const answer = await client.evidence({
-				documentId: point.documentId,
-				markdownSha256: point.markdownSha256,
-				byteStart: point.byteStart,
-				byteEnd: point.byteEnd,
-				quoteSha256: point.quoteSha256,
-			});
-			evidence[answer.status]++;
-		}
+		const { graph, request: graphRequest } = await readGraphFitting(client);
+		const evidence = await checkEvidence(client, graph);
 		const store = host.store.read((db) => {
 			const one = (sql: string) =>
 				(db.query(sql).get() as { n: number } | null)?.n ?? 0;
@@ -517,6 +448,7 @@ async function main() {
 				),
 			};
 		});
+		const linking = host.store.read((db) => linkingStats(db));
 		// Documents from the store, not from the graph: a document without nodes still counts.
 		const documents = host.store.read(
 			(db) =>
@@ -535,10 +467,29 @@ async function main() {
 				(jobStates[`${j.kind}:${j.state}`] ?? 0) + 1;
 		const report = {
 			kind: "kg-live",
-			note: "Synthetic research notes ingested with a real model through LARM. A single run: not a benchmark.",
+			note:
+				options.extract === "none"
+					? "Synthetic notes split and embedded through LARM; no extraction (every extraction answer was empty, no model was asked). A single run: not a benchmark."
+					: options.extract === "names"
+						? "Synthetic notes ingested with the model-free extractor (names and same-sentence relations from a tokenizer and rules) and embedded through LARM; no model was asked and no identity link was made, so the graph's nodes are not joined across mentions (kg-keys.ts joins them by key). A single run: not a benchmark."
+						: "Synthetic research notes ingested with a real model through LARM. A single run: not a benchmark.",
+			corpusName: options.corpus,
+			extract: options.extract,
+			extractor: tokenizer ? namesModel(tokenizer) : null,
 			startedAt: new Date(started).toISOString(),
 			elapsedMinutes: Number((elapsedMs / 60_000).toFixed(1)),
+			elapsedSeconds: Number((elapsedMs / 1000).toFixed(1)),
 			finished,
+			relinkedFrom: options.relink ? reportPath(options.relink) : null,
+			instructions: {
+				extract:
+					options.extract === "model" ? instruction("extract").version : null,
+				link: tokenizer ? null : instruction("link").version,
+				summarize: tokenizer ? null : instruction("summarize").version,
+			},
+			linkOptions: tokenizer
+				? null
+				: { candidateMatch: options.candidateMatch },
 			jobs: jobStates,
 			documents: documents.map((d) => ({
 				documentId: d.document_id,
@@ -559,11 +510,13 @@ async function main() {
 			inference: inference.stats(),
 			larmStats: larm.stats(),
 			store,
+			linking,
 			status: {
 				complete: status.complete,
 				partialReasons: status.partialReasons,
 			},
 			graph: {
+				request: graphRequest,
 				complete: graph.complete,
 				partialReasons: graph.partialReasons,
 				...graphStats(graph),
@@ -582,7 +535,17 @@ async function main() {
 			`${JSON.stringify(report, null, "\t")}\n`,
 			{ flag: "wx" },
 		);
-		log(`wrote ${join(out, "graph.json")} and report.json`);
+		// A copy of the database for a later --relink (not committed).
+		const snapshot = new Database(join(host.dir, "knowledge.db"), {
+			readonly: true,
+		});
+		try {
+			snapshot.run("VACUUM INTO ?", [join(out, "knowledge.db")]);
+		} finally {
+			snapshot.close();
+		}
+		log(`wrote ${join(out, "graph.json")}, report.json and knowledge.db`);
+		log(`linking: ${JSON.stringify(linking)}`);
 		log(`evaluation: ${JSON.stringify(evaluation.summary)}`);
 		log(`evidence: ${JSON.stringify(evidence)}`);
 	} finally {

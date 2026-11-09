@@ -83,9 +83,11 @@ describe("the identity chain", () => {
 		expect(chain(env).open_sweep).toBeNull();
 		expect(marks(env).every((m) => m.state === "done")).toBe(true);
 		expect(marks(env)).toHaveLength(8);
-		// Every pair across documents was decided once: 8 docs x 2 names; same names are `same`.
+		// One node per name (kg.md §7): the first mention is asked about the 7 others, which then
+		// share its node, so no later mention asks about them again. 8 docs x 2 names.
 		const sameCount = links(env).filter((l) => l.decision === "same").length;
-		expect(sameCount).toBe(2 * ((8 * 7) / 2));
+		expect(sameCount).toBe(2 * 7);
+		expect(links(env).every((l) => l.decision === "same")).toBe(true);
 		expect(
 			links(env).every((l) => (l.entity_a as number) < (l.entity_b as number)),
 		).toBe(true);
@@ -147,23 +149,23 @@ describe("the identity chain", () => {
 				decision: "same",
 				model: "mock-model",
 				instruction_id: "link",
-				instruction_version: 2,
+				instruction_version: 3,
 			},
 		]);
-		// The request carried link v2, and the version mark records it.
+		// The request carried link v3, and the version mark records it.
 		const asked = env.inference.calls.filter((c) => c.purpose === "link");
 		expect(asked.length).toBeGreaterThan(0);
 		for (const call of asked)
 			expect([call.instructionId, call.instructionVersion]).toEqual([
 				"link",
-				2,
+				3,
 			]);
 		const marked = rows(
 			env.db,
 			"SELECT DISTINCT instruction_id, instruction_version FROM knowledge_link_versions",
 		);
 		expect(marked).toEqual([
-			{ instruction_id: "link", instruction_version: 2 },
+			{ instruction_id: "link", instruction_version: 3 },
 		]);
 	});
 
@@ -232,14 +234,11 @@ describe("the identity chain", () => {
 		expect(marks(env).map((m) => m.state)).toEqual(["done", "done"]);
 		// Entities: 1 Alpha(doc 1), 2 Beta(doc 1), 3 Alpha(doc 2), 4 Beta(doc 2). Mentions named
 		// Alpha got an unusable answer, so the pair of the two Alphas has no decision, and the
-		// failures of both versions are counted.
+		// failures of both versions are counted. The Betas are compared (candidates are found by
+		// name only, so an Alpha is never a Beta's candidate).
 		expect(marks(env).map((m) => m.failed_mentions)).toEqual([1, 1]);
 		expect(links(env).map((l) => [l.entity_a, l.entity_b, l.decision])).toEqual(
-			[
-				[1, 4, "different"],
-				[2, 3, "different"],
-				[2, 4, "same"],
-			],
+			[[2, 4, "same"]],
 		);
 	});
 
@@ -582,7 +581,7 @@ describe("a document that comes back as current", () => {
 });
 
 describe("candidates beyond maxCandidatesPerMention", () => {
-	test("are taken in the next links: every pair is asked in the end, and the version is not done before", async () => {
+	test("are taken in the next links, and the version is not done before; a decided node is not asked again", async () => {
 		const env = makeLinkEnv({ maxCandidatesPerMention: 2 });
 		for (let n = 1; n <= 5; n++) putDoc(env, n, `Alpha Corp note ${n}.`);
 		await ingestOnly(env);
@@ -600,13 +599,14 @@ describe("candidates beyond maxCandidatesPerMention", () => {
 		expect(countUncomparedVersionsInSnapshot(env.db, ["wiki"])).toBe(5);
 		await drainLinks(env);
 		expect(marks(env).every((m) => m.state === "done")).toBe(true);
-		expect(links(env)).toHaveLength(10);
+		// The first mention was asked about all 4 others (in two links). They share its node then,
+		// and each of them has a decision with it, so none is asked about the rest (kg.md §7).
+		expect(links(env)).toHaveLength(4);
 		expect(links(env).every((l) => l.decision === "same")).toBe(true);
-		// Each pair was put to the model exactly once.
 		const asked = env.inference.calls
 			.filter((c) => c.purpose === "link")
 			.reduce((sum, c) => sum + (inputOf(c) as LinkInput).candidates.length, 0);
-		expect(asked).toBe(10);
+		expect(asked).toBe(4);
 		expect(chain(env).open_sweep).toBeNull();
 	});
 
@@ -633,8 +633,8 @@ describe("candidates beyond maxCandidatesPerMention", () => {
 		await ingestOnly(env);
 		await drainLinks(env);
 		expect(marks(env).every((m) => m.state === "done")).toBe(true);
-		// Alpha x3 and Beta x2: 3 + 1 pairs, all same.
-		expect(links(env).filter((l) => l.decision === "same")).toHaveLength(4);
+		// Alpha x3 and Beta x2: one node each, joined by 2 + 1 links (kg.md §7).
+		expect(links(env).filter((l) => l.decision === "same")).toHaveLength(3);
 	});
 });
 

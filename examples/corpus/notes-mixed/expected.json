@@ -1,0 +1,168 @@
+{
+	"corpus": "notes-mixed",
+	"about": "合成の社内メモ 6 文書（2026-11-09 に Claude が作成。会社・人物・製品はすべて架空）の正解表。kg2.md G6 の 2 つ目の素材で、ai-memory と性質を変えてある: 日本語の人名・部署名、送り仮名と長音の揺れ（打ち合わせ／打合せ、検索サーバー／検索サーバ）、ひらがなの名前（ひきだし）、全角と半角（ＭｙＳＱＬ、ＬＡＮＴＥＲＮ＿ＴＯＫＥＮ）、英文、コード・ログ・パス、走り書きと重複行、誤字（ランタソ）、同じ名前の別物（雑メモのキャンプ用のランタン）。括弧は、別名のもの（Lantern（ランタン）、Quality Assurance (品質保証部)）と、別名でないもの（夜間バッチ（hikidashi-sync）、添付ファイル（PDF）、SSO（情シス管理）、TypeScript（Hono））がある。数え方は ai-memory と同じ（ノードの名前のどれかが別名のどれかと一致すれば当たり）。",
+	"entities": [
+		{
+			"id": "lantern",
+			"aliases": ["Lantern", "ランタン", "Lantern Search"]
+		},
+		{
+			"id": "hikidashi",
+			"aliases": ["ひきだし", "Hikidashi"]
+		},
+		{
+			"id": "mitsumori",
+			"aliases": ["三ツ森製作所", "Mitsumori Seisakusho"]
+		},
+		{
+			"id": "sasaki",
+			"aliases": ["佐々木遥", "佐々木", "Sasaki"]
+		},
+		{
+			"id": "ono",
+			"aliases": ["大野健太", "大野", "Ono"]
+		},
+		{
+			"id": "morita",
+			"aliases": ["森田さくら", "森田"]
+		},
+		{
+			"id": "okafor",
+			"aliases": ["Mira Okafor", "Okafor", "オカフォー", "Mira"]
+		},
+		{
+			"id": "takahashi",
+			"aliases": ["高橋"]
+		},
+		{
+			"id": "hamamatsu",
+			"aliases": ["浜松工場"]
+		},
+		{
+			"id": "qa",
+			"aliases": ["品質保証部", "品証", "Quality Assurance"]
+		},
+		{
+			"id": "is",
+			"aliases": ["情報システム課", "情シス"]
+		},
+		{
+			"id": "fulltext",
+			"aliases": ["全文検索", "フルテキスト検索", "Full-text search"]
+		},
+		{
+			"id": "postgres",
+			"aliases": ["PostgreSQL", "Postgres"]
+		},
+		{
+			"id": "opensearch",
+			"aliases": ["OpenSearch"]
+		},
+		{
+			"id": "mysql",
+			"aliases": ["MySQL", "ＭｙＳＱＬ"]
+		},
+		{
+			"id": "pg-bigm",
+			"aliases": ["pg_bigm"]
+		},
+		{
+			"id": "hikidashi-sync",
+			"aliases": ["hikidashi-sync"]
+		},
+		{
+			"id": "nightly-batch",
+			"aliases": ["夜間バッチ", "nightly batch"]
+		},
+		{
+			"id": "lantern-api",
+			"aliases": ["lantern-api"]
+		},
+		{
+			"id": "lantern-worker",
+			"aliases": ["lantern-worker"]
+		},
+		{
+			"id": "lantern-token",
+			"aliases": ["LANTERN_TOKEN", "ＬＡＮＴＥＲＮ＿ＴＯＫＥＮ"]
+		},
+		{
+			"id": "e1023",
+			"aliases": ["E1023"]
+		},
+		{
+			"id": "northwind",
+			"aliases": ["Northwind Cloud", "Northwind"]
+		},
+		{
+			"id": "vm",
+			"aliases": ["VM"]
+		},
+		{
+			"id": "search-server",
+			"aliases": ["検索サーバー", "検索サーバ"]
+		},
+		{
+			"id": "index",
+			"aliases": ["索引", "インデックス"]
+		},
+		{
+			"id": "meeting",
+			"aliases": ["打ち合わせ", "打合せ"]
+		},
+		{
+			"id": "write",
+			"aliases": ["書き込み", "書込み"]
+		},
+		{
+			"id": "procedure",
+			"aliases": ["手順書"]
+		},
+		{
+			"id": "sso",
+			"aliases": ["SSO"]
+		}
+	],
+	"relations": [
+		{
+			"a": ["lantern"],
+			"b": ["hikidashi"],
+			"about": "Lantern がひきだしを置き換える"
+		},
+		{
+			"a": ["hikidashi-sync"],
+			"b": ["hikidashi"],
+			"about": "hikidashi-sync がひきだしのページを取り込む"
+		},
+		{
+			"a": ["fulltext"],
+			"b": ["postgres"],
+			"about": "全文検索は PostgreSQL で作る"
+		},
+		{
+			"a": ["e1023"],
+			"b": ["hikidashi"],
+			"about": "E1023 はひきだし側の API のタイムアウト"
+		},
+		{
+			"a": ["lantern-token"],
+			"b": ["is"],
+			"about": "LANTERN_TOKEN の置き場所は情報システム課が管理する案"
+		},
+		{
+			"a": ["okafor"],
+			"b": ["northwind"],
+			"about": "Okafor は Northwind の支援"
+		}
+	],
+	"distinct": [
+		["lantern", "hikidashi"],
+		["sasaki", "morita"],
+		["ono", "okafor"],
+		["postgres", "opensearch"],
+		["lantern", "lantern-api"],
+		["hikidashi", "hikidashi-sync"],
+		["search-server", "postgres"],
+		["postgres", "mysql"]
+	]
+}

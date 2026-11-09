@@ -104,7 +104,7 @@ test("同じ実体: LLM が same と判断した言及で文書がつながり�
 	expect(shared).toMatchObject({ label: NAME, relatedLabel: NAME });
 	expect(shared.decidedBy).toMatchObject({
 		instructionId: "link",
-		instructionVersion: 2,
+		instructionVersion: 3,
 	});
 	// Both quotations lead back to the documents, and the evidence check confirms them.
 	for (const [id, body, points] of [

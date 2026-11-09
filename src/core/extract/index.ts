@@ -8,6 +8,21 @@ export type {
 	ExtractionRequestOptions,
 } from "./request.js";
 export {
+	createCharclassTokenizer,
+	NAME_RULES_VERSION,
+	blankOut,
+	namesFromTokens,
+} from "./names.js";
+export type { NameCandidate } from "./names.js";
+export {
+	extractNames,
+	NAME_TYPES,
+	NAMES_LIMITS,
+	namesModel,
+	SAME_SENTENCE_RELATION,
+	TokenizerFailure,
+} from "./extract-names.js";
+export {
 	extractionErrorCodes,
 	mergeGleaning,
 	verifyExtraction,

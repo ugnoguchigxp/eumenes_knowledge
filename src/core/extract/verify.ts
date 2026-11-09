@@ -20,6 +20,8 @@ export const extractionErrorCodes = [
 	"inference_failed",
 	"invalid_json",
 	"schema_violation",
+	/** The model-free extractor's tokenizer answered tokens that do not describe the text. */
+	"invalid_tokens",
 ] as const;
 
 function failed(

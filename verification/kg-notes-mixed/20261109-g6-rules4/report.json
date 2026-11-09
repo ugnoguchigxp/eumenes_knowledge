@@ -1,0 +1,4210 @@
+{
+	"kind": "kg-alt",
+	"note": "Ways to connect fragments across documents, on an earlier run's fragments. Related pairs come from expected.json aliases in the text. A single run: not a benchmark.",
+	"startedAt": "2026-11-09T03:10:44.083Z",
+	"from": "verification/kg-notes-mixed/20261109-no-extraction/knowledge.db",
+	"corpus": "notes-mixed",
+	"jsEngines": {
+		"kuromoji": "kuromoji@0.1.2",
+		"lindera": "lindera-wasm-nodejs-ipadic@2.0.0"
+	},
+	"labels": "verification/kg-notes-mixed/noise-labels.json",
+	"specificShare": 0.2,
+	"sudachi": {
+		"sudachipy": "0.7.0",
+		"dictionary": "20261015"
+	},
+	"nlpVersion": 4,
+	"rules": 1,
+	"connections": [
+		{
+			"gold": "all",
+			"entities": 30,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.844,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0.01,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.811,
+					"hit3": 0.944,
+					"mrr": 0.921
+				},
+				{
+					"method": "nlp:noun",
+					"seconds": 0.18,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.9,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "nlp:proper",
+					"seconds": 0.18,
+					"evaluable": 18,
+					"ranked": 17,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.811,
+					"hit3": 0.944,
+					"mrr": 0.944
+				},
+				{
+					"method": "nlp:noun+aliases",
+					"seconds": 0.18,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.889,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "nlp:proper+aliases",
+					"seconds": 0.18,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.9,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "charclass:noun",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.9,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "charclass:proper",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 17,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.722,
+					"hit3": 0.944,
+					"mrr": 0.944
+				},
+				{
+					"method": "charclass:noun+aliases",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.9,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "charclass:proper+aliases",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.8,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "kuromoji:noun",
+					"seconds": 0.13,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.933,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "kuromoji:proper",
+					"seconds": 0.13,
+					"evaluable": 18,
+					"ranked": 17,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.8,
+					"hit3": 0.944,
+					"mrr": 0.944
+				},
+				{
+					"method": "kuromoji:noun+aliases",
+					"seconds": 0.13,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.922,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "kuromoji:proper+aliases",
+					"seconds": 0.13,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.889,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "lindera:noun",
+					"seconds": 0.12,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.922,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "lindera:proper",
+					"seconds": 0.12,
+					"evaluable": 18,
+					"ranked": 17,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.8,
+					"hit3": 0.944,
+					"mrr": 0.944
+				},
+				{
+					"method": "lindera:noun+aliases",
+					"seconds": 0.12,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.911,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "lindera:proper+aliases",
+					"seconds": 0.12,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.889,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+nlp:proper",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.944,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+nlp:noun",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.9,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+charclass:proper",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.922,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+charclass:noun",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.933,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+kuromoji:proper",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.933,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+kuromoji:noun",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.911,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+lindera:proper",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.933,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+lindera:noun",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.911,
+					"hit3": 1,
+					"mrr": 1
+				}
+			]
+		},
+		{
+			"gold": "specific",
+			"entities": 16,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.338,
+					"hit3": 0.846,
+					"mrr": 0.699
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0.01,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.338,
+					"hit3": 0.923,
+					"mrr": 0.728
+				},
+				{
+					"method": "nlp:noun",
+					"seconds": 0.18,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.508,
+					"hit3": 1,
+					"mrr": 0.91
+				},
+				{
+					"method": "nlp:proper",
+					"seconds": 0.18,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.446,
+					"hit3": 0.923,
+					"mrr": 0.846
+				},
+				{
+					"method": "nlp:noun+aliases",
+					"seconds": 0.18,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.508,
+					"hit3": 1,
+					"mrr": 0.949
+				},
+				{
+					"method": "nlp:proper+aliases",
+					"seconds": 0.18,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.462,
+					"hit3": 0.923,
+					"mrr": 0.885
+				},
+				{
+					"method": "charclass:noun",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.477,
+					"hit3": 1,
+					"mrr": 0.91
+				},
+				{
+					"method": "charclass:proper",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.385,
+					"hit3": 0.923,
+					"mrr": 0.782
+				},
+				{
+					"method": "charclass:noun+aliases",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.492,
+					"hit3": 1,
+					"mrr": 0.949
+				},
+				{
+					"method": "charclass:proper+aliases",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.4,
+					"hit3": 0.846,
+					"mrr": 0.788
+				},
+				{
+					"method": "kuromoji:noun",
+					"seconds": 0.13,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.492,
+					"hit3": 1,
+					"mrr": 0.91
+				},
+				{
+					"method": "kuromoji:proper",
+					"seconds": 0.13,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.415,
+					"hit3": 0.923,
+					"mrr": 0.846
+				},
+				{
+					"method": "kuromoji:noun+aliases",
+					"seconds": 0.13,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.477,
+					"hit3": 1,
+					"mrr": 0.91
+				},
+				{
+					"method": "kuromoji:proper+aliases",
+					"seconds": 0.13,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.431,
+					"hit3": 0.923,
+					"mrr": 0.885
+				},
+				{
+					"method": "lindera:noun",
+					"seconds": 0.12,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.508,
+					"hit3": 1,
+					"mrr": 0.91
+				},
+				{
+					"method": "lindera:proper",
+					"seconds": 0.12,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.415,
+					"hit3": 0.923,
+					"mrr": 0.846
+				},
+				{
+					"method": "lindera:noun+aliases",
+					"seconds": 0.12,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.508,
+					"hit3": 1,
+					"mrr": 0.91
+				},
+				{
+					"method": "lindera:proper+aliases",
+					"seconds": 0.12,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.431,
+					"hit3": 0.923,
+					"mrr": 0.885
+				},
+				{
+					"method": "embedding+nlp:proper",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.415,
+					"hit3": 0.923,
+					"mrr": 0.759
+				},
+				{
+					"method": "embedding+nlp:noun",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.462,
+					"hit3": 0.846,
+					"mrr": 0.795
+				},
+				{
+					"method": "embedding+charclass:proper",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.415,
+					"hit3": 0.923,
+					"mrr": 0.772
+				},
+				{
+					"method": "embedding+charclass:noun",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.477,
+					"hit3": 0.923,
+					"mrr": 0.763
+				},
+				{
+					"method": "embedding+kuromoji:proper",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.415,
+					"hit3": 0.923,
+					"mrr": 0.759
+				},
+				{
+					"method": "embedding+kuromoji:noun",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.431,
+					"hit3": 0.846,
+					"mrr": 0.753
+				},
+				{
+					"method": "embedding+lindera:proper",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.415,
+					"hit3": 0.923,
+					"mrr": 0.759
+				},
+				{
+					"method": "embedding+lindera:noun",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.446,
+					"hit3": 0.846,
+					"mrr": 0.753
+				}
+			]
+		}
+	],
+	"mentions": {
+		"nlp:noun": {
+			"mentions": 377,
+			"nodes": 258,
+			"multiDocumentNodes": 65,
+			"singletonNodes": 185,
+			"seconds": 0.185,
+			"topNodes": [
+				{
+					"label": "Lantern",
+					"documents": 6,
+					"mentions": 10
+				},
+				{
+					"label": "夜間バッチ",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "検索",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "VM",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "hikidashi-sync",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "全文検索",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "森田",
+					"documents": 3,
+					"mentions": 5
+				},
+				{
+					"label": "Okafor",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "佐々木",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "Hikidashi",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "LANTERN_TOKEN",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "PDF",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "wiki",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "ランタン",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "件数",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "取り込み",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "品質保証部",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "情報システム課",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "書き込み",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "sync",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "大野",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "手順",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "検索サーバー",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "構築",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "確認",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "索引",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "設計メモ",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "API",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "DB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "E1023",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "GB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "March",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind Cloud",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "OpenSearch",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PostgreSQL",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Postgres",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "done",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "index",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "internal",
+					"documents": 2,
+					"mentions": 2
+				}
+			],
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.9666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 14,
+				"meanBestNodeCoverage": 0.8453333333333333,
+				"meanNodesPerFoundEntity": 1.5517241379310345,
+				"relationRecall": 1,
+				"relationEndpointsFound": 6,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"procedure"
+			],
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi",
+						"ひきだし"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"三ツ森製作所",
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"品質保証部",
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": [
+						"情報システム課",
+						"情シス"
+					]
+				},
+				{
+					"id": "fulltext",
+					"labels": [
+						"全文検索",
+						"フルテキスト検索"
+					]
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "nightly-batch",
+					"labels": [
+						"夜間バッチ"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				}
+			],
+			"labelCounts": {
+				"entity": 23,
+				"topic": 10,
+				"noise": 7,
+				"unlabeled": []
+			}
+		},
+		"nlp:noun:sentence-edges": {
+			"nodePairs": 818,
+			"nodePairsAcrossDocuments": 49,
+			"relationRecall": 1
+		},
+		"nlp:proper": {
+			"mentions": 125,
+			"nodes": 78,
+			"multiDocumentNodes": 26,
+			"singletonNodes": 51,
+			"seconds": 0.185,
+			"topNodes": [
+				{
+					"label": "Lantern",
+					"documents": 6,
+					"mentions": 9
+				},
+				{
+					"label": "VM",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "森田",
+					"documents": 3,
+					"mentions": 5
+				},
+				{
+					"label": "Okafor",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "佐々木",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "Hikidashi",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "LANTERN_TOKEN",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "hikidashi-sync",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "大野",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "API",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "DB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "E1023",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "GB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "March",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind Cloud",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "OpenSearch",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PDF",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PostgreSQL",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Postgres",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-api",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "old",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "pg_bigm",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "三ツ森製作所",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "大野健太",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "浜松工場",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-worker",
+					"documents": 1,
+					"mentions": 2
+				},
+				{
+					"label": "Doc",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "ERROR E1023",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Full-text",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Hono",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "INFO",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Japanese",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "LED",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Lantern Search",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Markdown",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mira",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mira Okafor",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mitsumori Seisakusho",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mixed English",
+					"documents": 1,
+					"mentions": 1
+				}
+			],
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.7333333333333333,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 9,
+				"meanBestNodeCoverage": 0.5713333333333334,
+				"meanNodesPerFoundEntity": 1.4545454545454546,
+				"relationRecall": 0.5,
+				"relationEndpointsFound": 4,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"is",
+				"fulltext",
+				"nightly-batch",
+				"search-server",
+				"index",
+				"meeting",
+				"write",
+				"procedure"
+			],
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"三ツ森製作所",
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": []
+				},
+				{
+					"id": "fulltext",
+					"labels": []
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "hikidashi-sync",
+					"labels": [
+						"hikidashi-sync"
+					]
+				},
+				{
+					"id": "nightly-batch",
+					"labels": []
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "search-server",
+					"labels": []
+				},
+				{
+					"id": "index",
+					"labels": []
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			],
+			"labelCounts": {
+				"entity": 26,
+				"topic": 5,
+				"noise": 9,
+				"unlabeled": []
+			}
+		},
+		"nlp:proper:sentence-edges": {
+			"nodePairs": 116,
+			"nodePairsAcrossDocuments": 10,
+			"relationRecall": 0.5
+		},
+		"nlp:noun+aliases": {
+			"mentions": 377,
+			"nodes": 256,
+			"multiDocumentNodes": 64,
+			"aliasOccurrences": 2,
+			"aliasPairs": 2,
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.9666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 15,
+				"meanBestNodeCoverage": 0.8533333333333333,
+				"meanNodesPerFoundEntity": 1.5517241379310345,
+				"relationRecall": 1,
+				"relationEndpointsFound": 6,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi",
+						"ひきだし"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"三ツ森製作所",
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"品質保証部",
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": [
+						"情報システム課",
+						"情シス"
+					]
+				},
+				{
+					"id": "fulltext",
+					"labels": [
+						"全文検索",
+						"フルテキスト検索"
+					]
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				}
+			]
+		},
+		"nlp:proper+aliases": {
+			"mentions": 133,
+			"nodes": 78,
+			"multiDocumentNodes": 26,
+			"aliasOccurrences": 2,
+			"aliasPairs": 2,
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.7666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 11,
+				"meanBestNodeCoverage": 0.6213333333333333,
+				"meanNodesPerFoundEntity": 1.434782608695652,
+				"relationRecall": 0.6666666666666666,
+				"relationEndpointsFound": 4,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"三ツ森製作所",
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": []
+				},
+				{
+					"id": "fulltext",
+					"labels": []
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "search-server",
+					"labels": []
+				},
+				{
+					"id": "index",
+					"labels": []
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			]
+		},
+		"nlp:noun:suggestions": {
+			"bracket": {
+				"pairs": 5,
+				"right": 2,
+				"mergedIfAccepted": 14,
+				"coverageIfAccepted": 0.845
+			},
+			"containment": {
+				"pairs": 48,
+				"right": 7,
+				"mergedIfAccepted": 15,
+				"coverageIfAccepted": 0.877
+			},
+			"both": {
+				"pairs": 53,
+				"right": 9,
+				"mergedIfAccepted": 15,
+				"coverageIfAccepted": 0.877
+			}
+		},
+		"nlp:aliases": [
+			{
+				"names": [
+					"夜間バッチ",
+					"hikidashi-sync"
+				],
+				"count": 1
+			},
+			{
+				"names": [
+					"添付ファイル",
+					"PDF"
+				],
+				"count": 1
+			}
+		],
+		"charclass:noun": {
+			"mentions": 369,
+			"nodes": 254,
+			"multiDocumentNodes": 63,
+			"singletonNodes": 182,
+			"seconds": 0.002,
+			"topNodes": [
+				{
+					"label": "Lantern",
+					"documents": 6,
+					"mentions": 10
+				},
+				{
+					"label": "夜間バッチ",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "検索",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "VM",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "hikidashi-sync",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "全文検索",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "森田",
+					"documents": 3,
+					"mentions": 5
+				},
+				{
+					"label": "Okafor",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "佐々木",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "Hikidashi",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "LANTERN_TOKEN",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "PDF",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "wiki",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "ランタン",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "件数",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "品質保証部",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "情報システム課",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "sync",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "再構築",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "品証",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "大野",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "確認",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "索引",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "設計メモ",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "API",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "DB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "E1023",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "GB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "March",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind Cloud",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "OpenSearch",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PostgreSQL",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Postgres",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "done",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "index",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "internal",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "keep",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-api",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "new",
+					"documents": 2,
+					"mentions": 2
+				}
+			],
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.9333333333333333,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 12,
+				"meanBestNodeCoverage": 0.7653333333333333,
+				"meanNodesPerFoundEntity": 1.5714285714285714,
+				"relationRecall": 1,
+				"relationEndpointsFound": 6,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"meeting",
+				"write"
+			],
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"三ツ森製作所",
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"品質保証部",
+						"品証",
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": [
+						"情報システム課",
+						"情シス"
+					]
+				},
+				{
+					"id": "fulltext",
+					"labels": [
+						"全文検索",
+						"フルテキスト検索"
+					]
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "nightly-batch",
+					"labels": [
+						"夜間バッチ"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			],
+			"labelCounts": {
+				"entity": 23,
+				"topic": 9,
+				"noise": 8,
+				"unlabeled": []
+			}
+		},
+		"charclass:noun:sentence-edges": {
+			"nodePairs": 785,
+			"nodePairsAcrossDocuments": 48,
+			"relationRecall": 1
+		},
+		"charclass:proper": {
+			"mentions": 104,
+			"nodes": 69,
+			"multiDocumentNodes": 19,
+			"singletonNodes": 49,
+			"seconds": 0.002,
+			"topNodes": [
+				{
+					"label": "Lantern",
+					"documents": 6,
+					"mentions": 9
+				},
+				{
+					"label": "VM",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "hikidashi-sync",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "Okafor",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "Hikidashi",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "LANTERN_TOKEN",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "API",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "DB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "E1023",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "GB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "March",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind Cloud",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "OpenSearch",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PDF",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PostgreSQL",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Postgres",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-api",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "pg_bigm",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-worker",
+					"documents": 1,
+					"mentions": 2
+				},
+				{
+					"label": "Doc",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "ERROR E1023",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Full-text",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Hono",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "INFO",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Japanese",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "LED",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Lantern Search",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Markdown",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mira",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mira Okafor",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mitsumori Seisakusho",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mixed English",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "MySQL",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Northwind Cloud VM",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Notes",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Ono-san",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Open",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Promise",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Proposal",
+					"documents": 1,
+					"mentions": 1
+				}
+			],
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.5666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 8,
+				"meanBestNodeCoverage": 0.43799999999999994,
+				"meanNodesPerFoundEntity": 1.2941176470588236,
+				"relationRecall": 0.6666666666666666,
+				"relationEndpointsFound": 4,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"sasaki",
+				"ono",
+				"morita",
+				"takahashi",
+				"hamamatsu",
+				"is",
+				"fulltext",
+				"nightly-batch",
+				"search-server",
+				"index",
+				"meeting",
+				"write",
+				"procedure"
+			],
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": []
+				},
+				{
+					"id": "ono",
+					"labels": []
+				},
+				{
+					"id": "morita",
+					"labels": []
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira"
+					]
+				},
+				{
+					"id": "hamamatsu",
+					"labels": []
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": []
+				},
+				{
+					"id": "fulltext",
+					"labels": []
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "nightly-batch",
+					"labels": []
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "search-server",
+					"labels": []
+				},
+				{
+					"id": "index",
+					"labels": []
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			],
+			"labelCounts": {
+				"entity": 22,
+				"topic": 6,
+				"noise": 12,
+				"unlabeled": []
+			}
+		},
+		"charclass:proper:sentence-edges": {
+			"nodePairs": 98,
+			"nodePairsAcrossDocuments": 7,
+			"relationRecall": 0.6666666666666666
+		},
+		"charclass:noun+aliases": {
+			"mentions": 369,
+			"nodes": 252,
+			"multiDocumentNodes": 62,
+			"aliasOccurrences": 2,
+			"aliasPairs": 2,
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.9333333333333333,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 13,
+				"meanBestNodeCoverage": 0.7733333333333333,
+				"meanNodesPerFoundEntity": 1.5714285714285714,
+				"relationRecall": 1,
+				"relationEndpointsFound": 6,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"三ツ森製作所",
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"品質保証部",
+						"品証",
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": [
+						"情報システム課",
+						"情シス"
+					]
+				},
+				{
+					"id": "fulltext",
+					"labels": [
+						"全文検索",
+						"フルテキスト検索"
+					]
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			]
+		},
+		"charclass:proper+aliases": {
+			"mentions": 111,
+			"nodes": 69,
+			"multiDocumentNodes": 19,
+			"aliasOccurrences": 2,
+			"aliasPairs": 2,
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.6,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 9,
+				"meanBestNodeCoverage": 0.478,
+				"meanNodesPerFoundEntity": 1.2777777777777777,
+				"relationRecall": 0.6666666666666666,
+				"relationEndpointsFound": 4,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": []
+				},
+				{
+					"id": "ono",
+					"labels": []
+				},
+				{
+					"id": "morita",
+					"labels": []
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira"
+					]
+				},
+				{
+					"id": "hamamatsu",
+					"labels": []
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": []
+				},
+				{
+					"id": "fulltext",
+					"labels": []
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "search-server",
+					"labels": []
+				},
+				{
+					"id": "index",
+					"labels": []
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			]
+		},
+		"charclass:noun:suggestions": {
+			"bracket": {
+				"pairs": 5,
+				"right": 2,
+				"mergedIfAccepted": 12,
+				"coverageIfAccepted": 0.765
+			},
+			"containment": {
+				"pairs": 49,
+				"right": 7,
+				"mergedIfAccepted": 13,
+				"coverageIfAccepted": 0.797
+			},
+			"both": {
+				"pairs": 54,
+				"right": 9,
+				"mergedIfAccepted": 13,
+				"coverageIfAccepted": 0.797
+			}
+		},
+		"charclass:aliases": [
+			{
+				"names": [
+					"夜間バッチ",
+					"hikidashi-sync"
+				],
+				"count": 1
+			},
+			{
+				"names": [
+					"添付ファイル",
+					"PDF"
+				],
+				"count": 1
+			}
+		],
+		"kuromoji:noun": {
+			"mentions": 377,
+			"nodes": 260,
+			"multiDocumentNodes": 66,
+			"singletonNodes": 186,
+			"seconds": 0.129,
+			"topNodes": [
+				{
+					"label": "Lantern",
+					"documents": 6,
+					"mentions": 10
+				},
+				{
+					"label": "夜間バッチ",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "検索",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "確認",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "VM",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "hikidashi-sync",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "全文検索",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "Okafor",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "佐々木",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "Hikidashi",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "LANTERN_TOKEN",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "PDF",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "wiki",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "ランタン",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "件数",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "取り込み",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "品質保証",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "森田",
+					"documents": 2,
+					"mentions": 4
+				},
+				{
+					"label": "sync",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "大野",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "手順",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "構築",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "索引",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "設計メモ",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "API",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "DB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "E1023",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "GB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "March",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind Cloud",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "OpenSearch",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PostgreSQL",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Postgres",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "done",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "index",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "internal",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "keep",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-api",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "new",
+					"documents": 2,
+					"mentions": 2
+				}
+			],
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.9666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 12,
+				"meanBestNodeCoverage": 0.792,
+				"meanNodesPerFoundEntity": 1.5862068965517242,
+				"relationRecall": 1,
+				"relationEndpointsFound": 6,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"procedure"
+			],
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi",
+						"ひきだし"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"三ツ森製作所",
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "morita",
+					"labels": [
+						"森田さくら",
+						"森田"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": [
+						"情報システム課",
+						"情シス"
+					]
+				},
+				{
+					"id": "fulltext",
+					"labels": [
+						"全文検索",
+						"フルテキスト検索"
+					]
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "nightly-batch",
+					"labels": [
+						"夜間バッチ"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "write",
+					"labels": [
+						"書き込み",
+						"書込み"
+					]
+				}
+			],
+			"labelCounts": {
+				"entity": 20,
+				"topic": 11,
+				"noise": 9,
+				"unlabeled": []
+			}
+		},
+		"kuromoji:noun:sentence-edges": {
+			"nodePairs": 814,
+			"nodePairsAcrossDocuments": 49,
+			"relationRecall": 1
+		},
+		"kuromoji:proper": {
+			"mentions": 119,
+			"nodes": 75,
+			"multiDocumentNodes": 24,
+			"singletonNodes": 50,
+			"seconds": 0.129,
+			"topNodes": [
+				{
+					"label": "Lantern",
+					"documents": 6,
+					"mentions": 9
+				},
+				{
+					"label": "VM",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "Okafor",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "佐々木",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "Hikidashi",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "LANTERN_TOKEN",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "hikidashi-sync",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "森田",
+					"documents": 2,
+					"mentions": 4
+				},
+				{
+					"label": "大野",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "API",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "DB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "E1023",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "GB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "March",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind Cloud",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "OpenSearch",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PDF",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PostgreSQL",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Postgres",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-api",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "pg_bigm",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "大野健太",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "浜松工場",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-worker",
+					"documents": 1,
+					"mentions": 2
+				},
+				{
+					"label": "Doc",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "ERROR E1023",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Full-text",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Hono",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "INFO",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Japanese",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "LED",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Lantern Search",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Markdown",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mira",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mira Okafor",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mitsumori Seisakusho",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mixed English",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "MySQL",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Northwind Cloud VM",
+					"documents": 1,
+					"mentions": 1
+				}
+			],
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.7333333333333333,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 8,
+				"meanBestNodeCoverage": 0.5446666666666666,
+				"meanNodesPerFoundEntity": 1.4090909090909092,
+				"relationRecall": 0.5,
+				"relationEndpointsFound": 4,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"is",
+				"fulltext",
+				"nightly-batch",
+				"search-server",
+				"index",
+				"meeting",
+				"write",
+				"procedure"
+			],
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "morita",
+					"labels": [
+						"森田さくら",
+						"森田"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": []
+				},
+				{
+					"id": "fulltext",
+					"labels": []
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "hikidashi-sync",
+					"labels": [
+						"hikidashi-sync"
+					]
+				},
+				{
+					"id": "nightly-batch",
+					"labels": []
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "search-server",
+					"labels": []
+				},
+				{
+					"id": "index",
+					"labels": []
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			],
+			"labelCounts": {
+				"entity": 26,
+				"topic": 6,
+				"noise": 8,
+				"unlabeled": []
+			}
+		},
+		"kuromoji:proper:sentence-edges": {
+			"nodePairs": 109,
+			"nodePairsAcrossDocuments": 7,
+			"relationRecall": 0.5
+		},
+		"kuromoji:noun+aliases": {
+			"mentions": 377,
+			"nodes": 258,
+			"multiDocumentNodes": 65,
+			"aliasOccurrences": 2,
+			"aliasPairs": 2,
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.9666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 13,
+				"meanBestNodeCoverage": 0.8,
+				"meanNodesPerFoundEntity": 1.5862068965517242,
+				"relationRecall": 1,
+				"relationEndpointsFound": 6,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi",
+						"ひきだし"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"三ツ森製作所",
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "morita",
+					"labels": [
+						"森田さくら",
+						"森田"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": [
+						"情報システム課",
+						"情シス"
+					]
+				},
+				{
+					"id": "fulltext",
+					"labels": [
+						"全文検索",
+						"フルテキスト検索"
+					]
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "write",
+					"labels": [
+						"書き込み",
+						"書込み"
+					]
+				}
+			]
+		},
+		"kuromoji:proper+aliases": {
+			"mentions": 127,
+			"nodes": 75,
+			"multiDocumentNodes": 24,
+			"aliasOccurrences": 2,
+			"aliasPairs": 2,
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.7666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 10,
+				"meanBestNodeCoverage": 0.5946666666666666,
+				"meanNodesPerFoundEntity": 1.391304347826087,
+				"relationRecall": 0.6666666666666666,
+				"relationEndpointsFound": 4,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "morita",
+					"labels": [
+						"森田さくら",
+						"森田"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira",
+						"オカフォー"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": []
+				},
+				{
+					"id": "fulltext",
+					"labels": []
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "search-server",
+					"labels": []
+				},
+				{
+					"id": "index",
+					"labels": []
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			]
+		},
+		"kuromoji:noun:suggestions": {
+			"bracket": {
+				"pairs": 4,
+				"right": 1,
+				"mergedIfAccepted": 12,
+				"coverageIfAccepted": 0.792
+			},
+			"containment": {
+				"pairs": 50,
+				"right": 8,
+				"mergedIfAccepted": 13,
+				"coverageIfAccepted": 0.823
+			},
+			"both": {
+				"pairs": 54,
+				"right": 9,
+				"mergedIfAccepted": 13,
+				"coverageIfAccepted": 0.823
+			}
+		},
+		"kuromoji:aliases": [
+			{
+				"names": [
+					"夜間バッチ",
+					"hikidashi-sync"
+				],
+				"count": 1
+			},
+			{
+				"names": [
+					"添付ファイル",
+					"PDF"
+				],
+				"count": 1
+			}
+		],
+		"lindera:noun": {
+			"mentions": 371,
+			"nodes": 254,
+			"multiDocumentNodes": 66,
+			"singletonNodes": 180,
+			"seconds": 0.117,
+			"topNodes": [
+				{
+					"label": "Lantern",
+					"documents": 6,
+					"mentions": 10
+				},
+				{
+					"label": "夜間バッチ",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "検索",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "確認",
+					"documents": 4,
+					"mentions": 5
+				},
+				{
+					"label": "VM",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "hikidashi-sync",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "全文検索",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "Okafor",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "佐々木",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "Hikidashi",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "LANTERN_TOKEN",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "PDF",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "wiki",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "ランタン",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "件数",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "取り込み",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "品質保証",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "森田",
+					"documents": 2,
+					"mentions": 4
+				},
+				{
+					"label": "sync",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "大野",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "手順",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "構築",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "索引",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "設計メモ",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "API",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "DB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "E1023",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "GB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "March",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind Cloud",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "OpenSearch",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PostgreSQL",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Postgres",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "done",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "index",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "internal",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "keep",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-api",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "new",
+					"documents": 2,
+					"mentions": 2
+				}
+			],
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.9666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 12,
+				"meanBestNodeCoverage": 0.772,
+				"meanNodesPerFoundEntity": 1.4827586206896552,
+				"relationRecall": 1,
+				"relationEndpointsFound": 6,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"procedure"
+			],
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi",
+						"ひきだし"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "morita",
+					"labels": [
+						"森田さくら",
+						"森田"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": [
+						"情報システム課"
+					]
+				},
+				{
+					"id": "fulltext",
+					"labels": [
+						"全文検索",
+						"フルテキスト検索"
+					]
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "nightly-batch",
+					"labels": [
+						"夜間バッチ"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "write",
+					"labels": [
+						"書き込み",
+						"書込み"
+					]
+				}
+			],
+			"labelCounts": {
+				"entity": 20,
+				"topic": 11,
+				"noise": 9,
+				"unlabeled": []
+			}
+		},
+		"lindera:noun:sentence-edges": {
+			"nodePairs": 800,
+			"nodePairsAcrossDocuments": 49,
+			"relationRecall": 1
+		},
+		"lindera:proper": {
+			"mentions": 118,
+			"nodes": 74,
+			"multiDocumentNodes": 24,
+			"singletonNodes": 49,
+			"seconds": 0.117,
+			"topNodes": [
+				{
+					"label": "Lantern",
+					"documents": 6,
+					"mentions": 9
+				},
+				{
+					"label": "VM",
+					"documents": 4,
+					"mentions": 4
+				},
+				{
+					"label": "Okafor",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "佐々木",
+					"documents": 3,
+					"mentions": 4
+				},
+				{
+					"label": "Hikidashi",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "LANTERN_TOKEN",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "hikidashi-sync",
+					"documents": 3,
+					"mentions": 3
+				},
+				{
+					"label": "森田",
+					"documents": 2,
+					"mentions": 4
+				},
+				{
+					"label": "大野",
+					"documents": 2,
+					"mentions": 3
+				},
+				{
+					"label": "API",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "DB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "E1023",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "GB",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "March",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Northwind Cloud",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "OpenSearch",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PDF",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "PostgreSQL",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "Postgres",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-api",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "pg_bigm",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "大野健太",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "浜松工場",
+					"documents": 2,
+					"mentions": 2
+				},
+				{
+					"label": "lantern-worker",
+					"documents": 1,
+					"mentions": 2
+				},
+				{
+					"label": "Doc",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "ERROR E1023",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Full-text",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Hono",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "INFO",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Japanese",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "LED",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Lantern Search",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Markdown",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mira",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mira Okafor",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mitsumori Seisakusho",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Mixed English",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "MySQL",
+					"documents": 1,
+					"mentions": 1
+				},
+				{
+					"label": "Northwind Cloud VM",
+					"documents": 1,
+					"mentions": 1
+				}
+			],
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.7333333333333333,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 8,
+				"meanBestNodeCoverage": 0.5446666666666666,
+				"meanNodesPerFoundEntity": 1.3636363636363635,
+				"relationRecall": 0.5,
+				"relationEndpointsFound": 4,
+				"distinctViolations": 0,
+				"impureNodes": 0
+			},
+			"notFound": [
+				"is",
+				"fulltext",
+				"nightly-batch",
+				"search-server",
+				"index",
+				"meeting",
+				"write",
+				"procedure"
+			],
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "morita",
+					"labels": [
+						"森田さくら",
+						"森田"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": []
+				},
+				{
+					"id": "fulltext",
+					"labels": []
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "hikidashi-sync",
+					"labels": [
+						"hikidashi-sync"
+					]
+				},
+				{
+					"id": "nightly-batch",
+					"labels": []
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "search-server",
+					"labels": []
+				},
+				{
+					"id": "index",
+					"labels": []
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			],
+			"labelCounts": {
+				"entity": 26,
+				"topic": 6,
+				"noise": 8,
+				"unlabeled": []
+			}
+		},
+		"lindera:proper:sentence-edges": {
+			"nodePairs": 108,
+			"nodePairsAcrossDocuments": 7,
+			"relationRecall": 0.5
+		},
+		"lindera:noun+aliases": {
+			"mentions": 371,
+			"nodes": 252,
+			"multiDocumentNodes": 65,
+			"aliasOccurrences": 2,
+			"aliasPairs": 2,
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.9666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 13,
+				"meanBestNodeCoverage": 0.7800000000000001,
+				"meanNodesPerFoundEntity": 1.4827586206896552,
+				"relationRecall": 1,
+				"relationEndpointsFound": 6,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi",
+						"ひきだし"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "morita",
+					"labels": [
+						"森田さくら",
+						"森田"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": [
+						"情報システム課"
+					]
+				},
+				{
+					"id": "fulltext",
+					"labels": [
+						"全文検索",
+						"フルテキスト検索"
+					]
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "write",
+					"labels": [
+						"書き込み",
+						"書込み"
+					]
+				}
+			]
+		},
+		"lindera:proper+aliases": {
+			"mentions": 126,
+			"nodes": 74,
+			"multiDocumentNodes": 24,
+			"aliasOccurrences": 2,
+			"aliasPairs": 2,
+			"evaluation": {
+				"entitiesInCorpus": 30,
+				"entityRecall": 0.7666666666666667,
+				"crossDocumentEntities": 25,
+				"mergedIntoOneNode": 10,
+				"meanBestNodeCoverage": 0.5946666666666666,
+				"meanNodesPerFoundEntity": 1.3478260869565217,
+				"relationRecall": 0.6666666666666666,
+				"relationEndpointsFound": 4,
+				"distinctViolations": 0,
+				"impureNodes": 1
+			},
+			"notInOneNode": [
+				{
+					"id": "hikidashi",
+					"labels": [
+						"Hikidashi"
+					]
+				},
+				{
+					"id": "mitsumori",
+					"labels": [
+						"Mitsumori Seisakusho"
+					]
+				},
+				{
+					"id": "sasaki",
+					"labels": [
+						"佐々木遥",
+						"佐々木"
+					]
+				},
+				{
+					"id": "ono",
+					"labels": [
+						"大野健太",
+						"大野"
+					]
+				},
+				{
+					"id": "morita",
+					"labels": [
+						"森田さくら",
+						"森田"
+					]
+				},
+				{
+					"id": "okafor",
+					"labels": [
+						"Mira Okafor",
+						"Okafor",
+						"Mira"
+					]
+				},
+				{
+					"id": "qa",
+					"labels": [
+						"Quality Assurance"
+					]
+				},
+				{
+					"id": "is",
+					"labels": []
+				},
+				{
+					"id": "fulltext",
+					"labels": []
+				},
+				{
+					"id": "postgres",
+					"labels": [
+						"PostgreSQL",
+						"Postgres"
+					]
+				},
+				{
+					"id": "northwind",
+					"labels": [
+						"Northwind",
+						"Northwind Cloud"
+					]
+				},
+				{
+					"id": "search-server",
+					"labels": []
+				},
+				{
+					"id": "index",
+					"labels": []
+				},
+				{
+					"id": "meeting",
+					"labels": []
+				},
+				{
+					"id": "write",
+					"labels": []
+				}
+			]
+		},
+		"lindera:noun:suggestions": {
+			"bracket": {
+				"pairs": 3,
+				"right": 1,
+				"mergedIfAccepted": 12,
+				"coverageIfAccepted": 0.772
+			},
+			"containment": {
+				"pairs": 50,
+				"right": 8,
+				"mergedIfAccepted": 13,
+				"coverageIfAccepted": 0.803
+			},
+			"both": {
+				"pairs": 53,
+				"right": 9,
+				"mergedIfAccepted": 13,
+				"coverageIfAccepted": 0.803
+			}
+		},
+		"lindera:aliases": [
+			{
+				"names": [
+					"夜間バッチ",
+					"hikidashi-sync"
+				],
+				"count": 1
+			},
+			{
+				"names": [
+					"添付ファイル",
+					"PDF"
+				],
+				"count": 1
+			}
+		]
+	},
+	"relationEdges": {},
+	"nameAliases": null,
+	"namedEdges": null
+}

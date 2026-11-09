@@ -513,8 +513,13 @@
 
 		// --- header ---------------------------------------------------------------
 		const r = D.run;
+		const how = r.keys
+			? `前の実行の抽出（${r.llm}）をそのまま使い、同一視はモデルに聞かずに、名前の正規化キー（${r.keys}）が同じ言及をつないで`
+			: r.relinked
+				? `前の実行の抽出をそのまま使い、同一視だけを ${r.llm}（LARM の profile ${r.profile}、同一視の指示 v${r.linkVersion}）でやり直して`
+				: `${r.llm}（LARM の profile ${r.profile}）で取り込み`;
 		$("lede").textContent =
-			`合成の調査 ${D.documents.length} 文書を、${r.llm}（LARM の profile ${r.profile}）で取り込み、eumenes_knowledge のグラフ API から取り出したもの。手で描いた図ではなく、抽出と同一視の結果そのものです。${r.date} の 1 回の実行で、品質の基準値ではありません。`;
+			`合成の調査 ${D.documents.length} 文書を、${how}、eumenes_knowledge のグラフ API から取り出したもの。手で描いた図ではなく、抽出と同一視の結果そのものです。${r.date} の 1 回の実行で、品質の基準値ではありません。`;
 		const facts = [
 			["文書", fmt(D.documents.length), `${fmt(r.bytes)} bytes`],
 			["断片", fmt(r.fragments), `抽出の失敗 ${fmt(r.extractionsFailed)}`],
@@ -901,7 +906,7 @@
 		const ev = D.evaluation;
 		const s = ev.summary;
 		$("evalnote").innerHTML =
-			`正解表は、素材を書いた側が先に決めた実体 ${s.entitiesInCorpus} 件と関係 ${D.evaluation.relations.length} 件です。ノードの名前のどれかが別名と一致すれば「見つかった」とします。実体の再現 <strong class="num">${pct(s.entityRecall)}</strong>、複数の文書に出る実体 ${s.crossDocumentEntities} 件のうち 1 つのノードにまとまったもの <strong class="num">${s.mergedIntoOneNode}</strong> 件、関係の再現 <strong class="num">${pct(s.relationRecall)}</strong>、混ぜてはいけない組を混ぜたもの <strong class="num">${s.distinctViolations}</strong> 件。`;
+			`正解表は、素材を書いた側が先に決めた実体 ${s.entitiesInCorpus} 件と関係 ${D.evaluation.relations.length} 件です。ノードの名前のどれかが別名と一致すれば「見つかった」とします。実体の再現 <strong class="num">${pct(s.entityRecall)}</strong>、複数の文書に出る実体 ${s.crossDocumentEntities} 件のうち 1 つのノードにまとまったもの <strong class="num">${s.mergedIntoOneNode}</strong> 件、関係の再現 <strong class="num">${pct(s.relationRecall)}</strong>、混ぜてはいけない組を混ぜたもの <strong class="num">${s.distinctViolations}</strong> 件${s.impureNodes === undefined ? "" : `、正解表の 2 つ以上の実体を含むノード <strong class="num">${s.impureNodes}</strong> 件`}${r.largestSameComponent === null ? "" : `。same のリンクだけで（矛盾の規則なしに）つなぐと、最大のまとまりは言及 <strong class="num">${fmt(r.largestSameComponent)}</strong> 件`}。`;
 		const mark = (b) =>
 			b ? `<span class="ok">✓ あり</span>` : `<span class="ng">✕ なし</span>`;
 		$("t-ent").innerHTML =

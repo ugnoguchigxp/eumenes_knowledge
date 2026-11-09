@@ -88,7 +88,7 @@ describe("candidates", () => {
 		expect(readLinkCandidatesInTransaction(env.db, a1, 1)).toHaveLength(1);
 	});
 
-	test("the mention full-text index finds a name inside another mention's description; equal names come first", async () => {
+	test("with `text`, the mention full-text index finds a name inside another mention's description; equal names come first", async () => {
 		const env = makeLinkEnv();
 		putDoc(env, 1, "Alpha Corp is here.");
 		// The Delta mention's description contains the text "Alpha Corp".
@@ -96,16 +96,46 @@ describe("candidates", () => {
 		putDoc(env, 3, "Alpha Corp again.");
 		await ingestWithoutLinking(env);
 		const a1 = entityOf(env, 1, "Alpha Corp");
-		const found = readLinkCandidatesInTransaction(env.db, a1, 10).map((c) => [
-			c.documentId.slice(-1),
-			c.name,
-		]);
+		const found = (match: "name" | "text") =>
+			readLinkCandidatesInTransaction(env.db, a1, 10, match).map((c) => [
+				c.documentId.slice(-1),
+				c.name,
+			]);
 		// Exact name matches first (docs 2 and 3), then the Delta mention whose description names Alpha Corp.
-		expect(found).toEqual([
+		expect(found("text")).toEqual([
 			["2", "Alpha Corp"],
 			["3", "Alpha Corp"],
 			["2", "Delta"],
 		]);
+		// With `name` (the default), a mention that is only described with the name is no candidate.
+		expect(found("name")).toEqual([
+			["2", "Alpha Corp"],
+			["3", "Alpha Corp"],
+		]);
+		expect(readLinkCandidatesInTransaction(env.db, a1, 10)).toHaveLength(2);
+	});
+
+	test("with `name`, the index adds the mentions whose name contains the mention's name", async () => {
+		const env = makeLinkEnv();
+		putDoc(env, 1, "Alpha Corp is here.");
+		// Doc 2 names Delta (described with the text) and Alpha Corp Japan (whose name contains it).
+		putDoc(env, 2, "Delta and Alpha Corp Japan.");
+		await ingestWithoutLinking(env);
+		const a1 = entityOf(env, 1, "Alpha Corp");
+		const names = (match: "name" | "text") =>
+			readLinkCandidatesInTransaction(env.db, a1, 10, match).map((c) => c.name);
+		expect(names("name")).toEqual(["Alpha Corp", "Alpha Corp Japan"]);
+		expect(names("text").sort()).toEqual(
+			["Alpha Corp", "Alpha Corp Japan", "Delta"].sort(),
+		);
+		// The longer name does not find the shorter one (the index looks for the whole name).
+		expect(
+			readLinkCandidatesInTransaction(
+				env.db,
+				entityOf(env, 2, "Alpha Corp Japan"),
+				10,
+			).map((c) => c.name),
+		).toEqual([]);
 	});
 
 	test("mentions of the same document in another fragment are candidates; the same fragment never is", async () => {
@@ -164,7 +194,7 @@ WHERE d.document_id = ? AND m.name = 'Alpha Corp' ORDER BY m.fragment_ordinal`,
 		expect(ids(mine[1]!.id)).toEqual([other]);
 	});
 
-	test("a same-document mention found only by the full-text index follows the equal names", async () => {
+	test("with `text`, a same-document mention found only by the full-text index follows the equal names", async () => {
 		const env = makeLinkEnv();
 		// Fragment 1 names Alpha Corp; fragment 2 names Delta, whose description contains "Alpha Corp".
 		putDoc(
@@ -186,6 +216,7 @@ WHERE d.document_id = ? AND m.name = 'Alpha Corp' ORDER BY m.fragment_ordinal LI
 				)[0] as { id: number }
 			).id,
 			10,
+			"text",
 		).map((c) => [c.documentId.slice(-1), c.name]);
 		// Equal names first (the same document's other fragment, then the other document),
 		// then the Delta mention of the same document found through the index.

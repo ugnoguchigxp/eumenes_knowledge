@@ -13,3 +13,9 @@ distribution-manifest.json
 
 # OS
 .DS_Store
+
+# Python のキャッシュ（scripts の補助を実行すると作られる）
+__pycache__/
+
+# 実行の DB の写し（scripts/kg-live.ts が残す。--relink で使う）
+verification/**/knowledge.db

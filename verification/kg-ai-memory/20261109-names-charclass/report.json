@@ -1,0 +1,1026 @@
+{
+	"kind": "kg-live",
+	"note": "Synthetic notes ingested with the model-free extractor (names and same-sentence relations from a tokenizer and rules) and embedded through LARM; no model was asked and no identity link was made, so the graph's nodes are not joined across mentions (kg-keys.ts joins them by key). A single run: not a benchmark.",
+	"corpusName": "ai-memory",
+	"extract": "names",
+	"extractor": "names:charclass@rules5",
+	"startedAt": "2026-11-09T03:56:22.044Z",
+	"elapsedMinutes": 0.1,
+	"elapsedSeconds": 4.7,
+	"finished": true,
+	"relinkedFrom": null,
+	"instructions": {
+		"extract": null,
+		"link": null,
+		"summarize": null
+	},
+	"linkOptions": null,
+	"jobs": {
+		"knowledge.sync-page:completed": 1,
+		"knowledge.ingest-next:completed": 4,
+		"knowledge.link-next:cancelled": 1
+	},
+	"documents": [
+		{
+			"documentId": "wiki-c4091e337c6db49f25786c30d41e8765",
+			"path": "ai-memory/eumenes-memory-direction.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-3dd85ad5607d4a1c034bdf707959b077",
+			"path": "ai-memory/eumenes-memory-evaluation.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-55c123bfe4e70e5926b32271c3ae00a5",
+			"path": "ai-memory/mem0-architecture-shift.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-f6c43ad7809029b907da7f3c793eb63f",
+			"path": "ai-memory/memory-research-map.md",
+			"state": "current"
+		}
+	],
+	"larm": {
+		"profile": "lfm2.5",
+		"catalogRevision": "73bfa004e4f37de8a989a756b5464a99b3d8143f13d907fb6e9364a2de74debf",
+		"llm": {
+			"name": "llm",
+			"model": "ornith1.5-strix",
+			"contextWindow": {
+				"maxTokens": 200000,
+				"outputReserveTokens": 4096,
+				"outputLimit": "remaining-context"
+			}
+		},
+		"embedding": {
+			"name": "embedding",
+			"model": "multilingual-e5-small",
+			"space": {
+				"modelId": "intfloat/multilingual-e5-small",
+				"revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+				"artifactDigest": "63bc913284590439c0fdadcd5f61ee9ad9630591075314bc975fb190983ed62c",
+				"dimension": 384,
+				"queryPrefix": "query: ",
+				"passagePrefix": "passage: "
+			}
+		},
+		"reasoning": "off"
+	},
+	"corpus": [
+		{
+			"path": "ai-memory/eumenes-memory-direction.md",
+			"bytes": 14812
+		},
+		{
+			"path": "ai-memory/eumenes-memory-evaluation.md",
+			"bytes": 19858
+		},
+		{
+			"path": "ai-memory/mem0-architecture-shift.md",
+			"bytes": 21254
+		},
+		{
+			"path": "ai-memory/memory-research-map.md",
+			"bytes": 4016
+		}
+	],
+	"inference": {},
+	"larmStats": {
+		"calls": 4,
+		"ok": 4,
+		"failures": {},
+		"inputTokens": 0,
+		"outputTokens": 0,
+		"reasoningTokens": 0,
+		"totalMs": 4504
+	},
+	"store": {
+		"fragments": 76,
+		"extractionsOk": 76,
+		"extractionsFailed": 0,
+		"droppedItems": 373,
+		"entityMentions": 2505,
+		"relationMentions": 7422,
+		"linksSame": 0,
+		"linksDifferent": 0,
+		"linksUnsure": 0,
+		"summariesOk": 0
+	},
+	"linking": {
+		"decisionsByNames": {},
+		"largestSameComponent": 1
+	},
+	"status": {
+		"complete": true,
+		"partialReasons": []
+	},
+	"graph": {
+		"request": {
+			"maxNodes": 500,
+			"maxEdges": 1000
+		},
+		"complete": false,
+		"partialReasons": [
+			"linking_pending",
+			"nodes_truncated"
+		],
+		"nodes": 500,
+		"edges": 435,
+		"singletonNodes": 500,
+		"multiDocumentNodes": 0,
+		"nodesWithSummary": 0,
+		"multiMentionEdges": 0,
+		"crossDocumentEdges": 0,
+		"maxNamesPerNode": 1,
+		"nodesWithFiveNamesOrMore": 0,
+		"topNodes": [
+			{
+				"label": "../eumenes",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "../eumenes_memory",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "./sqlite",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "13f6f47",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "2635c13f033c",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "2966c06",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "30721f30aa19",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "30721f30aa19",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "3b6091d1b1ea",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "3b6091d1b1ea",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "9c0e85aa2fa3",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD-only",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD-only",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD-only",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD-only",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD-only",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD-only",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD-only",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "ADD-only",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "AI",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "AI Agent Memory",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "AI Agent Memory",
+				"mentions": 1,
+				"documents": 1,
+				"types": [
+					"固有名"
+				]
+			}
+		]
+	},
+	"evidence": {
+		"valid": 1050,
+		"stale": 0,
+		"unavailable": 0,
+		"mismatch": 0,
+		"not_available": 0
+	},
+	"evaluation": {
+		"summary": {
+			"entitiesInCorpus": 32,
+			"entityRecall": 0.75,
+			"crossDocumentEntities": 18,
+			"mergedIntoOneNode": 0,
+			"meanBestNodeCoverage": 0.33333333333333326,
+			"meanNodesPerFoundEntity": 7.416666666666667,
+			"relationRecall": 0.47058823529411764,
+			"relationEndpointsFound": 13,
+			"distinctViolations": 0,
+			"impureNodes": 0
+		},
+		"entities": [
+			{
+				"id": "mem0",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 38,
+				"bestNodeCoverage": 0.25,
+				"unionCoverage": 1,
+				"labels": [
+					"Mem0",
+					"Mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0",
+					"mem0"
+				]
+			},
+			{
+				"id": "mem0-oss",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 19,
+				"bestNodeCoverage": 0.3333333333333333,
+				"unionCoverage": 1,
+				"labels": [
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS",
+					"OSS"
+				]
+			},
+			{
+				"id": "mem0-platform",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 18,
+				"bestNodeCoverage": 0.25,
+				"unionCoverage": 1,
+				"labels": [
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform",
+					"Platform"
+				]
+			},
+			{
+				"id": "mem0g",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 4,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Mem0g",
+					"Mem0g",
+					"Mem0g",
+					"Mem0g"
+				]
+			},
+			{
+				"id": "mem0-paper",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "neo4j",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 4,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Neo4j",
+					"Neo4j",
+					"Neo4j",
+					"Neo4j"
+				]
+			},
+			{
+				"id": "add-only",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 8,
+				"bestNodeCoverage": 0.3333333333333333,
+				"unionCoverage": 1,
+				"labels": [
+					"ADD-only",
+					"ADD-only",
+					"ADD-only",
+					"ADD-only",
+					"ADD-only",
+					"ADD-only",
+					"ADD-only",
+					"ADD-only"
+				]
+			},
+			{
+				"id": "bm25",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 3,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 1,
+				"labels": [
+					"BM25",
+					"BM25",
+					"BM25"
+				]
+			},
+			{
+				"id": "locomo",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 3,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 1,
+				"labels": [
+					"LoCoMo",
+					"LoCoMo",
+					"LoCoMo"
+				]
+			},
+			{
+				"id": "longmemeval",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 5,
+				"bestNodeCoverage": 0.3333333333333333,
+				"unionCoverage": 1,
+				"labels": [
+					"LongMemEval",
+					"LongMemEval",
+					"LongMemEval",
+					"LongMemEval",
+					"LongMemEval"
+				]
+			},
+			{
+				"id": "beam",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 4,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 1,
+				"labels": [
+					"BEAM",
+					"BEAM",
+					"BEAM",
+					"BEAM"
+				]
+			},
+			{
+				"id": "memory-benchmarks",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "gpt-4o",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"gpt-4o"
+				]
+			},
+			{
+				"id": "temporal-reasoning",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 0.5,
+				"labels": [
+					"Temporal Reasoning"
+				]
+			},
+			{
+				"id": "memory-decay",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 0.5,
+				"labels": [
+					"Memory Decay"
+				]
+			},
+			{
+				"id": "graph-memory",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Graph Memory"
+				]
+			},
+			{
+				"id": "state-key",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "hysen-labs",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Hysen Labs",
+					"Hysen Labs"
+				]
+			},
+			{
+				"id": "eumenes",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 17,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 1,
+				"labels": [
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes",
+					"Eumenes"
+				]
+			},
+			{
+				"id": "eumenes-memory",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 19,
+				"bestNodeCoverage": 0.3333333333333333,
+				"unionCoverage": 1,
+				"labels": [
+					"eumenes-memory",
+					"eumenes-memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory",
+					"eumenes_memory"
+				]
+			},
+			{
+				"id": "eumenes-memory-host",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"eumenes-memory-host"
+				]
+			},
+			{
+				"id": "eumenes-knowledge",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 8,
+				"bestNodeCoverage": 0.3333333333333333,
+				"unionCoverage": 1,
+				"labels": [
+					"eumenes_knowledge",
+					"eumenes_knowledge",
+					"eumenes_knowledge",
+					"eumenes_knowledge",
+					"eumenes_knowledge",
+					"eumenes_knowledge",
+					"eumenes_knowledge",
+					"eumenes_knowledge"
+				]
+			},
+			{
+				"id": "steward",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "cas",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 5,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"CAS",
+					"CAS",
+					"CAS",
+					"CAS",
+					"CAS"
+				]
+			},
+			{
+				"id": "journal",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 7,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 1,
+				"labels": [
+					"journal",
+					"journal",
+					"journal",
+					"journal",
+					"journal",
+					"journal",
+					"journal"
+				]
+			},
+			{
+				"id": "tombstone",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "quality-80",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "rrf",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"RRF",
+					"RRF"
+				]
+			},
+			{
+				"id": "world",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 6,
+				"bestNodeCoverage": 0.3333333333333333,
+				"unionCoverage": 1,
+				"labels": [
+					"World",
+					"World",
+					"World",
+					"World",
+					"World",
+					"World"
+				]
+			},
+			{
+				"id": "multilingual-e5",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "read-memory",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "model-input-too-large",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"MODEL_INPUT_TOO_LARGE"
+				]
+			}
+		],
+		"relations": [
+			{
+				"about": "Mem0g は Neo4j に型付きの関係を持っていた",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "OSS から外部のグラフ DB（Neo4j など）への対応を外した",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "新方式は ADD-only の書込み",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "Platform だけに時間推論を足した",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Platform だけに記憶の減衰を足した",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Platform のグラフ記憶は共起から推定する",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "2025 年の論文が旧方式と Mem0g を述べる",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "mem0 がベンチマークの数値を公表した",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "評価の枠組みの既定モデルは gpt-4o",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "eumenes_memory は Eumenes の記憶を切り出したライブラリ",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "書込みの競合を CAS で検出する",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "忘却を journal に記録する",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "quality-80 の評価",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "mem0 と比べる",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "2 つのパッケージは同じ作り方をする",
+				"endpointsFound": true,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "検索は順位だけで融合する（RRF）",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "判断は Eumenes の steward が持つ",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			}
+		],
+		"distinct": [
+			{
+				"pair": [
+					"mem0",
+					"mem0g"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"mem0-oss",
+					"mem0-platform"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"eumenes",
+					"eumenes-memory"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"eumenes-memory",
+					"eumenes-knowledge"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"eumenes-memory",
+					"eumenes-memory-host"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"locomo",
+					"longmemeval"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"temporal-reasoning",
+					"memory-decay"
+				],
+				"merged": []
+			}
+		],
+		"impureNodes": []
+	}
+}

@@ -1,0 +1,930 @@
+<title>AI 記憶調査の知識グラフ</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	rel="stylesheet"
+	href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Zen+Old+Mincho:wght@700&display=swap"
+/>
+<style>
+	/* Layout: a working sheet. Run facts on top, the graph with its inspector beside it, then the comparison with the expected graph. */
+	:root {
+		--plane: #f9f9f7;
+		--surface: #fcfcfb;
+		--ink: #0b0b0b;
+		--ink-2: #52514e;
+		--muted: #898781;
+		--hair: #e1e0d9;
+		--axis: #c3c2b7;
+		--ring: rgba(11, 11, 11, 0.10);
+		--accent: #1c5cab;
+		--d1: #86b6ef;
+		--d2: #3987e5;
+		--d3: #1c5cab;
+		--d4: #0d366b;
+		--edge: #b9b8b0;
+		--edge-cross: #52514e;
+		--good: #006300;
+		--bad: #d03b3b;
+		--warn-bg: #fdf3dc;
+		--warn-ink: #6b4a00;
+		--font-display:
+			"Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+		--font-body:
+			"BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+		--font-mono:
+			"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--plane: #0d0d0d;
+			--surface: #1a1a19;
+			--ink: #f0efec;
+			--ink-2: #c3c2b7;
+			--muted: #898781;
+			--hair: #2c2c2a;
+			--axis: #383835;
+			--ring: rgba(255, 255, 255, 0.10);
+			--accent: #6da7ec;
+			--d1: #184f95;
+			--d2: #2a78d6;
+			--d3: #6da7ec;
+			--d4: #b7d3f6;
+			--edge: #4a4a46;
+			--edge-cross: #c3c2b7;
+			--good: #0ca30c;
+			--bad: #e66767;
+			--warn-bg: #2e2510;
+			--warn-ink: #f2c35a;
+			color-scheme: dark;
+		}
+	}
+	:root[data-theme="dark"] {
+		--plane: #0d0d0d;
+		--surface: #1a1a19;
+		--ink: #f0efec;
+		--ink-2: #c3c2b7;
+		--muted: #898781;
+		--hair: #2c2c2a;
+		--axis: #383835;
+		--ring: rgba(255, 255, 255, 0.10);
+		--accent: #6da7ec;
+		--d1: #184f95;
+		--d2: #2a78d6;
+		--d3: #6da7ec;
+		--d4: #b7d3f6;
+		--edge: #4a4a46;
+		--edge-cross: #c3c2b7;
+		--good: #0ca30c;
+		--bad: #e66767;
+		--warn-bg: #2e2510;
+		--warn-ink: #f2c35a;
+		color-scheme: dark;
+	}
+	* {
+		box-sizing: border-box;
+	}
+	body {
+		background: var(--plane);
+		color: var(--ink);
+		font-family: var(--font-body);
+		font-size: 14px;
+		line-height: 1.6;
+	}
+	.page {
+		max-width: 1360px;
+		margin: 0 auto;
+		padding-left: max(16px, env(safe-area-inset-left, 0px));
+		padding-right: max(16px, env(safe-area-inset-right, 0px));
+		padding-block: 28px 56px;
+		display: grid;
+		gap: 28px;
+	}
+	h1 {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 30px;
+		line-height: 1.25;
+		margin: 0;
+		text-wrap: balance;
+	}
+	h2 {
+		font-size: 17px;
+		margin: 0;
+		text-wrap: balance;
+	}
+	h3 {
+		font-size: 14px;
+		margin: 0;
+	}
+	.lede {
+		color: var(--ink-2);
+		max-width: 68ch;
+		margin: 6px 0 0;
+	}
+	.num {
+		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
+	}
+	.label {
+		font-size: 11px;
+		letter-spacing: 0.06em;
+		color: var(--muted);
+	}
+
+	.facts {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 1px;
+		background: var(--hair);
+		border: 1px solid var(--hair);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+	.fact {
+		background: var(--surface);
+		padding: 10px 14px;
+		display: grid;
+		gap: 2px;
+		min-width: 0;
+	}
+	.fact .value {
+		font-family: var(--font-mono);
+		font-size: 18px;
+		font-variant-numeric: tabular-nums;
+	}
+	.fact .sub {
+		font-size: 12px;
+		color: var(--ink-2);
+	}
+	.reasons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.reason {
+		display: inline-flex;
+		gap: 6px;
+		align-items: baseline;
+		background: var(--warn-bg);
+		color: var(--warn-ink);
+		border-radius: 999px;
+		padding: 2px 10px;
+		font-size: 12px;
+	}
+	.reason code {
+		font-family: var(--font-mono);
+		font-size: 11px;
+	}
+
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px 18px;
+		align-items: center;
+	}
+	.controls label {
+		display: inline-flex;
+		gap: 6px;
+		align-items: center;
+		color: var(--ink-2);
+		font-size: 13px;
+	}
+	.controls input[type="search"],
+	.controls select {
+		font: inherit;
+		color: var(--ink);
+		background: var(--surface);
+		border: 1px solid var(--axis);
+		border-radius: 6px;
+		padding: 5px 9px;
+		min-width: 0;
+	}
+	.controls input[type="search"] {
+		width: 220px;
+		max-width: 100%;
+	}
+	:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+	.work {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 340px;
+		gap: 16px;
+		align-items: start;
+	}
+	@media (max-width: 900px) {
+		.work {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	.canvas {
+		position: relative;
+		background: var(--surface);
+		border: 1px solid var(--hair);
+		border-radius: 10px;
+		overflow: hidden;
+		height: 640px;
+	}
+	@media (max-width: 600px) {
+		.canvas {
+			height: 460px;
+		}
+	}
+	.canvas svg {
+		width: 100%;
+		height: 100%;
+		display: block;
+		touch-action: none;
+	}
+	.legend {
+		position: absolute;
+		left: 12px;
+		bottom: 10px;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px 14px;
+		align-items: center;
+		font-size: 12px;
+		color: var(--ink-2);
+		background: color-mix(in srgb, var(--surface) 88%, transparent);
+		padding: 6px 10px;
+		border-radius: 6px;
+		max-width: calc(100% - 24px);
+	}
+	.swatch {
+		display: inline-block;
+		width: 11px;
+		height: 11px;
+		border-radius: 50%;
+		vertical-align: -1px;
+		margin-right: 3px;
+		box-shadow: 0 0 0 1px var(--ring);
+	}
+	.hint {
+		position: absolute;
+		right: 12px;
+		top: 10px;
+		font-size: 12px;
+		color: var(--muted);
+	}
+	.tooltip {
+		position: absolute;
+		pointer-events: none;
+		background: var(--ink);
+		color: var(--surface);
+		font-size: 12px;
+		padding: 5px 8px;
+		border-radius: 6px;
+		max-width: 260px;
+	}
+
+	.inspector {
+		background: var(--surface);
+		border: 1px solid var(--hair);
+		border-radius: 10px;
+		padding: 16px;
+		display: grid;
+		gap: 12px;
+		min-width: 0;
+		max-height: 640px;
+		overflow: auto;
+	}
+	.inspector .empty {
+		color: var(--ink-2);
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+	.chip {
+		border: 1px solid var(--axis);
+		border-radius: 999px;
+		padding: 1px 9px;
+		font-size: 12px;
+		color: var(--ink-2);
+		overflow-wrap: anywhere;
+	}
+	.rel {
+		display: grid;
+		gap: 6px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.rel li {
+		display: grid;
+		gap: 1px;
+		padding: 6px 8px;
+		border-radius: 6px;
+		background: var(--plane);
+		min-width: 0;
+	}
+	.rel button {
+		all: unset;
+		cursor: pointer;
+		color: var(--accent);
+		overflow-wrap: anywhere;
+	}
+	.rel button:focus-visible {
+		outline: 2px solid var(--accent);
+	}
+	.rel .meta {
+		font-size: 11px;
+		color: var(--muted);
+	}
+	.summary {
+		border-left: 2px solid var(--axis);
+		padding-left: 10px;
+		color: var(--ink-2);
+	}
+
+	section {
+		display: grid;
+		gap: 12px;
+		min-width: 0;
+	}
+	.tables {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+		gap: 16px;
+	}
+	@media (max-width: 480px) {
+		.tables {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	.tablewrap {
+		overflow-x: auto;
+		background: var(--surface);
+		border: 1px solid var(--hair);
+		border-radius: 10px;
+	}
+	table {
+		border-collapse: collapse;
+		width: 100%;
+		font-size: 13px;
+	}
+	th,
+	td {
+		text-align: left;
+		padding: 7px 10px;
+		border-bottom: 1px solid var(--hair);
+		vertical-align: top;
+	}
+	th {
+		font-weight: 700;
+		font-size: 12px;
+		color: var(--ink-2);
+		background: var(--plane);
+		position: sticky;
+		top: 0;
+	}
+	td.n,
+	th.n {
+		text-align: right;
+		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
+	}
+	.ok {
+		color: var(--good);
+		white-space: nowrap;
+	}
+	.ng {
+		color: var(--bad);
+		white-space: nowrap;
+	}
+	.note {
+		color: var(--ink-2);
+		font-size: 13px;
+		max-width: 75ch;
+	}
+</style>
+
+<div class="page">
+	<header>
+		<h1>AI 記憶調査の知識グラフ</h1>
+		<p class="lede" id="lede"></p>
+	</header>
+	<div class="facts" id="facts"></div>
+	<div class="reasons" id="reasons"></div>
+
+	<section aria-labelledby="graph-h">
+		<h2 id="graph-h">グラフ</h2>
+		<div class="controls">
+			<label for="q"
+				>名前で探す <input type="search" id="q" placeholder="例: mem0"
+			/></label>
+			<label for="minm"
+				>言及数
+				<select id="minm">
+					<option value="1">1 以上</option>
+					<option value="2" selected>2 以上</option>
+					<option value="3">3 以上</option>
+					<option value="5">5 以上</option>
+				</select></label
+			>
+			<label for="doc"
+				>文書
+				<select id="doc">
+					<option value="">すべて</option>
+				</select></label
+			>
+			<label for="cross"
+				><input type="checkbox" id="cross" /> 文書をまたぐノードだけ</label
+			>
+			<label for="iso"
+				><input type="checkbox" id="iso" checked /> 辺のないノードを隠す</label
+			>
+			<span class="label num" id="shown"></span>
+		</div>
+		<div class="work">
+			<div class="canvas" id="canvas">
+				<svg
+					id="svg"
+					role="img"
+					aria-label="ノードと辺の図。ノードの色は現れる文書の数、大きさは言及の数。"
+				></svg>
+				<div class="hint">ドラッグで移動・ホイールで拡大・クリックで詳細</div>
+				<div class="legend" id="legend"></div>
+				<div class="tooltip" id="tip" hidden></div>
+			</div>
+			<aside class="inspector" id="inspector" aria-live="polite"></aside>
+		</div>
+	</section>
+
+	<section aria-labelledby="eval-h">
+		<h2 id="eval-h">正解表との比較</h2>
+		<p class="note" id="evalnote"></p>
+		<div class="tables">
+			<div class="tablewrap"><table id="t-ent"></table></div>
+			<div class="tablewrap"><table id="t-rel"></table></div>
+		</div>
+	</section>
+
+	<section aria-labelledby="list-h">
+		<h2 id="list-h">ノードの一覧（言及の多い順）</h2>
+		<div class="tablewrap"><table id="t-nodes"></table></div>
+	</section>
+</div>
+
+<script id="kg-data" type="application/json">
+	{"run":{"llm":"ornith1.5-strix","profile":"lfm2.5","date":"2026-11-08","minutes":0,"bytes":59978,"fragments":76,"extractionsFailed":0,"entityMentions":920,"relationMentions":600,"linksSame":319,"linksDifferent":0,"linksUnsure":0,"evidenceValid":1410,"evidenceTotal":1410,"calls":0,"relinked":false,"keys":"nfkc","linkVersion":null,"largestSameComponent":28},"documents":[{"title":"eumenes_memory の評価（2026-11-07 時点）","path":"ai-memory/eumenes-memory-evaluation.md"},{"title":"mem0 のアーキテクチャ転換が何をもたらすか","path":"ai-memory/mem0-architecture-shift.md"},{"title":"eumenes_memory はどうするべきか","path":"ai-memory/eumenes-memory-direction.md"},{"title":"記憶の調査: 関連の地図","path":"ai-memory/memory-research-map.md"}],"partialReasons":[],"nodes":[{"id":"n1","label":"mem0","names":["mem0","Mem0"],"types":["記憶システムの名称","製品・システム","システム・プロジェクト","一般の記憶ライブラリ","記憶システム（製品・手法）","記憶管理システムの旧方式","記憶機能を持つシステム","システム・OSS","アーキテクチャ","Mem0"],"m":28,"docs":[0,1,2,3],"summary":null},{"id":"n2","label":"Platform","names":["Platform"],"types":["プラットフォーム","mem0 の構成要素","mem0 が動作する基盤","有償のホスト版の名前","mem0 の形態","記憶システムの版・プラットフォーム","Mem0 の新バージョンの構成要素","プラットフォーム・サービスの名称","製品・サービス形態","評価プラットフォーム"],"m":16,"docs":[0,1,2,3],"summary":null},{"id":"n3","label":"eumenes_memory","names":["eumenes_memory"],"types":["記憶システムの名称","ライブラリ","記憶システム（製品・手法）","システム・記憶","記憶システム","システム・プロジェクト","記憶システムの設計","システム（メモリ機能を持つ）","製品・システム","システム・仕組み"],"m":15,"docs":[0,2,3],"summary":null},{"id":"n4","label":"Eumenes","names":["Eumenes"],"types":["システム","記憶の主体・システム","ホスト","対象","記憶システム","システムまたはその側","システム名","主体・機構","主体 / 所有者","対話システム"],"m":13,"docs":[0,2],"summary":null},{"id":"n5","label":"LLM","names":["LLM"],"types":["大規模言語モデル","言語モデル","判断を行う主体","言語モデル / 判断主体"],"m":12,"docs":[0,1,2],"summary":null},{"id":"n6","label":"記憶","names":["記憶"],"types":["データ","本人の確認・修正・推測の痕跡を残す対象","出典・派生物","記憶","概念","システムが保持する情報","記憶データ","システムの機能"],"m":9,"docs":[0,1,2],"summary":null},{"id":"n7","label":"host","names":["host"],"types":["別パッケージ（CLI・MCP）","実装の主体","記憶管理を行う主体","対象","主体・実行主体","役割・主体","主体・機構","場所（保持先・システム）"],"m":8,"docs":[0,2],"summary":null},{"id":"n8","label":"LongMemEval","names":["LongMemEval"],"types":["公開ベンチマーク","評価（ベンチマーク）","ベンチマーク","評価手法・ベンチマーク","評価手法・ベンチマーク（旧アルゴリズムの値）","評価手法・指標"],"m":6,"docs":[0,1,2],"summary":null},{"id":"n9","label":"tgz","names":["tgz"],"types":["配布ファイル形式","配布パッケージ","配布パッケージ形式","圧縮ファイル","配布物"],"m":6,"docs":[0,2,3],"summary":null},{"id":"n10","label":"合成データ","names":["合成データ"],"types":["評価データ","検証に使用するデータ","評価に使用されるデータ","データ","資源（データ）","評価の側が使用するデータ"],"m":6,"docs":[0,2,3],"summary":null},{"id":"n11","label":"OSS","names":["OSS"],"types":["オープンソースソフトウェア","製品・サービス形態","オープンソース"],"m":6,"docs":[1,2],"summary":null},{"id":"n12","label":"eumenes_knowledge","names":["eumenes_knowledge"],"types":["知識システム","制度・仕組み","記憶・知識機構","パッケージ","検索システムまたは手法"],"m":6,"docs":[2,3],"summary":null},{"id":"n13","label":"新方式","names":["新方式"],"types":["書込み方式","記憶管理の新方式","記憶書き込みの新方式","記憶管理の方式","記憶の保存方式"],"m":6,"docs":[0,1],"summary":null},{"id":"n14","label":"時間推論","names":["時間推論"],"types":["機能","概念・タスク","評価条件","機能・概念"],"m":6,"docs":[1],"summary":null},{"id":"n15","label":"state key","names":["state key"],"types":["mem0 の時間管理の要素","mem0 の Platform に追加された鍵","続いている状態に付けるキー","状態を表すキー","Platformの要素"],"m":5,"docs":[0,1,3],"summary":null},{"id":"n16","label":"State","names":["State"],"types":["記憶のカテゴリ","データ構造またはオブジェクト","データ構造","状態","状態・区分"],"m":5,"docs":[0,2],"summary":null},{"id":"n17","label":"delete","names":["delete","DELETE"],"types":["mem0 の忘却方法","LLMが選ぶ処理","出来事の種別","明示的操作","明示的な操作コマンド"],"m":5,"docs":[0,1],"summary":null},{"id":"n18","label":"memory-benchmarks","names":["memory-benchmarks"],"types":["評価の枠組み","ベンチマーク","ツール・リソース"],"m":5,"docs":[1,2],"summary":null},{"id":"n19","label":"quality-80","names":["quality-80"],"types":["指標・基準","品質目標の識別子","タスク・作業","指標（費用上限の基準）"],"m":5,"docs":[0,2],"summary":null},{"id":"n20","label":"update","names":["update","UPDATE"],"types":["mem0 の訂正方法","LLMが選ぶ処理","出来事の種別","明示的操作","明示的な操作コマンド"],"m":5,"docs":[0,1],"summary":null},{"id":"n21","label":"公開ベンチマーク","names":["公開ベンチマーク"],"types":["評価手法","mem0 の評価に用いられる物差し","追加する設計（優先順3）","物（評価手段）"],"m":5,"docs":[0,2],"summary":null},{"id":"n22","label":"出典","names":["出典"],"types":["出典・派生物","派生物","参照元文献または資料","データ","概念 / メタデータ"],"m":5,"docs":[0,2],"summary":null},{"id":"n23","label":"実体","names":["実体"],"types":["取り出しの要素","固有名詞などの実体","採点対象","検索の要素","エンティティ"],"m":5,"docs":[0,1],"summary":null},{"id":"n24","label":"忘却","names":["忘却"],"types":["不可逆の操作","機能・プロセス","記憶システムの特徴","操作・処理","処理・操作"],"m":5,"docs":[0,1],"summary":null},{"id":"n25","label":"移行文書","names":["移行文書"],"types":["文書","文書の種類","検証に用いた資料"],"m":5,"docs":[1,3],"summary":null},{"id":"n26","label":"mem0 OSS","names":["mem0 OSS"],"types":["オープンソース版mem0","製品・システム","測定対象・物","オープンソースソフトウェア","物（モデル）"],"m":5,"docs":[2],"summary":null},{"id":"n27","label":"World","names":["World"],"types":["概念・仕組みの名前","構造・概念","世界","関係が属する領分"],"m":4,"docs":[0,2,3],"summary":null},{"id":"n28","label":"BEAM","names":["BEAM"],"types":["評価・分類の名称","ベンチマーク","分類（記憶システムの評価分類）","評価手法・指標"],"m":4,"docs":[1,2],"summary":null},{"id":"n29","label":"journal","names":["journal"],"types":["忘却の依存閉包と併置される仕組み","データ構造・記憶媒体","要素","設計要素"],"m":4,"docs":[0,2],"summary":null},{"id":"n30","label":"利用者","names":["利用者"],"types":["ユーザー","人物","人物（判断を行う主体）"],"m":4,"docs":[1,2],"summary":null},{"id":"n31","label":"削除","names":["削除"],"types":["mem0 が残す課題","記憶の削除処理（DELETE）","記憶の削除処理","課題"],"m":4,"docs":[0,1],"summary":null},{"id":"n32","label":"型付きの関係","names":["型付きの関係"],"types":["グラフの辺","グラフ記憶が付けない関係","関係の形式","mem0が手放した要素"],"m":4,"docs":[1,3],"summary":null},{"id":"n33","label":"索引","names":["索引"],"types":["実体の索引","派生物・データ","全文検索用のデータ構造","物（システム要素）"],"m":4,"docs":[1,2],"summary":null},{"id":"n34","label":"CAS","names":["CAS"],"types":["書込みの競合検出方式","コードが決定する事項","競合検出を行う書込み方式","誤った削除を抑制する仕組み"],"m":4,"docs":[0],"summary":null},{"id":"n35","label":"Mem0g","names":["Mem0g"],"types":["Mem0のグラフ版","Mem0 の旧バージョンの型付き関係を持つ構成要素","Mem0 の一種","Mem0の方式・バージョン"],"m":4,"docs":[1],"summary":null},{"id":"n36","label":"Neo4j","names":["Neo4j"],"types":["グラフデータベース","グラフデータベースのdriver","データベース"],"m":4,"docs":[1],"summary":null},{"id":"n37","label":"Python v2.0.0","names":["Python v2.0.0"],"types":["SDKのバージョン","Python SDK の版","ソフトウェアのバージョン","mem0 Python のリリースノート"],"m":4,"docs":[1],"summary":null},{"id":"n38","label":"BM25","names":["BM25"],"types":["取り出しの手法","キーワード検索の手法","検索方式"],"m":3,"docs":[0,1],"summary":null},{"id":"n39","label":"LoCoMo","names":["LoCoMo"],"types":["公開ベンチマーク","ベンチマーク","評価手法・ベンチマーク"],"m":3,"docs":[0,1],"summary":null},{"id":"n40","label":"commit","names":["commit"],"types":["バージョン管理の単位","バージョン管理の変更単位"],"m":3,"docs":[0,2],"summary":null},{"id":"n41","label":"mem0 のアーキテクチャ転換が何をもたらすか","names":["mem0 のアーキテクチャ転換が何をもたらすか"],"types":["調査記事（Claude のアーティファクト）","Claude のアーティファクト（Web ページ）","文書（リンク）"],"m":3,"docs":[0,3],"summary":null},{"id":"n42","label":"verify:package","names":["verify:package"],"types":["検証コマンド","CIの試験コマンド"],"m":3,"docs":[0,2],"summary":null},{"id":"n43","label":"ベンチマークの数値","names":["ベンチマークの数値"],"types":["指標","mem0 の性能評価の数値"],"m":3,"docs":[1,3],"summary":null},{"id":"n44","label":"外部のグラフ DB","names":["外部のグラフ DB"],"types":["外部データベース","データベース","mem0 の変更・技術"],"m":3,"docs":[1,2],"summary":null},{"id":"n45","label":"時間","names":["時間"],"types":["記憶のカテゴリ","概念","概念・軸"],"m":3,"docs":[0,1],"summary":null},{"id":"n46","label":"書込み","names":["書込み"],"types":["記憶への書き込み操作","記憶への書き込み処理","記憶の書込み処理"],"m":3,"docs":[0,1],"summary":null},{"id":"n47","label":"本体","names":["本体"],"types":["実装の主体","要素","eumenes-memory の本体"],"m":3,"docs":[0,2],"summary":null},{"id":"n48","label":"版","names":["版"],"types":["コードが決定する事項","eumenes_memory が持つもの","出典の情報"],"m":3,"docs":[0,2],"summary":null},{"id":"n49","label":"知識の更新","names":["知識の更新"],"types":["概念・処理","概念・タスク","機能"],"m":3,"docs":[1,2],"summary":null},{"id":"n50","label":"関係","names":["関係"],"types":["記憶機能の構成要素の一つ","データ構造・概念","検索の経路"],"m":3,"docs":[1,2],"summary":null},{"id":"n51","label":"2025 年の論文","names":["2025 年の論文"],"types":["学術論文","論文"],"m":3,"docs":[1],"summary":null},{"id":"n52","label":"M1","names":["M1"],"types":["前提の記号","問題・理由の符号","記憶・概念（言及対象）"],"m":3,"docs":[2],"summary":null},{"id":"n53","label":"TypeScript v3.0.0","names":["TypeScript v3.0.0"],"types":["SDKのバージョン","TypeScript の版","mem0 TypeScript のリリースノート"],"m":3,"docs":[1],"summary":null},{"id":"n54","label":"examples","names":["examples"],"types":["資料・データ","対象・場所","事例・例"],"m":3,"docs":[2],"summary":null},{"id":"n55","label":"mem0 のブログ","names":["mem0 のブログ"],"types":["ブログ","根拠となる資料"],"m":3,"docs":[1],"summary":null},{"id":"n56","label":"アプリケーション","names":["アプリケーション"],"types":["ソフトウェア"],"m":3,"docs":[1],"summary":null},{"id":"n57","label":"ホスト","names":["ホスト"],"types":["記憶の有効性を判定する主体","構成要素・主体","主体"],"m":3,"docs":[0],"summary":null},{"id":"n58","label":"利用者の発言","names":["利用者の発言"],"types":["利用者が発した発言","入力情報","保存対象の情報"],"m":3,"docs":[1],"summary":null},{"id":"n59","label":"忘却の閉包","names":["忘却の閉包"],"types":["概念・仕組み","概念","制度（登録対象）"],"m":3,"docs":[2],"summary":null},{"id":"n60","label":"旧方式","names":["旧方式"],"types":["記憶書き込みの旧来の方式","書込み方式","記憶管理の方式"],"m":3,"docs":[1],"summary":null},{"id":"n61","label":"減衰","names":["減衰"],"types":["機能","手法"],"m":3,"docs":[1],"summary":null},{"id":"n62","label":"第三者の評","names":["第三者の評"],"types":["評価","mem0 に関する外部の評価","評価・評"],"m":3,"docs":[1],"summary":null},{"id":"n63","label":"順位","names":["順位"],"types":["概念","グラフ記憶が効くもの","ランキング"],"m":3,"docs":[1],"summary":null},{"id":"n64","label":"1,001 件","names":["1,001 件"],"types":["合成データの件数"],"m":2,"docs":[0,2],"summary":null},{"id":"n65","label":"3 つの信号","names":["3 つの信号"],"types":["採点に用いられる信号の数","融合される信号"],"m":2,"docs":[1,3],"summary":null},{"id":"n66","label":"30 件","names":["30 件"],"types":["生成された自然文の回答の評価の件数","評価した件数"],"m":2,"docs":[0,2],"summary":null},{"id":"n67","label":"80 件","names":["80 件"],"types":["自然文の回答の評価で予定されていた件数","評価対象の件数"],"m":2,"docs":[0,2],"summary":null},{"id":"n68","label":"N013","names":["N013"],"types":["評価対象の事例番号","事例・誤り"],"m":2,"docs":[0,2],"summary":null},{"id":"n69","label":"README","names":["README"],"types":["文書","説明文档"],"m":2,"docs":[0,2],"summary":null},{"id":"n70","label":"agent_inferred","names":["agent_inferred"],"types":["記憶に残される情報の一種","origin の区分値"],"m":2,"docs":[0,2],"summary":null},{"id":"n71","label":"byte 範囲","names":["byte 範囲"],"types":["コードが決定する事項","出典の情報"],"m":2,"docs":[0,2],"summary":null},{"id":"n72","label":"fixture","names":["fixture"],"types":["合成データ","テストや評価に使う固定された入力データ"],"m":2,"docs":[0,2],"summary":null},{"id":"n73","label":"host 0.1.0","names":["host 0.1.0"],"types":["版番号","版（バージョン）"],"m":2,"docs":[0,2],"summary":null},{"id":"n74","label":"superseded","names":["superseded"],"types":["記憶の状態の一種","版（バージョン）"],"m":2,"docs":[0,2],"summary":null},{"id":"n75","label":"プライバシー","names":["プライバシー"],"types":["mem0 が残す課題","課題"],"m":2,"docs":[0,1],"summary":null},{"id":"n76","label":"モデル","names":["モデル"],"types":["対象・システム","検証手法"],"m":2,"docs":[2,3],"summary":null},{"id":"n77","label":"予約の台帳","names":["予約の台帳"],"types":["台帳","制度・仕組み"],"m":2,"docs":[0,2],"summary":null},{"id":"n78","label":"合成の 18 件","names":["合成の 18 件","合成の18件"],"types":["Seedの実際の数","合成データ"],"m":2,"docs":[0,2],"summary":null},{"id":"n79","label":"版番号","names":["版番号"],"types":["管理番号","tgzの識別情報"],"m":2,"docs":[2,3],"summary":null},{"id":"n80","label":"状態","names":["状態"],"types":["記憶の状態","eumenes_memory が持つもの"],"m":2,"docs":[0,2],"summary":null},{"id":"n81","label":"矛盾の解決","names":["矛盾の解決"],"types":["概念・タスク","機能"],"m":2,"docs":[1,2],"summary":null},{"id":"n82","label":"約 7,000 token","names":["約 7,000 token","約7,000 token"],"types":["mem0 の取り出し量","取り出しの収容量"],"m":2,"docs":[0,2],"summary":null},{"id":"n83","label":"試験","names":["試験"],"types":["表の見出し","検証手法"],"m":2,"docs":[0,3],"summary":null},{"id":"n84","label":"0.0.4","names":["0.0.4"],"types":["版番号"],"m":2,"docs":[0],"summary":null},{"id":"n85","label":"2026 年 4 月","names":["2026 年 4 月"],"types":["記憶の書き方を変更した時期","発表時期"],"m":2,"docs":[1],"summary":null},{"id":"n86","label":"ADD","names":["ADD"],"types":["LLMが選ぶ処理","出来事の種別"],"m":2,"docs":[1],"summary":null},{"id":"n87","label":"Hysen Labs","names":["Hysen Labs"],"types":["組織","プロジェクト提供者・ウェブサイト運営者"],"m":2,"docs":[1],"summary":null},{"id":"n88","label":"RRF","names":["RRF"],"types":["手法・指標","融合方式（順位融合）"],"m":2,"docs":[2],"summary":null},{"id":"n89","label":"S4","names":["S4"],"types":["段階（配布と文書）","時期（ステージ）"],"m":2,"docs":[2],"summary":null},{"id":"n90","label":"State of AI Agent Memory 2026","names":["State of AI Agent Memory 2026"],"types":["mem0 の文書・報告","mem0 のブログ記事（業界の流れと残る課題）"],"m":2,"docs":[1],"summary":null},{"id":"n91","label":"eumenes_memory はどうするべきか","names":["eumenes_memory はどうするべきか"],"types":["文書（リンク）","Claude の artifact（URL 参照）"],"m":2,"docs":[3],"summary":null},{"id":"n92","label":"mem0/memory/main.py","names":["mem0/memory/main.py"],"types":["ソースコードのファイルパス","mem0 のコード（main 枝）"],"m":2,"docs":[1],"summary":null},{"id":"n93","label":"multilingual-e5","names":["multilingual-e5"],"types":["ベクトル手法","埋込モデル/手法"],"m":2,"docs":[0],"summary":null},{"id":"n94","label":"origin","names":["origin"],"types":["設計要素","区分・概念"],"m":2,"docs":[2],"summary":null},{"id":"n95","label":"schema 8","names":["schema 8"],"types":["スキーマの名称・番号","スキーマ"],"m":2,"docs":[0],"summary":null},{"id":"n96","label":"spec/host/implementation.md","names":["spec/host/implementation.md"],"types":["仕様文書","実装ドキュメントファイル"],"m":2,"docs":[0],"summary":null},{"id":"n97","label":"steward","names":["steward"],"types":["Eumenes 側の構成要素","LLM の step"],"m":2,"docs":[0],"summary":null},{"id":"n98","label":"turn のベクトル","names":["turn のベクトル"],"types":["Eumenes のベクトル","想起の経路"],"m":2,"docs":[0],"summary":null},{"id":"n99","label":"キーワード","names":["キーワード"],"types":["採点の信号の一つ","採点対象"],"m":2,"docs":[1],"summary":null},{"id":"n100","label":"グラフ記憶","names":["グラフ記憶"],"types":["記憶の形式","機能"],"m":2,"docs":[1],"summary":null},{"id":"n101","label":"ベクトルストア","names":["ベクトルストア"],"types":["記憶を保持するストア","記憶のストア"],"m":2,"docs":[1],"summary":null},{"id":"n102","label":"ベクトル検索","names":["ベクトル検索"],"types":["技術・手法","検索手法"],"m":2,"docs":[0],"summary":null},{"id":"n103","label":"リリースノート","names":["リリースノート"],"types":["文書の種類","newreleases.io の写しとしてのリリースノート"],"m":2,"docs":[1],"summary":null},{"id":"n104","label":"全文検索","names":["全文検索"],"types":["技術・手法","検索手法"],"m":2,"docs":[0],"summary":null},{"id":"n105","label":"全文索引","names":["全文索引"],"types":["データ構造・仕組み","データ構造"],"m":2,"docs":[0],"summary":null},{"id":"n106","label":"公開データ","names":["公開データ"],"types":["検証に使用するデータ","データ"],"m":2,"docs":[2],"summary":null},{"id":"n107","label":"墓標","names":["墓標"],"types":["概念・機構","機能・要素"],"m":2,"docs":[0],"summary":null},{"id":"n108","label":"実体リンク","names":["実体リンク"],"types":["検索順位を上げる機能","アルゴリズムの処理"],"m":2,"docs":[1],"summary":null},{"id":"n109","label":"忘却の依存閉包","names":["忘却の依存閉包"],"types":["設計要素","忘却処理の概念"],"m":2,"docs":[2],"summary":null},{"id":"n110","label":"想起","names":["想起"],"types":["処理・機能","入力処理を行う対象"],"m":2,"docs":[2],"summary":null},{"id":"n111","label":"意味検索","names":["意味検索"],"types":["検索方式","検索手法"],"m":2,"docs":[1],"summary":null},{"id":"n112","label":"抽出","names":["抽出"],"types":["書込み処理の第一段","書込みの処理工程"],"m":2,"docs":[1],"summary":null},{"id":"n113","label":"新しい事実","names":["新しい事実"],"types":["記憶データ","事実"],"m":2,"docs":[1],"summary":null},{"id":"n114","label":"時間の推論","names":["時間の推論"],"types":["記憶機能に追加された機能","課題"],"m":2,"docs":[1],"summary":null},{"id":"n115","label":"更新","names":["更新"],"types":["記憶の更新処理（UPDATE）","書込み処理の第二段"],"m":2,"docs":[1],"summary":null},{"id":"n116","label":"物理的な消去","names":["物理的な消去"],"types":["概念・処理","制約・保証対象外"],"m":2,"docs":[0],"summary":null},{"id":"n117","label":"訂正","names":["訂正"],"types":["操作・処理","処理・操作"],"m":2,"docs":[1],"summary":null},{"id":"n118","label":"記憶の減衰","names":["記憶の減衰"],"types":["記憶機能に追加された機能","機能"],"m":2,"docs":[1],"summary":null},{"id":"n119","label":"論文","names":["論文"],"types":["論文","出典リストのカテゴリ"],"m":2,"docs":[1],"summary":null},{"id":"n120","label":"遅延","names":["遅延"],"types":["評価指標","レイテンシ"],"m":2,"docs":[1],"summary":null},{"id":"n121","label":"0.1.0","names":["0.1.0"],"types":["版番号"],"m":1,"docs":[0],"summary":null},{"id":"n122","label":"1 つの順位","names":["1 つの順位"],"types":["融合された順位"],"m":1,"docs":[1],"summary":null},{"id":"n123","label":"1 回の LLM 呼び出し","names":["1 回の LLM 呼び出し"],"types":["LLM呼び出しの回数"],"m":1,"docs":[1],"summary":null},{"id":"n124","label":"10M token","names":["10M token"],"types":["トークン数"],"m":1,"docs":[1],"summary":null},{"id":"n125","label":"11 月 6 日","names":["11 月 6 日"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n126","label":"131,072 bytes","names":["131,072 bytes"],"types":["送信の上限サイズ"],"m":1,"docs":[0],"summary":null},{"id":"n127","label":"1M token","names":["1M token"],"types":["トークン数"],"m":1,"docs":[1],"summary":null},{"id":"n128","label":"1回の取得あたりのtoken","names":["1回の取得あたりのtoken"],"types":["評価指標"],"m":1,"docs":[1],"summary":null},{"id":"n129","label":"2 つのパッケージ","names":["2 つのパッケージ"],"types":["パッケージ"],"m":1,"docs":[2],"summary":null},{"id":"n130","label":"2. 回答の品質の受入を終える（E3）","names":["2. 回答の品質の受入を終える（E3）"],"types":["タスク・フェーズ"],"m":1,"docs":[2],"summary":null},{"id":"n131","label":"2.4 倍","names":["2.4 倍"],"types":["上限に対する倍率"],"m":1,"docs":[2],"summary":null},{"id":"n132","label":"2025-04-28","names":["2025-04-28"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n133","label":"2026 年の値","names":["2026 年の値"],"types":["評価値"],"m":1,"docs":[1],"summary":null},{"id":"n134","label":"2026 年春（日付は未確認）","names":["2026 年春（日付は未確認）"],"types":["時期"],"m":1,"docs":[1],"summary":null},{"id":"n135","label":"2026-04-06 以降","names":["2026-04-06 以降"],"types":["時期"],"m":1,"docs":[1],"summary":null},{"id":"n136","label":"2026-04-16","names":["2026-04-16"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n137","label":"2026-05-08","names":["2026-05-08"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n138","label":"2026-05-12～14","names":["2026-05-12～14"],"types":["時期"],"m":1,"docs":[1],"summary":null},{"id":"n139","label":"2026-10-16 の一連","names":["2026-10-16 の一連"],"types":["記録"],"m":1,"docs":[0],"summary":null},{"id":"n140","label":"2026-11-06 Eumenes の記憶関連","names":["2026-11-06 Eumenes の記憶関連"],"types":["試験の時点・対象"],"m":1,"docs":[0],"summary":null},{"id":"n141","label":"2026-11-06 `bun run verify`（本体）","names":["2026-11-06 `bun run verify`（本体）"],"types":["試験の時点・対象"],"m":1,"docs":[0],"summary":null},{"id":"n142","label":"2026-11-07 の稼働確認","names":["2026-11-07 の稼働確認"],"types":["確認作業"],"m":1,"docs":[0],"summary":null},{"id":"n143","label":"2026-11-07 全体（commit 13f6f47 の source）","names":["2026-11-07 全体（commit 13f6f47 の source）"],"types":["試験の時点・対象"],"m":1,"docs":[0],"summary":null},{"id":"n144","label":"26,000 token を使う方式","names":["26,000 token を使う方式"],"types":["取得方式"],"m":1,"docs":[1],"summary":null},{"id":"n145","label":"2段の書込み","names":["2段の書込み"],"types":["記憶の書込み方式"],"m":1,"docs":[1],"summary":null},{"id":"n146","label":"3 つの信号の融合、時間推論、減衰の仕組み","names":["3 つの信号の融合、時間推論、減衰の仕組み"],"types":["mem0 の技術的内容"],"m":1,"docs":[1],"summary":null},{"id":"n147","label":"4 月 16 日","names":["4 月 16 日"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n148","label":"5 月","names":["5 月"],"types":["時間の推論と記憶の減衰を追加した時期"],"m":1,"docs":[1],"summary":null},{"id":"n149","label":"5. 配布の管理を正す（E5）","names":["5. 配布の管理を正す（E5）"],"types":["配布管理の施策"],"m":1,"docs":[2],"summary":null},{"id":"n150","label":"6 か月前","names":["6 か月前"],"types":["相対日付"],"m":1,"docs":[1],"summary":null},{"id":"n151","label":"7,000 token","names":["7,000 token"],"types":["mem0 が 1 回で答えるトークン数"],"m":1,"docs":[0],"summary":null},{"id":"n152","label":"7. 評価の軸が「小さな予算で答える」へ移る","names":["7. 評価の軸が「小さな予算で答える」へ移る"],"types":["セクションの見出し"],"m":1,"docs":[1],"summary":null},{"id":"n153","label":"ADD-only","names":["ADD-only"],"types":["記憶方式の限界"],"m":1,"docs":[1],"summary":null},{"id":"n154","label":"ADD-only にしない","names":["ADD-only にしない"],"types":["判断事項"],"m":1,"docs":[3],"summary":null},{"id":"n155","label":"ADD-only の書込み","names":["ADD-only の書込み"],"types":["mem0 の変更・手法"],"m":1,"docs":[2],"summary":null},{"id":"n156","label":"ADD-only、グラフの削除、実体のコレクション、既定値の変更","names":["ADD-only、グラフの削除、実体のコレクション、既定値の変更"],"types":["mem0 のアーキテクチャ転換の内容"],"m":1,"docs":[1],"summary":null},{"id":"n157","label":"AI の支援で書いた編集記事","names":["AI の支援で書いた編集記事"],"types":["Hysen Labs が執筆した記事"],"m":1,"docs":[1],"summary":null},{"id":"n158","label":"API の予算","names":["API の予算"],"types":["予算上限"],"m":1,"docs":[0],"summary":null},{"id":"n159","label":"API の変更","names":["API の変更"],"types":["変更事項"],"m":1,"docs":[1],"summary":null},{"id":"n160","label":"API の費用","names":["API の費用"],"types":["費用"],"m":1,"docs":[0],"summary":null},{"id":"n161","label":"Apache AGE","names":["Apache AGE"],"types":["グラフデータベースのdriver"],"m":1,"docs":[1],"summary":null},{"id":"n162","label":"Apache-2.0","names":["Apache-2.0"],"types":["ライセンス"],"m":1,"docs":[2],"summary":null},{"id":"n163","label":"CI","names":["CI"],"types":["継続的統合（CI）"],"m":1,"docs":[0],"summary":null},{"id":"n164","label":"CLI","names":["CLI"],"types":["物（インターフェース）"],"m":1,"docs":[2],"summary":null},{"id":"n165","label":"Chhikara","names":["Chhikara"],"types":["論文著者"],"m":1,"docs":[1],"summary":null},{"id":"n166","label":"Consolidation","names":["Consolidation"],"types":["概念・仕組みの名前"],"m":1,"docs":[0],"summary":null},{"id":"n167","label":"ContextWindow","names":["ContextWindow"],"types":["Eumenes の機能"],"m":1,"docs":[0],"summary":null},{"id":"n168","label":"Continuity","names":["Continuity"],"types":["概念・仕組みの名前"],"m":1,"docs":[0],"summary":null},{"id":"n169","label":"DB","names":["DB"],"types":["データストア"],"m":1,"docs":[0],"summary":null},{"id":"n170","label":"Docker","names":["Docker"],"types":["コンテナ技術"],"m":1,"docs":[1],"summary":null},{"id":"n171","label":"E1","names":["E1"],"types":["評価項目"],"m":1,"docs":[2],"summary":null},{"id":"n172","label":"E2","names":["E2"],"types":["評価項目"],"m":1,"docs":[2],"summary":null},{"id":"n173","label":"E3","names":["E3"],"types":["評価項目"],"m":1,"docs":[2],"summary":null},{"id":"n174","label":"E4","names":["E4"],"types":["評価項目"],"m":1,"docs":[2],"summary":null},{"id":"n175","label":"E5","names":["E5"],"types":["評価項目"],"m":1,"docs":[2],"summary":null},{"id":"n176","label":"Eumenes の host","names":["Eumenes の host"],"types":["意味の判断を持つ主体"],"m":1,"docs":[0],"summary":null},{"id":"n177","label":"Eumenes の steward","names":["Eumenes の steward"],"types":["意味の判断を持つ主体"],"m":1,"docs":[0],"summary":null},{"id":"n178","label":"Eumenes の vendor","names":["Eumenes の vendor"],"types":["依存関係の供給元（vendor）"],"m":1,"docs":[0],"summary":null},{"id":"n179","label":"Eumenes 側 `verify --domain memory`","names":["Eumenes 側 `verify --domain memory`"],"types":["試験の時点・対象"],"m":1,"docs":[0],"summary":null},{"id":"n180","label":"Eumenes 側の取り込み","names":["Eumenes 側の取り込み"],"types":["パッケージ取り込み作業"],"m":1,"docs":[0],"summary":null},{"id":"n181","label":"ExternalDependent","names":["ExternalDependent"],"types":["接続部・仕組みの名前"],"m":1,"docs":[0],"summary":null},{"id":"n182","label":"FTS5 の trigram","names":["FTS5 の trigram"],"types":["技術・手法"],"m":1,"docs":[2],"summary":null},{"id":"n183","label":"Graph Memory（Platform）","names":["Graph Memory（Platform）"],"types":["Platform のグラフ記憶のページ"],"m":1,"docs":[1],"summary":null},{"id":"n184","label":"ID","names":["ID"],"types":["コードが決定する事項"],"m":1,"docs":[0],"summary":null},{"id":"n185","label":"Introducing Memory Decay","names":["Introducing Memory Decay"],"types":["mem0 のブログ記事（Memory Decay の導入）"],"m":1,"docs":[1],"summary":null},{"id":"n186","label":"Introducing Temporal Reasoning","names":["Introducing Temporal Reasoning"],"types":["mem0 のブログ記事（Temporal Reasoning の導入）"],"m":1,"docs":[1],"summary":null},{"id":"n187","label":"Kuzu","names":["Kuzu"],"types":["グラフデータベースのdriver"],"m":1,"docs":[1],"summary":null},{"id":"n188","label":"Linux","names":["Linux"],"types":["オペレーティングシステム"],"m":1,"docs":[0],"summary":null},{"id":"n189","label":"LoCoMo の時間の分類の変化","names":["LoCoMo の時間の分類の変化"],"types":["評価条件の変化"],"m":1,"docs":[1],"summary":null},{"id":"n190","label":"M4","names":["M4"],"types":["問題・理由の符号"],"m":1,"docs":[2],"summary":null},{"id":"n191","label":"M6","names":["M6"],"types":["問題・理由の符号"],"m":1,"docs":[2],"summary":null},{"id":"n192","label":"MCP","names":["MCP"],"types":["物（インターフェース）"],"m":1,"docs":[2],"summary":null},{"id":"n193","label":"MD5 hash","names":["MD5 hash"],"types":["重複除去の判定方法"],"m":1,"docs":[1],"summary":null},{"id":"n194","label":"MODEL_INPUT_TOO_LARGE","names":["MODEL_INPUT_TOO_LARGE"],"types":["エラー/拒否理由"],"m":1,"docs":[0],"summary":null},{"id":"n195","label":"Mem0 Research","names":["Mem0 Research"],"types":["mem0 の研究ページ"],"m":1,"docs":[1],"summary":null},{"id":"n196","label":"Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory","names":["Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory"],"types":["論文"],"m":1,"docs":[1],"summary":null},{"id":"n197","label":"Memgraph","names":["Memgraph"],"types":["グラフデータベースのdriver"],"m":1,"docs":[1],"summary":null},{"id":"n198","label":"Memory Decay","names":["Memory Decay"],"types":["機能（英語名）"],"m":1,"docs":[1],"summary":null},{"id":"n199","label":"Migrating OSS v2 to v3","names":["Migrating OSS v2 to v3"],"types":["破壊的変更の一覧を扱うページ"],"m":1,"docs":[1],"summary":null},{"id":"n200","label":"NOOP","names":["NOOP"],"types":["LLMが選ぶ処理"],"m":1,"docs":[1],"summary":null},{"id":"n201","label":"Neptune","names":["Neptune"],"types":["グラフデータベースのdriver"],"m":1,"docs":[1],"summary":null},{"id":"n202","label":"OSS の SDK","names":["OSS の SDK"],"types":["ソフトウェア開発キット（SDK）"],"m":1,"docs":[1],"summary":null},{"id":"n203","label":"OSS 版","names":["OSS 版"],"types":["オープンソース版のmem0"],"m":1,"docs":[1],"summary":null},{"id":"n204","label":"Python SDK","names":["Python SDK"],"types":["SDK"],"m":1,"docs":[1],"summary":null},{"id":"n205","label":"Python quickstart","names":["Python quickstart"],"types":["mem0 の Python quickstart のページ"],"m":1,"docs":[1],"summary":null},{"id":"n206","label":"Python v2.0.0b0","names":["Python v2.0.0b0"],"types":["mem0 Python のベータリリースノート"],"m":1,"docs":[1],"summary":null},{"id":"n207","label":"Qdrant","names":["Qdrant"],"types":["ベクトルストア"],"m":1,"docs":[1],"summary":null},{"id":"n208","label":"README.md","names":["README.md"],"types":["ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n209","label":"Records","names":["Records"],"types":["記憶のカテゴリ"],"m":1,"docs":[0],"summary":null},{"id":"n210","label":"Rule","names":["Rule"],"types":["概念・仕組みの名前"],"m":1,"docs":[0],"summary":null},{"id":"n211","label":"S1","names":["S1"],"types":["段階（想起の予算）"],"m":1,"docs":[2],"summary":null},{"id":"n212","label":"S1～S3","names":["S1～S3"],"types":["時期（ステージ）"],"m":1,"docs":[2],"summary":null},{"id":"n213","label":"S1～S3 の受入","names":["S1～S3 の受入"],"types":["制度（受入基準）"],"m":1,"docs":[2],"summary":null},{"id":"n214","label":"S2","names":["S2"],"types":["段階（回答の品質）"],"m":1,"docs":[2],"summary":null},{"id":"n215","label":"S3","names":["S3"],"types":["段階（公開の物差し）"],"m":1,"docs":[2],"summary":null},{"id":"n216","label":"S5","names":["S5"],"types":["段階（Eumenes へ）"],"m":1,"docs":[2],"summary":null},{"id":"n217","label":"SDK の大版","names":["SDK の大版"],"types":["ソフトウェア版"],"m":1,"docs":[1],"summary":null},{"id":"n218","label":"SQLite","names":["SQLite"],"types":["データベース / 対象"],"m":1,"docs":[2],"summary":null},{"id":"n219","label":"Seed","names":["Seed"],"types":["説明対象"],"m":1,"docs":[2],"summary":null},{"id":"n220","label":"Temporal Reasoning","names":["Temporal Reasoning"],"types":["機能（英語名）"],"m":1,"docs":[1],"summary":null},{"id":"n221","label":"The Token-Efficient Memory Algorithm","names":["The Token-Efficient Memory Algorithm"],"types":["mem0 のブログ記事（アルゴリズム解説）"],"m":1,"docs":[1],"summary":null},{"id":"n222","label":"The Token-Efficient Memory Algorithm Now Has Temporal Reasoning","names":["The Token-Efficient Memory Algorithm Now Has Temporal Reasoning"],"types":["mem0 のブログ記事（時間推論の追加）"],"m":1,"docs":[1],"summary":null},{"id":"n223","label":"UTF-8 の byte 範囲","names":["UTF-8 の byte 範囲"],"types":["文字エンコーディングに基づく範囲指定"],"m":1,"docs":[0],"summary":null},{"id":"n224","label":"active","names":["active"],"types":["記憶の状態の一種"],"m":1,"docs":[0],"summary":null},{"id":"n225","label":"add()","names":["add()"],"types":["関数・メソッド"],"m":1,"docs":[1],"summary":null},{"id":"n226","label":"allPlanQualityGoalsMet","names":["allPlanQualityGoalsMet"],"types":["品質目標達成を示すフラグ"],"m":1,"docs":[0],"summary":null},{"id":"n227","label":"api/domains/memory/service/turn-recall.ts","names":["api/domains/memory/service/turn-recall.ts"],"types":["ソースコードファイル"],"m":1,"docs":[0],"summary":null},{"id":"n228","label":"apply","names":["apply"],"types":["概念・処理"],"m":1,"docs":[2],"summary":null},{"id":"n229","label":"applyForget","names":["applyForget"],"types":["関数・処理"],"m":1,"docs":[0],"summary":null},{"id":"n230","label":"arXiv 2504.19413","names":["arXiv 2504.19413"],"types":["arXiv識別子"],"m":1,"docs":[1],"summary":null},{"id":"n231","label":"artifacts/","names":["artifacts/"],"types":["配布物ディレクトリ"],"m":1,"docs":[0],"summary":null},{"id":"n232","label":"claude-sonnet-5-5","names":["claude-sonnet-5-5"],"types":["モデル名"],"m":1,"docs":[0],"summary":null},{"id":"n233","label":"coexists","names":["coexists"],"types":["記憶関係の提案カテゴリ"],"m":1,"docs":[0],"summary":null},{"id":"n234","label":"complete: false","names":["complete: false"],"types":["指標・フラグ"],"m":1,"docs":[2],"summary":null},{"id":"n235","label":"conflicts","names":["conflicts"],"types":["記憶関係の提案カテゴリ"],"m":1,"docs":[0],"summary":null},{"id":"n236","label":"current","names":["current"],"types":["memory の根捗状態"],"m":1,"docs":[2],"summary":null},{"id":"n237","label":"custom_fact_extraction_prompt","names":["custom_fact_extraction_prompt"],"types":["設定項目"],"m":1,"docs":[1],"summary":null},{"id":"n238","label":"custom_instructions","names":["custom_instructions"],"types":["設定項目"],"m":1,"docs":[1],"summary":null},{"id":"n239","label":"custom_update_memory_prompt","names":["custom_update_memory_prompt"],"types":["設定項目"],"m":1,"docs":[1],"summary":null},{"id":"n240","label":"deactivate","names":["deactivate"],"types":["可逆の停止の操作"],"m":1,"docs":[0],"summary":null},{"id":"n241","label":"delete_all","names":["delete_all"],"types":["明示的操作"],"m":1,"docs":[1],"summary":null},{"id":"n242","label":"disputed","names":["disputed"],"types":["記憶の状態の一種"],"m":1,"docs":[0],"summary":null},{"id":"n243","label":"docs/cli-mcp.md","names":["docs/cli-mcp.md"],"types":["利用手引ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n244","label":"docs/host-guide.md","names":["docs/host-guide.md"],"types":["利用手引ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n245","label":"docs/memory.md","names":["docs/memory.md"],"types":["ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n246","label":"embedding","names":["embedding"],"types":["技術・手法"],"m":1,"docs":[0],"summary":null},{"id":"n247","label":"enable_graph","names":["enable_graph"],"types":["設定項目"],"m":1,"docs":[1],"summary":null},{"id":"n248","label":"eumenes-memory","names":["eumenes-memory"],"types":["システム名（本体の名前）"],"m":1,"docs":[2],"summary":null},{"id":"n249","label":"eumenes-memory 0.0.4（本体）","names":["eumenes-memory 0.0.4（本体）"],"types":["パッケージ（本体）"],"m":1,"docs":[0],"summary":null},{"id":"n250","label":"eumenes-memory-host 0.1.0","names":["eumenes-memory-host 0.1.0"],"types":["パッケージ"],"m":1,"docs":[0],"summary":null},{"id":"n251","label":"eumenes_knowledge の P4（CLI・MCP）","names":["eumenes_knowledge の P4（CLI・MCP）"],"types":["項目（フェーズ）"],"m":1,"docs":[2],"summary":null},{"id":"n252","label":"eumenes_knowledge の方針","names":["eumenes_knowledge の方針"],"types":["方針"],"m":1,"docs":[0],"summary":null},{"id":"n253","label":"eumenes_memory の artifacts","names":["eumenes_memory の artifacts"],"types":["依存関係の供給元（artifacts）"],"m":1,"docs":[0],"summary":null},{"id":"n254","label":"eumenes_memory の評価（2026-11-07 時点）","names":["eumenes_memory の評価（2026-11-07 時点）"],"types":["文書（リンク）"],"m":1,"docs":[3],"summary":null},{"id":"n255","label":"examples/quality/RESULTS.md","names":["examples/quality/RESULTS.md"],"types":["実験記録ファイル"],"m":1,"docs":[0],"summary":null},{"id":"n256","label":"examples/seeds/README.md","names":["examples/seeds/README.md"],"types":["実験記録ファイル"],"m":1,"docs":[0],"summary":null},{"id":"n257","label":"examples/standalone/README.md","names":["examples/standalone/README.md"],"types":["実験記録ファイル"],"m":1,"docs":[0],"summary":null},{"id":"n258","label":"fail closed","names":["fail closed"],"types":["動作方針・概念"],"m":1,"docs":[0],"summary":null},{"id":"n259","label":"fastembed","names":["fastembed"],"types":["埋め込みツール"],"m":1,"docs":[1],"summary":null},{"id":"n260","label":"forget","names":["forget"],"types":["記憶関係の提案カテゴリ"],"m":1,"docs":[0],"summary":null},{"id":"n261","label":"forgotten","names":["forgotten"],"types":["記憶の状態の一種"],"m":1,"docs":[0],"summary":null},{"id":"n262","label":"git status","names":["git status"],"types":["コマンドの実行結果"],"m":1,"docs":[0],"summary":null},{"id":"n263","label":"gpt-4o","names":["gpt-4o"],"types":["モデル"],"m":1,"docs":[1],"summary":null},{"id":"n264","label":"gpt-6-luna","names":["gpt-6-luna"],"types":["モデル名"],"m":1,"docs":[0],"summary":null},{"id":"n265","label":"graph_store","names":["graph_store"],"types":["設定項目"],"m":1,"docs":[1],"summary":null},{"id":"n266","label":"history","names":["history"],"types":["明示的操作"],"m":1,"docs":[1],"summary":null},{"id":"n267","label":"host の plan","names":["host の plan"],"types":["計画"],"m":1,"docs":[2],"summary":null},{"id":"n268","label":"host の recall","names":["host の recall"],"types":["処理"],"m":1,"docs":[0],"summary":null},{"id":"n269","label":"host の取り込み","names":["host の取り込み"],"types":["取り込み処理（コード）"],"m":1,"docs":[0],"summary":null},{"id":"n270","label":"host の稼働","names":["host の稼働"],"types":["評価項目"],"m":1,"docs":[0],"summary":null},{"id":"n271","label":"host の計画","names":["host の計画"],"types":["派生物"],"m":1,"docs":[0],"summary":null},{"id":"n272","label":"inactive","names":["inactive"],"types":["記憶の状態の一種"],"m":1,"docs":[0],"summary":null},{"id":"n273","label":"invalidated","names":["invalidated"],"types":["記憶の状態の一種"],"m":1,"docs":[0],"summary":null},{"id":"n274","label":"knowledge","names":["knowledge"],"types":["知識"],"m":1,"docs":[2],"summary":null},{"id":"n275","label":"knowledge の文書","names":["knowledge の文書"],"types":["物（文書）"],"m":1,"docs":[2],"summary":null},{"id":"n276","label":"listState","names":["listState"],"types":["関数/メソッド"],"m":1,"docs":[0],"summary":null},{"id":"n277","label":"macOS","names":["macOS"],"types":["オペレーティングシステム"],"m":1,"docs":[0],"summary":null},{"id":"n278","label":"main 枝","names":["main 枝"],"types":["ソースコードのブランチ"],"m":1,"docs":[1],"summary":null},{"id":"n279","label":"main.py","names":["main.py"],"types":["ソースコードのファイル"],"m":1,"docs":[1],"summary":null},{"id":"n280","label":"manifest","names":["manifest"],"types":["マニフェスト"],"m":1,"docs":[2],"summary":null},{"id":"n281","label":"mcp.ts","names":["mcp.ts"],"types":["MCP を担当するソースコードファイル"],"m":1,"docs":[0],"summary":null},{"id":"n282","label":"mem0 の Platform","names":["mem0 の Platform"],"types":["製品・サービス"],"m":1,"docs":[2],"summary":null},{"id":"n283","label":"mem0 の公式の文書とコード","names":["mem0 の公式の文書とコード"],"types":["出典リストのカテゴリ"],"m":1,"docs":[1],"summary":null},{"id":"n284","label":"mem0 の数値を目標にする","names":["mem0 の数値を目標にする"],"types":["mem0 の変更・手法"],"m":1,"docs":[2],"summary":null},{"id":"n285","label":"mem0 の発表","names":["mem0 の発表"],"types":["発表資料"],"m":1,"docs":[1],"summary":null},{"id":"n286","label":"mem0 の記事","names":["mem0 の記事"],"types":["記事"],"m":1,"docs":[1],"summary":null},{"id":"n287","label":"mem0 自身の測定","names":["mem0 自身の測定"],"types":["根拠となる測定"],"m":1,"docs":[1],"summary":null},{"id":"n288","label":"mem0ai/mem0","names":["mem0ai/mem0"],"types":["プロジェクト・リポジトリ"],"m":1,"docs":[1],"summary":null},{"id":"n289","label":"memory","names":["memory"],"types":["記憶"],"m":1,"docs":[2],"summary":null},{"id":"n290","label":"memory ドメイン","names":["memory ドメイン"],"types":["Eumenes のドメイン"],"m":1,"docs":[0],"summary":null},{"id":"n291","label":"mismatch","names":["mismatch"],"types":["knowledge の根捗状態"],"m":1,"docs":[2],"summary":null},{"id":"n292","label":"missing","names":["missing"],"types":["memory の根捗状態"],"m":1,"docs":[2],"summary":null},{"id":"n293","label":"new","names":["new"],"types":["記憶関係の提案カテゴリ"],"m":1,"docs":[0],"summary":null},{"id":"n294","label":"not_available","names":["not_available"],"types":["knowledge の根捗状態"],"m":1,"docs":[2],"summary":null},{"id":"n295","label":"other_person_note","names":["other_person_note"],"types":["記憶・記録項目"],"m":1,"docs":[2],"summary":null},{"id":"n296","label":"package.json","names":["package.json"],"types":["設定ファイル"],"m":1,"docs":[0],"summary":null},{"id":"n297","label":"packages/host/src/meaning/planning.ts","names":["packages/host/src/meaning/planning.ts"],"types":["計画を実行するソースコードファイル"],"m":1,"docs":[0],"summary":null},{"id":"n298","label":"partial","names":["partial"],"types":["返答形式"],"m":1,"docs":[2],"summary":null},{"id":"n299","label":"partialReasons","names":["partialReasons"],"types":["指標・フラグ"],"m":1,"docs":[2],"summary":null},{"id":"n300","label":"planForget","names":["planForget"],"types":["関数・処理"],"m":1,"docs":[0],"summary":null},{"id":"n301","label":"quality-80 の取得","names":["quality-80 の取得"],"types":["評価項目"],"m":1,"docs":[0],"summary":null},{"id":"n302","label":"quality-80 の回答","names":["quality-80 の回答"],"types":["評価項目"],"m":1,"docs":[0],"summary":null},{"id":"n303","label":"quality-80 の評価","names":["quality-80 の評価"],"types":["2026-11-05 に実施された評価"],"m":1,"docs":[0],"summary":null},{"id":"n304","label":"read_memory","names":["read_memory"],"types":["想起の経路/手法"],"m":1,"docs":[0],"summary":null},{"id":"n305","label":"remaining","names":["remaining"],"types":["記録上の未確認項目"],"m":1,"docs":[0],"summary":null},{"id":"n306","label":"replaces","names":["replaces"],"types":["CASでの書込みの要素"],"m":1,"docs":[0],"summary":null},{"id":"n307","label":"rerank","names":["rerank"],"types":["設定値"],"m":1,"docs":[1],"summary":null},{"id":"n308","label":"reset","names":["reset"],"types":["明示的操作"],"m":1,"docs":[1],"summary":null},{"id":"n309","label":"retracted","names":["retracted"],"types":["記憶の状態の一種"],"m":1,"docs":[0],"summary":null},{"id":"n310","label":"retrieval.ts","names":["retrieval.ts"],"types":["検索を実行するソースコードファイル"],"m":1,"docs":[0],"summary":null},{"id":"n311","label":"same","names":["same"],"types":["記憶関係の提案カテゴリ"],"m":1,"docs":[0],"summary":null},{"id":"n312","label":"secure_delete","names":["secure_delete"],"types":["機能・設定"],"m":1,"docs":[0],"summary":null},{"id":"n313","label":"service.ts","names":["service.ts"],"types":["サービスを実行するソースコードファイル"],"m":1,"docs":[0],"summary":null},{"id":"n314","label":"spaCy","names":["spaCy"],"types":["言語処理ライブラリ"],"m":1,"docs":[1],"summary":null},{"id":"n315","label":"spec/full-system-design.md","names":["spec/full-system-design.md"],"types":["設計ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n316","label":"spec/host/contracts.md","names":["spec/host/contracts.md"],"types":["契約ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n317","label":"spec/improvement-design.md","names":["spec/improvement-design.md"],"types":["設計ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n318","label":"spec/memory-cli-mcp-package-adoption-2026-11-07.md","names":["spec/memory-cli-mcp-package-adoption-2026-11-07.md"],"types":["ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n319","label":"spec/verification-status.md","names":["spec/verification-status.md"],"types":["検証状況ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n320","label":"spec/verification/memory-live-2026-11-07/README.md","names":["spec/verification/memory-live-2026-11-07/README.md"],"types":["検証記録ドキュメントファイル"],"m":1,"docs":[0],"summary":null},{"id":"n321","label":"src/domains/state/contracts/index.ts","names":["src/domains/state/contracts/index.ts"],"types":["契約を定義するソースコードファイル"],"m":1,"docs":[0],"summary":null},{"id":"n322","label":"src/infrastructure/sqlite/migrations/","names":["src/infrastructure/sqlite/migrations/"],"types":["データベースマイグレーションディレクトリ"],"m":1,"docs":[0],"summary":null},{"id":"n323","label":"stale","names":["stale"],"types":["根拠状態の語彙"],"m":1,"docs":[2],"summary":null},{"id":"n324","label":"standalone の指示 v22","names":["standalone の指示 v22"],"types":["指示のバージョン"],"m":1,"docs":[0],"summary":null},{"id":"n325","label":"standalone の指示 v25","names":["standalone の指示 v25"],"types":["指示のバージョン"],"m":1,"docs":[0],"summary":null},{"id":"n326","label":"storage.ts","names":["storage.ts"],"types":["保存を実行するソースコードファイル"],"m":1,"docs":[0],"summary":null},{"id":"n327","label":"supersedes","names":["supersedes"],"types":["記憶関係の提案カテゴリ"],"m":1,"docs":[0],"summary":null},{"id":"n328","label":"threshold","names":["threshold"],"types":["設定値"],"m":1,"docs":[1],"summary":null},{"id":"n329","label":"token","names":["token"],"types":["評価指標"],"m":1,"docs":[1],"summary":null},{"id":"n330","label":"top_200","names":["top_200"],"types":["取得件数"],"m":1,"docs":[1],"summary":null},{"id":"n331","label":"top_50","names":["top_50"],"types":["取得件数"],"m":1,"docs":[1],"summary":null},{"id":"n332","label":"top_k","names":["top_k"],"types":["設定値"],"m":1,"docs":[1],"summary":null},{"id":"n333","label":"transaction","names":["transaction"],"types":["処理単位"],"m":1,"docs":[0],"summary":null},{"id":"n334","label":"trigger","names":["trigger"],"types":["機構・メカニズム"],"m":1,"docs":[0],"summary":null},{"id":"n335","label":"unavailable","names":["unavailable"],"types":["knowledge の根捗状態"],"m":1,"docs":[2],"summary":null},{"id":"n336","label":"unverified","names":["unverified"],"types":["memory の根捗状態"],"m":1,"docs":[2],"summary":null},{"id":"n337","label":"user_confirmed","names":["user_confirmed"],"types":["記憶に残される情報の一種"],"m":1,"docs":[0],"summary":null},{"id":"n338","label":"user_edited","names":["user_edited"],"types":["記憶に残される情報の一種"],"m":1,"docs":[0],"summary":null},{"id":"n339","label":"v1.0.11","names":["v1.0.11"],"types":["Python SDK の版"],"m":1,"docs":[1],"summary":null},{"id":"n340","label":"v2.0.0b0","names":["v2.0.0b0"],"types":["Python SDK のベータ版"],"m":1,"docs":[1],"summary":null},{"id":"n341","label":"valid","names":["valid"],"types":["knowledge の根拠状態"],"m":1,"docs":[2],"summary":null},{"id":"n342","label":"vendor/eumenes-memory-host/","names":["vendor/eumenes-memory-host/"],"types":["ベンダーパッケージディレクトリ"],"m":1,"docs":[0],"summary":null},{"id":"n343","label":"vendor/eumenes-memory/","names":["vendor/eumenes-memory/"],"types":["ベンダーパッケージディレクトリ"],"m":1,"docs":[0],"summary":null},{"id":"n344","label":"verification-reports/host/","names":["verification-reports/host/"],"types":["検証報告書ディレクトリ"],"m":1,"docs":[0],"summary":null},{"id":"n345","label":"verification-reports/quality-80/answer-summary.json","names":["verification-reports/quality-80/answer-summary.json"],"types":["検証報告書（JSON）"],"m":1,"docs":[0],"summary":null},{"id":"n346","label":"verification-reports/quality-80/completion.json","names":["verification-reports/quality-80/completion.json"],"types":["検証報告書（JSON）"],"m":1,"docs":[0],"summary":null},{"id":"n347","label":"verification-reports/quality-80/model-metrics.json","names":["verification-reports/quality-80/model-metrics.json"],"types":["検証報告書（JSON）"],"m":1,"docs":[0],"summary":null},{"id":"n348","label":"verification-reports/quality-80/performance.json","names":["verification-reports/quality-80/performance.json"],"types":["検証報告書（JSON）"],"m":1,"docs":[0],"summary":null},{"id":"n349","label":"verify:all","names":["verify:all"],"types":["CIの試験コマンド"],"m":1,"docs":[0],"summary":null},{"id":"n350","label":"verify:host","names":["verify:host"],"types":["CIの試験コマンド"],"m":1,"docs":[0],"summary":null},{"id":"n351","label":"zeroUnsupportedAssertionGoalMet","names":["zeroUnsupportedAssertionGoalMet"],"types":["根拠のない断定ゼロ目標を示すフラグ"],"m":1,"docs":[0],"summary":null},{"id":"n352","label":"{collection}_entities","names":["{collection}_entities"],"types":["実体のコレクション"],"m":1,"docs":[1],"summary":null},{"id":"n353","label":"この文書","names":["この文書"],"types":["文書"],"m":1,"docs":[1],"summary":null},{"id":"n354","label":"つなぎ方","names":["つなぎ方"],"types":["方法"],"m":1,"docs":[2],"summary":null},{"id":"n355","label":"やること 1・4","names":["やること 1・4"],"types":["タスク"],"m":1,"docs":[2],"summary":null},{"id":"n356","label":"やること 2","names":["やること 2"],"types":["タスク"],"m":1,"docs":[2],"summary":null},{"id":"n357","label":"やること 3","names":["やること 3"],"types":["タスク"],"m":1,"docs":[2],"summary":null},{"id":"n358","label":"やること 5","names":["やること 5"],"types":["タスク"],"m":1,"docs":[2],"summary":null},{"id":"n359","label":"エージェントの推測","names":["エージェントの推測"],"types":["記憶になりうる内容"],"m":1,"docs":[1],"summary":null},{"id":"n360","label":"エージェントの発言","names":["エージェントの発言"],"types":["入力情報"],"m":1,"docs":[1],"summary":null},{"id":"n361","label":"エージェントの発言を本人と同じ重みにする","names":["エージェントの発言を本人と同じ重みにする"],"types":["mem0 の変更・手法"],"m":1,"docs":[2],"summary":null},{"id":"n362","label":"エージェントの誤り","names":["エージェントの誤り"],"types":["記憶になりうる内容"],"m":1,"docs":[1],"summary":null},{"id":"n363","label":"エージェント自身の発言","names":["エージェント自身の発言"],"types":["エージェントが発した発言"],"m":1,"docs":[1],"summary":null},{"id":"n364","label":"グラフ","names":["グラフ"],"types":["グラフ構造"],"m":1,"docs":[1],"summary":null},{"id":"n365","label":"グラフ DB","names":["グラフ DB"],"types":["グラフデータベース"],"m":1,"docs":[1],"summary":null},{"id":"n366","label":"グラフ DB を入れない","names":["グラフ DB を入れない"],"types":["判断事項"],"m":1,"docs":[3],"summary":null},{"id":"n367","label":"グラフの辺","names":["グラフの辺"],"types":["データ構造"],"m":1,"docs":[1],"summary":null},{"id":"n368","label":"セッションをまたぐ同一性","names":["セッションをまたぐ同一性"],"types":["課題"],"m":1,"docs":[1],"summary":null},{"id":"n369","label":"ソースコード","names":["ソースコード"],"types":["検証に用いた資料"],"m":1,"docs":[3],"summary":null},{"id":"n370","label":"パッケージ","names":["パッケージ"],"types":["ソフトウェアパッケージ"],"m":1,"docs":[2],"summary":null},{"id":"n371","label":"ファイル","names":["ファイル"],"types":["検証に用いた資料"],"m":1,"docs":[3],"summary":null},{"id":"n372","label":"ブログに表示される日付","names":["ブログに表示される日付"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n373","label":"プライバシーと削除","names":["プライバシーと削除"],"types":["課題"],"m":1,"docs":[2],"summary":null},{"id":"n374","label":"ベクトル","names":["ベクトル"],"types":["検索の経路"],"m":1,"docs":[2],"summary":null},{"id":"n375","label":"ページ","names":["ページ"],"types":["文書の構成要素"],"m":1,"docs":[1],"summary":null},{"id":"n376","label":"ページの内部情報の日付","names":["ページの内部情報の日付"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n377","label":"モデルの呼び出し","names":["モデルの呼び出し"],"types":["機能・処理"],"m":1,"docs":[0],"summary":null},{"id":"n378","label":"リポジトリ","names":["リポジトリ"],"types":["ソフトウェアリポジトリ"],"m":1,"docs":[0],"summary":null},{"id":"n379","label":"リポジトリの記録","names":["リポジトリの記録"],"types":["検証に用いた資料"],"m":1,"docs":[3],"summary":null},{"id":"n380","label":"リリースのページ","names":["リリースのページ"],"types":["ページ"],"m":1,"docs":[1],"summary":null},{"id":"n381","label":"上書き","names":["上書き"],"types":["記憶の上書き処理"],"m":1,"docs":[1],"summary":null},{"id":"n382","label":"上限（10 USD）","names":["上限（10 USD）"],"types":["費用の上限"],"m":1,"docs":[0],"summary":null},{"id":"n383","label":"予定","names":["予定"],"types":["計画された件数"],"m":1,"docs":[0],"summary":null},{"id":"n384","label":"予算","names":["予算"],"types":["予算"],"m":1,"docs":[0],"summary":null},{"id":"n385","label":"事前登録","names":["事前登録"],"types":["検証の工程"],"m":1,"docs":[0],"summary":null},{"id":"n386","label":"事前登録の比較","names":["事前登録の比較"],"types":["評価項目"],"m":1,"docs":[0],"summary":null},{"id":"n387","label":"人","names":["人"],"types":["判定主体"],"m":1,"docs":[2],"summary":null},{"id":"n388","label":"他の記憶システム","names":["他の記憶システム"],"types":["記憶システム"],"m":1,"docs":[0],"summary":null},{"id":"n389","label":"他人についての覚え書き（other_person_note）","names":["他人についての覚え書き（other_person_note）"],"types":["記憶の種類"],"m":1,"docs":[0],"summary":null},{"id":"n390","label":"件数","names":["件数"],"types":["単位"],"m":1,"docs":[0],"summary":null},{"id":"n391","label":"会話の原文のコピー","names":["会話の原文のコピー"],"types":["データ・内容物"],"m":1,"docs":[0],"summary":null},{"id":"n392","label":"何もしない","names":["何もしない"],"types":["何もしない処理（NOOP）"],"m":1,"docs":[1],"summary":null},{"id":"n393","label":"使われない記憶の減衰による自動の忘却","names":["使われない記憶の減衰による自動の忘却"],"types":["mem0 の変更・手法"],"m":1,"docs":[2],"summary":null},{"id":"n394","label":"依存の閉包","names":["依存の閉包"],"types":["概念・構造"],"m":1,"docs":[0],"summary":null},{"id":"n395","label":"依存閉包","names":["依存閉包"],"types":["コードが決定する事項"],"m":1,"docs":[0],"summary":null},{"id":"n396","label":"保存のまとまり","names":["保存のまとまり"],"types":["記憶保存の単位"],"m":1,"docs":[0],"summary":null},{"id":"n397","label":"保存・訂正・忘却・出典","names":["保存・訂正・忘却・出典"],"types":["記憶の機能"],"m":1,"docs":[0],"summary":null},{"id":"n398","label":"個人データを使わない結合試験","names":["個人データを使わない結合試験"],"types":["試験方法"],"m":1,"docs":[0],"summary":null},{"id":"n399","label":"候補から外れた","names":["候補から外れた"],"types":["概念・状態"],"m":1,"docs":[2],"summary":null},{"id":"n400","label":"候補の選択","names":["候補の選択"],"types":["分類項目"],"m":1,"docs":[0],"summary":null},{"id":"n401","label":"偶然の破損","names":["偶然の破損"],"types":["事象"],"m":1,"docs":[0],"summary":null},{"id":"n402","label":"全プラン","names":["全プラン"],"types":["記憶が有効なプラン"],"m":1,"docs":[1],"summary":null},{"id":"n403","label":"全文","names":["全文"],"types":["検索の経路"],"m":1,"docs":[2],"summary":null},{"id":"n404","label":"全文脈を渡す方式","names":["全文脈を渡す方式"],"types":["取得方式"],"m":1,"docs":[1],"summary":null},{"id":"n405","label":"公開の物差し","names":["公開の物差し"],"types":["施策・タスク"],"m":1,"docs":[2],"summary":null},{"id":"n406","label":"公開日","names":["公開日"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n407","label":"公開資料の要約","names":["公開資料の要約"],"types":["資料の種別"],"m":1,"docs":[1],"summary":null},{"id":"n408","label":"共起","names":["共起"],"types":["つながりを推定する根拠"],"m":1,"docs":[1],"summary":null},{"id":"n409","label":"内部情報の日付","names":["内部情報の日付"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n410","label":"凍結","names":["凍結"],"types":["検証の工程"],"m":1,"docs":[0],"summary":null},{"id":"n411","label":"出典からの忘却の p95","names":["出典からの忘却の p95"],"types":["出典からの忘却応答時間の95パーセンタイル"],"m":1,"docs":[0],"summary":null},{"id":"n412","label":"出典の有効性","names":["出典の有効性"],"types":["評価項目"],"m":1,"docs":[0],"summary":null},{"id":"n413","label":"切り捨て","names":["切り捨て"],"types":["処理"],"m":1,"docs":[0],"summary":null},{"id":"n414","label":"判定者","names":["判定者"],"types":["役割・主体"],"m":1,"docs":[2],"summary":null},{"id":"n415","label":"別リポジトリ","names":["別リポジトリ"],"types":["管理・保存の仕組み"],"m":1,"docs":[0],"summary":null},{"id":"n416","label":"別リポジトリの World","names":["別リポジトリの World"],"types":["派生物"],"m":1,"docs":[0],"summary":null},{"id":"n417","label":"利用者が述べた事実","names":["利用者が述べた事実"],"types":["記憶becomes内容"],"m":1,"docs":[1],"summary":null},{"id":"n418","label":"制約（constraint）","names":["制約（constraint）"],"types":["記憶の種類"],"m":1,"docs":[0],"summary":null},{"id":"n419","label":"加算型の構造","names":["加算型の構造"],"types":["データ構造"],"m":1,"docs":[1],"summary":null},{"id":"n420","label":"単一 principal","names":["単一 principal"],"types":["前提条件"],"m":1,"docs":[0],"summary":null},{"id":"n421","label":"取り出し","names":["取り出し"],"types":["主題の1つ"],"m":1,"docs":[3],"summary":null},{"id":"n422","label":"取得から回答までの性能","names":["取得から回答までの性能"],"types":["評価指標"],"m":1,"docs":[2],"summary":null},{"id":"n423","label":"取得から回答までを通した性能","names":["取得から回答までを通した性能"],"types":["評価指標"],"m":1,"docs":[0],"summary":null},{"id":"n424","label":"受入の条件","names":["受入の条件"],"types":["条件"],"m":1,"docs":[2],"summary":null},{"id":"n425","label":"古い DB","names":["古い DB"],"types":["対象"],"m":1,"docs":[0],"summary":null},{"id":"n426","label":"古い事実","names":["古い事実"],"types":["事実"],"m":1,"docs":[1],"summary":null},{"id":"n427","label":"古い記憶","names":["古い記憶"],"types":["記憶の概念"],"m":1,"docs":[1],"summary":null},{"id":"n428","label":"台帳","names":["台帳"],"types":["記憶の仕組み"],"m":1,"docs":[0],"summary":null},{"id":"n429","label":"合成の 1,001 件","names":["合成の 1,001 件"],"types":["数量・上限"],"m":1,"docs":[3],"summary":null},{"id":"n430","label":"合成データの独自の評価","names":["合成データの独自の評価"],"types":["eumenes_memory の評価に用いられる物差し"],"m":1,"docs":[0],"summary":null},{"id":"n431","label":"同一性の分類","names":["同一性の分類"],"types":["分類項目"],"m":1,"docs":[0],"summary":null},{"id":"n432","label":"品質の目標","names":["品質の目標"],"types":["評価目標"],"m":1,"docs":[0],"summary":null},{"id":"n433","label":"回答の品質の受入","names":["回答の品質の受入"],"types":["追加する設計（優先順2）"],"m":1,"docs":[2],"summary":null},{"id":"n434","label":"回答・採点のモデル","names":["回答・採点のモデル"],"types":["物（モデル）"],"m":1,"docs":[2],"summary":null},{"id":"n435","label":"図","names":["図"],"types":["図表"],"m":1,"docs":[3],"summary":null},{"id":"n436","label":"図に描いた結びつき","names":["図に描いた結びつき"],"types":["表（判断と各側の根拠を対比した一覧）"],"m":1,"docs":[3],"summary":null},{"id":"n437","label":"固有名詞","names":["固有名詞"],"types":["実体の一例"],"m":1,"docs":[1],"summary":null},{"id":"n438","label":"基本版","names":["基本版"],"types":["Mem0gの基礎となる版"],"m":1,"docs":[1],"summary":null},{"id":"n439","label":"変化","names":["変化"],"types":["概念"],"m":1,"docs":[1],"summary":null},{"id":"n440","label":"変更の feed","names":["変更の feed"],"types":["接続・データの流れ"],"m":1,"docs":[0],"summary":null},{"id":"n441","label":"外部への削除の確認状況","names":["外部への削除の確認状況"],"types":["情報"],"m":1,"docs":[0],"summary":null},{"id":"n442","label":"多くのシステム","names":["多くのシステム"],"types":["対象"],"m":1,"docs":[1],"summary":null},{"id":"n443","label":"多くの記憶から小さな予算で取り出す","names":["多くの記憶から小さな予算で取り出す"],"types":["mem0 が力を入れた機能"],"m":1,"docs":[0],"summary":null},{"id":"n444","label":"大きな忘却","names":["大きな忘却"],"types":["状況"],"m":1,"docs":[0],"summary":null},{"id":"n445","label":"契約","names":["契約"],"types":["概念 / 要素"],"m":1,"docs":[2],"summary":null},{"id":"n446","label":"好み（preference）","names":["好み（preference）"],"types":["記憶の種類"],"m":1,"docs":[0],"summary":null},{"id":"n447","label":"実データでの利用","names":["実データでの利用"],"types":["実データ利用の件数"],"m":1,"docs":[0],"summary":null},{"id":"n448","label":"実データの Seed","names":["実データの Seed"],"types":["実データのSeed"],"m":1,"docs":[0],"summary":null},{"id":"n449","label":"実モデルの評価（すべて合成データ）","names":["実モデルの評価（すべて合成データ）"],"types":["評価セクションの見出し"],"m":1,"docs":[0],"summary":null},{"id":"n450","label":"実体による順位の加点","names":["実体による順位の加点"],"types":["関係の表現方法"],"m":1,"docs":[1],"summary":null},{"id":"n451","label":"実体の一致","names":["実体の一致"],"types":["採点の信号の一つ"],"m":1,"docs":[1],"summary":null},{"id":"n452","label":"実行の制御","names":["実行の制御"],"types":["分類項目"],"m":1,"docs":[0],"summary":null},{"id":"n453","label":"実際の会話や記憶","names":["実際の会話や記憶"],"types":["物（データ）"],"m":1,"docs":[2],"summary":null},{"id":"n454","label":"対象","names":["対象"],"types":["検索の経路"],"m":1,"docs":[2],"summary":null},{"id":"n455","label":"小さな予算","names":["小さな予算"],"types":["制約・目標"],"m":1,"docs":[1],"summary":null},{"id":"n456","label":"小さな予算での取り出し","names":["小さな予算での取り出し"],"types":["mem0が力を入れた要素"],"m":1,"docs":[3],"summary":null},{"id":"n457","label":"小標本","names":["小標本"],"types":["記録自身の自己記述"],"m":1,"docs":[0],"summary":null},{"id":"n458","label":"履歴","names":["履歴"],"types":["記憶の概念"],"m":1,"docs":[1],"summary":null},{"id":"n459","label":"履歴の表","names":["履歴の表"],"types":["データ格納先"],"m":1,"docs":[1],"summary":null},{"id":"n460","label":"引用の完全一致","names":["引用の完全一致"],"types":["コードが決定する事項"],"m":1,"docs":[0],"summary":null},{"id":"n461","label":"弱点とリスク","names":["弱点とリスク"],"types":["セクション見出し"],"m":1,"docs":[0],"summary":null},{"id":"n462","label":"強さの調整","names":["強さの調整"],"types":["今の版では行われない処理"],"m":1,"docs":[1],"summary":null},{"id":"n463","label":"復元した直後の DB","names":["復元した直後の DB"],"types":["状態"],"m":1,"docs":[0],"summary":null},{"id":"n464","label":"忘却のまとまり","names":["忘却のまとまり"],"types":["記憶忘却の単位"],"m":1,"docs":[0],"summary":null},{"id":"n465","label":"忘却の予算 200 ms","names":["忘却の予算 200 ms"],"types":["忘却応答時間の上限値"],"m":1,"docs":[0],"summary":null},{"id":"n466","label":"応答","names":["応答"],"types":["出力"],"m":1,"docs":[2],"summary":null},{"id":"n467","label":"性能","names":["性能"],"types":["指標"],"m":1,"docs":[0],"summary":null},{"id":"n468","label":"悪意ある書換え","names":["悪意ある書換え"],"types":["事象"],"m":1,"docs":[0],"summary":null},{"id":"n469","label":"想起が記憶の量に追いつかない","names":["想起が記憶の量に追いつかない"],"types":["弱点"],"m":1,"docs":[0],"summary":null},{"id":"n470","label":"想起の予算を守る候補の絞り込み（E2、M3）","names":["想起の予算を守る候補の絞り込み（E2、M3）"],"types":["施策・プロセス"],"m":1,"docs":[2],"summary":null},{"id":"n471","label":"想起の候補を絞る仕組み","names":["想起の候補を絞る仕組み"],"types":["追加する設計（優先順1）"],"m":1,"docs":[2],"summary":null},{"id":"n472","label":"想起の入力の量","names":["想起の入力の量"],"types":["パフォーマンスの弱点"],"m":1,"docs":[0],"summary":null},{"id":"n473","label":"想起の絞り込み（方式 A・B）の比較","names":["想起の絞り込み（方式 A・B）の比較"],"types":["作業（比較）"],"m":1,"docs":[2],"summary":null},{"id":"n474","label":"意味","names":["意味"],"types":["採点対象"],"m":1,"docs":[1],"summary":null},{"id":"n475","label":"意味の近さ","names":["意味の近さ"],"types":["採点の信号の一つ"],"m":1,"docs":[1],"summary":null},{"id":"n476","label":"意味の近さ 0.95","names":["意味の近さ 0.95"],"types":["しきい値"],"m":1,"docs":[1],"summary":null},{"id":"n477","label":"意味・キーワード・実体の3つの信号","names":["意味・キーワード・実体の3つの信号"],"types":["取り出しの信号"],"m":1,"docs":[2],"summary":null},{"id":"n478","label":"意図","names":["意図"],"types":["読み出し時の分類対象"],"m":1,"docs":[2],"summary":null},{"id":"n479","label":"成立期間","names":["成立期間"],"types":["評価の側が持つ情報"],"m":1,"docs":[3],"summary":null},{"id":"n480","label":"手法","names":["手法"],"types":["概念 / 要素"],"m":1,"docs":[2],"summary":null},{"id":"n481","label":"技術の点数","names":["技術の点数"],"types":["評価指標"],"m":1,"docs":[0],"summary":null},{"id":"n482","label":"抽出の文脈","names":["抽出の文脈"],"types":["用途"],"m":1,"docs":[1],"summary":null},{"id":"n483","label":"採点の揺れ","names":["採点の揺れ"],"types":["採点のばらつき"],"m":1,"docs":[1],"summary":null},{"id":"n484","label":"採用・不採用の判定","names":["採用・不採用の判定"],"types":["検証の工程"],"m":1,"docs":[0],"summary":null},{"id":"n485","label":"操作","names":["操作"],"types":["書込みの処理工程"],"m":1,"docs":[1],"summary":null},{"id":"n486","label":"改善しなかった変更","names":["改善しなかった変更"],"types":["変更"],"m":1,"docs":[0],"summary":null},{"id":"n487","label":"文書 ID","names":["文書 ID"],"types":["出典の情報"],"m":1,"docs":[2],"summary":null},{"id":"n488","label":"文書の一覧","names":["文書の一覧"],"types":["表（テーブル）"],"m":1,"docs":[3],"summary":null},{"id":"n489","label":"新しい tgz の manifest","names":["新しい tgz の manifest"],"types":["manifest ファイル"],"m":1,"docs":[0],"summary":null},{"id":"n490","label":"新しいアルゴリズム","names":["新しいアルゴリズム"],"types":["アルゴリズム"],"m":1,"docs":[1],"summary":null},{"id":"n491","label":"新しい検索 API","names":["新しい検索 API"],"types":["検索API"],"m":1,"docs":[1],"summary":null},{"id":"n492","label":"方式A. 目録で 2 段","names":["方式A. 目録で 2 段"],"types":["絞り込み手法"],"m":1,"docs":[2],"summary":null},{"id":"n493","label":"方式B. 索引と順位の融合","names":["方式B. 索引と順位の融合"],"types":["絞り込み手法"],"m":1,"docs":[2],"summary":null},{"id":"n494","label":"施策","names":["施策"],"types":["提案される行動や方針"],"m":1,"docs":[2],"summary":null},{"id":"n495","label":"施策 1","names":["施策 1"],"types":["施策"],"m":1,"docs":[3],"summary":null},{"id":"n496","label":"施策 1 候補の絞り込み","names":["施策 1 候補の絞り込み"],"types":["判断事項"],"m":1,"docs":[3],"summary":null},{"id":"n497","label":"施策 2・3 品質と物差し","names":["施策 2・3 品質と物差し"],"types":["判断事項"],"m":1,"docs":[3],"summary":null},{"id":"n498","label":"施策 3","names":["施策 3"],"types":["施策"],"m":1,"docs":[3],"summary":null},{"id":"n499","label":"施策 4 時間の意図","names":["施策 4 時間の意図"],"types":["判断事項"],"m":1,"docs":[3],"summary":null},{"id":"n500","label":"施策 5 配布の管理","names":["施策 5 配布の管理"],"types":["判断事項"],"m":1,"docs":[3],"summary":null},{"id":"n501","label":"施策の順序（S1～S5）","names":["施策の順序（S1～S5）"],"types":["施策の順序"],"m":1,"docs":[3],"summary":null},{"id":"n502","label":"既存の記憶","names":["既存の記憶"],"types":["記憶データ"],"m":1,"docs":[1],"summary":null},{"id":"n503","label":"既存の記憶を書き換える判断","names":["既存の記憶を書き換える判断"],"types":["処理"],"m":1,"docs":[1],"summary":null},{"id":"n504","label":"旧アルゴリズム","names":["旧アルゴリズム"],"types":["評価対象"],"m":1,"docs":[1],"summary":null},{"id":"n505","label":"明示の `update`・`delete`・`delete_all`","names":["明示の `update`・`delete`・`delete_all`"],"types":["操作"],"m":1,"docs":[1],"summary":null},{"id":"n506","label":"明示の `update`・`delete`・`history` が残る","names":["明示の `update`・`delete`・`history` が残る"],"types":["mem0 のアーキテクチャに関する主張"],"m":1,"docs":[1],"summary":null},{"id":"n507","label":"時間と矛盾の扱い","names":["時間と矛盾の扱い"],"types":["処理・手法"],"m":1,"docs":[1],"summary":null},{"id":"n508","label":"時間の問いを想起に渡す（M5）","names":["時間の問いを想起に渡す（M5）"],"types":["手順・方針の項目"],"m":1,"docs":[2],"summary":null},{"id":"n509","label":"時間推論の記事","names":["時間推論の記事"],"types":["記事"],"m":1,"docs":[1],"summary":null},{"id":"n510","label":"書込みの前に確かめる台帳","names":["書込みの前に確かめる台帳"],"types":["記憶システムの設計概念"],"m":1,"docs":[2],"summary":null},{"id":"n511","label":"書込み時の判断","names":["書込み時の判断"],"types":["mem0が手放した要素"],"m":1,"docs":[3],"summary":null},{"id":"n512","label":"最優先の施策","names":["最優先の施策"],"types":["eumenes_memoryにおける施策の優先度"],"m":1,"docs":[3],"summary":null},{"id":"n513","label":"最新の source の host","names":["最新の source の host"],"types":["試験の時点・対象"],"m":1,"docs":[0],"summary":null},{"id":"n514","label":"有償のホスト版","names":["有償のホスト版"],"types":["記憶機能の有償版"],"m":1,"docs":[1],"summary":null},{"id":"n515","label":"有向・ラベル付きの関係","names":["有向・ラベル付きの関係"],"types":["グラフの関係表現"],"m":1,"docs":[1],"summary":null},{"id":"n516","label":"未コミットの取り込み","names":["未コミットの取り込み"],"types":["出来事（コミット）"],"m":1,"docs":[2],"summary":null},{"id":"n517","label":"未決の判断","names":["未決の判断"],"types":["表題（表形式のセクション）"],"m":1,"docs":[2],"summary":null},{"id":"n518","label":"未達の受入","names":["未達の受入"],"types":["検証状態のセクション見出し"],"m":1,"docs":[0],"summary":null},{"id":"n519","label":"本人についての記憶","names":["本人についての記憶"],"types":["記憶の一種"],"m":1,"docs":[2],"summary":null},{"id":"n520","label":"本人の事実（personal_fact）","names":["本人の事実（personal_fact）"],"types":["記憶の種類"],"m":1,"docs":[0],"summary":null},{"id":"n521","label":"本人の記憶","names":["本人の記憶"],"types":["記憶・記録項目"],"m":1,"docs":[2],"summary":null},{"id":"n522","label":"本体 0.0.4","names":["本体 0.0.4"],"types":["版（バージョン）"],"m":1,"docs":[2],"summary":null},{"id":"n523","label":"本体へのベクトル・全文検索","names":["本体へのベクトル・全文検索"],"types":["mem0 の変更・手法"],"m":1,"docs":[2],"summary":null},{"id":"n524","label":"根拠のない断定0件","names":["根拠のない断定0件"],"types":["受入の条件"],"m":1,"docs":[2],"summary":null},{"id":"n525","label":"根拠の状態","names":["根拠の状態"],"types":["根拠の信頼度分類"],"m":1,"docs":[0],"summary":null},{"id":"n526","label":"根拠の確かさ","names":["根拠の確かさ"],"types":["表の見出し"],"m":1,"docs":[1],"summary":null},{"id":"n527","label":"検索","names":["検索"],"types":["仕組み"],"m":1,"docs":[1],"summary":null},{"id":"n528","label":"検索の順位","names":["検索の順位"],"types":["検索結果の順位"],"m":1,"docs":[1],"summary":null},{"id":"n529","label":"検証の状態","names":["検証の状態"],"types":["見出し"],"m":1,"docs":[0],"summary":null},{"id":"n530","label":"検証の規律","names":["検証の規律"],"types":["節"],"m":1,"docs":[0],"summary":null},{"id":"n531","label":"権限","names":["権限"],"types":["コードが決定する事項"],"m":1,"docs":[0],"summary":null},{"id":"n532","label":"正解の記憶が候補から落ちる率","names":["正解の記憶が候補から落ちる率"],"types":["評価指標（比率）"],"m":1,"docs":[2],"summary":null},{"id":"n533","label":"派生物","names":["派生物"],"types":["出典・派生物"],"m":1,"docs":[0],"summary":null},{"id":"n534","label":"版番号を上げた配布物","names":["版番号を上げた配布物"],"types":["物（配布物）"],"m":1,"docs":[2],"summary":null},{"id":"n535","label":"独立した測定","names":["独立した測定"],"types":["第三者による測定"],"m":1,"docs":[1],"summary":null},{"id":"n536","label":"独自の最適化","names":["独自の最適化"],"types":["技術・手法"],"m":1,"docs":[1],"summary":null},{"id":"n537","label":"用途ごとの評価","names":["用途ごとの評価"],"types":["課題"],"m":1,"docs":[1],"summary":null},{"id":"n538","label":"発表","names":["発表"],"types":["文書・資料"],"m":1,"docs":[1],"summary":null},{"id":"n539","label":"発表の数値","names":["発表の数値"],"types":["数値・指標"],"m":1,"docs":[1],"summary":null},{"id":"n540","label":"発言者の違い","names":["発言者の違い"],"types":["順位への影響対象"],"m":1,"docs":[1],"summary":null},{"id":"n541","label":"目標・決定・未解決の問いの正本","names":["目標・決定・未解決の問いの正本"],"types":["データ・内容物"],"m":1,"docs":[0],"summary":null},{"id":"n542","label":"目録","names":["目録"],"types":["データ形式"],"m":1,"docs":[2],"summary":null},{"id":"n543","label":"矛盾","names":["矛盾"],"types":["概念"],"m":1,"docs":[1],"summary":null},{"id":"n544","label":"知識","names":["知識"],"types":["関係が属する領分"],"m":1,"docs":[3],"summary":null},{"id":"n545","label":"破壊的変更","names":["破壊的変更"],"types":["変更"],"m":1,"docs":[1],"summary":null},{"id":"n546","label":"確認つきの計画","names":["確認つきの計画"],"types":["設計要素"],"m":1,"docs":[2],"summary":null},{"id":"n547","label":"私の推奨","names":["私の推奨"],"types":["推奨（提案）"],"m":1,"docs":[2],"summary":null},{"id":"n548","label":"第三者","names":["第三者"],"types":["第三者"],"m":1,"docs":[1],"summary":null},{"id":"n549","label":"第三者の比較","names":["第三者の比較"],"types":["比較"],"m":1,"docs":[1],"summary":null},{"id":"n550","label":"精度","names":["精度"],"types":["評価指標"],"m":1,"docs":[1],"summary":null},{"id":"n551","label":"約 310KB","names":["約 310KB"],"types":["合成データのサイズ"],"m":1,"docs":[0],"summary":null},{"id":"n552","label":"約 4,000 行","names":["約 4,000 行"],"types":["処理の行数"],"m":1,"docs":[1],"summary":null},{"id":"n553","label":"統合","names":["統合"],"types":["概念 / 処理"],"m":1,"docs":[2],"summary":null},{"id":"n554","label":"習慣（habit）","names":["習慣（habit）"],"types":["記憶の種類"],"m":1,"docs":[0],"summary":null},{"id":"n555","label":"自前で運用する利用者","names":["自前で運用する利用者"],"types":["利用者の種類"],"m":1,"docs":[1],"summary":null},{"id":"n556","label":"自前の運用","names":["自前の運用"],"types":["運用形態"],"m":1,"docs":[1],"summary":null},{"id":"n557","label":"自動の更新・削除","names":["自動の更新・削除"],"types":["機能"],"m":1,"docs":[1],"summary":null},{"id":"n558","label":"自然文の回答","names":["自然文の回答"],"types":["生成物"],"m":1,"docs":[0],"summary":null},{"id":"n559","label":"色の付いた本体","names":["色の付いた本体"],"types":["本体のバリアント"],"m":1,"docs":[0],"summary":null},{"id":"n560","label":"融合","names":["融合"],"types":["複数の信号を統合する処理"],"m":1,"docs":[1],"summary":null},{"id":"n561","label":"表示の日付","names":["表示の日付"],"types":["日付"],"m":1,"docs":[1],"summary":null},{"id":"n562","label":"言い換えただけの重複","names":["言い換えただけの重複"],"types":["重複のパターン"],"m":1,"docs":[1],"summary":null},{"id":"n563","label":"訂正と忘却の語彙","names":["訂正と忘却の語彙"],"types":["記憶の状態を表す語彙"],"m":1,"docs":[0],"summary":null},{"id":"n564","label":"記憶から小さな予算で取り出す","names":["記憶から小さな予算で取り出す"],"types":["記憶システムの特徴・機能"],"m":1,"docs":[0],"summary":null},{"id":"n565","label":"記憶が古くなること","names":["記憶が古くなること"],"types":["課題"],"m":1,"docs":[1],"summary":null},{"id":"n566","label":"記憶についての調査","names":["記憶についての調査"],"types":["調査プロジェクト"],"m":1,"docs":[3],"summary":null},{"id":"n567","label":"記憶にない","names":["記憶にない"],"types":["概念・状態"],"m":1,"docs":[2],"summary":null},{"id":"n568","label":"記憶の件数","names":["記憶の件数"],"types":["パフォーマンス計測の指標"],"m":1,"docs":[0],"summary":null},{"id":"n569","label":"記憶の出典","names":["記憶の出典"],"types":["制度（出典）"],"m":1,"docs":[2],"summary":null},{"id":"n570","label":"記憶の数","names":["記憶の数"],"types":["数量"],"m":1,"docs":[1],"summary":null},{"id":"n571","label":"記憶の更新","names":["記憶の更新"],"types":["機能"],"m":1,"docs":[2],"summary":null},{"id":"n572","label":"記憶の量","names":["記憶の量"],"types":["量"],"m":1,"docs":[1],"summary":null},{"id":"n573","label":"記憶の順位","names":["記憶の順位"],"types":["記憶の構造"],"m":1,"docs":[1],"summary":null},{"id":"n574","label":"記録","names":["記録"],"types":["評価の記録文書"],"m":1,"docs":[0],"summary":null},{"id":"n575","label":"記録された値","names":["記録された値"],"types":["測定結果など、記録されている数値やデータ"],"m":1,"docs":[0],"summary":null},{"id":"n576","label":"評価の側","names":["評価の側"],"types":["判断を行う側の一つ"],"m":1,"docs":[3],"summary":null},{"id":"n577","label":"評価の枠組み","names":["評価の枠組み"],"types":["公開されているもの"],"m":1,"docs":[3],"summary":null},{"id":"n578","label":"評価の軸","names":["評価の軸"],"types":["指標・軸"],"m":1,"docs":[1],"summary":null},{"id":"n579","label":"評価器","names":["評価器"],"types":["採点を行う二つの評価ツール"],"m":1,"docs":[0],"summary":null},{"id":"n580","label":"語句で分岐する処理","names":["語句で分岐する処理"],"types":["足さない処理"],"m":1,"docs":[0],"summary":null},{"id":"n581","label":"読み出し","names":["読み出し"],"types":["記憶の読み出し処理"],"m":1,"docs":[1],"summary":null},{"id":"n582","label":"読み出しの p95","names":["読み出しの p95"],"types":["読み出し応答時間の95パーセンタイル"],"m":1,"docs":[0],"summary":null},{"id":"n583","label":"負荷","names":["負荷"],"types":["パフォーマンス計測の条件"],"m":1,"docs":[0],"summary":null},{"id":"n584","label":"資格情報","names":["資格情報"],"types":["データ・権限情報"],"m":1,"docs":[0],"summary":null},{"id":"n585","label":"質問の意図","names":["質問の意図"],"types":["読み出しで分類されるもの"],"m":1,"docs":[1],"summary":null},{"id":"n586","label":"質問の意図の分類","names":["質問の意図の分類"],"types":["Platformの要素"],"m":1,"docs":[3],"summary":null},{"id":"n587","label":"追加","names":["追加"],"types":["記憶への追加処理（ADD）"],"m":1,"docs":[1],"summary":null},{"id":"n588","label":"追加するだけ","names":["追加するだけ"],"types":["ADD-only処理"],"m":1,"docs":[1],"summary":null},{"id":"n589","label":"送信の bytes","names":["送信の bytes"],"types":["評価指標（データ量）"],"m":1,"docs":[2],"summary":null},{"id":"n590","label":"進化","names":["進化"],"types":["概念"],"m":1,"docs":[1],"summary":null},{"id":"n591","label":"運用","names":["運用"],"types":["パフォーマンス計測の条件"],"m":1,"docs":[0],"summary":null},{"id":"n592","label":"運用の条件","names":["運用の条件"],"types":["条件"],"m":1,"docs":[0],"summary":null},{"id":"n593","label":"配布","names":["配布"],"types":["主題の1つ"],"m":1,"docs":[3],"summary":null},{"id":"n594","label":"配布の管理","names":["配布の管理"],"types":["追加する設計（優先順4）"],"m":1,"docs":[2],"summary":null},{"id":"n595","label":"配布の行","names":["配布の行"],"types":["関連の図の行"],"m":1,"docs":[3],"summary":null},{"id":"n596","label":"重み","names":["重み"],"types":["記憶への反映の重み"],"m":1,"docs":[1],"summary":null},{"id":"n597","label":"重複の除去","names":["重複の除去"],"types":["用途"],"m":1,"docs":[1],"summary":null},{"id":"n598","label":"鍵なしの hash の鎖","names":["鍵なしの hash の鎖"],"types":["構造"],"m":1,"docs":[0],"summary":null},{"id":"n599","label":"関係の出力","names":["関係の出力"],"types":["出力形式"],"m":1,"docs":[1],"summary":null},{"id":"n600","label":"関係を辿る質問","names":["関係を辿る質問"],"types":["クエリ"],"m":1,"docs":[1],"summary":null},{"id":"n601","label":"関連の図","names":["関連の図"],"types":["文書のセクション"],"m":1,"docs":[3],"summary":null}],"edges":[{"id":"e1","s":"n1","t":"n1","rel":"同一対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e2","s":"n1","t":"n2","rel":"mem0 の時間管理は Platform だけにある","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e3","s":"n1","t":"n2","rel":"Platformの提供","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e4","s":"n1","t":"n2","rel":"対象に要素を足した","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e5","s":"n1","t":"n2","rel":"新バージョンの構成要素","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e6","s":"n1","t":"n2","rel":"意図の分類で行う","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e7","s":"n1","t":"n2","rel":"数値が測定された環境","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e8","s":"n1","t":"n3","rel":"mem0 と eumenes_memory が同じ問いにどう答えているか並べられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e9","s":"n1","t":"n3","rel":"mem0 と eumenes_memory の比較","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e10","s":"n1","t":"n3","rel":"mem0 の変更を取り入れない対象とする","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e11","s":"n1","t":"n3","rel":"一般の記憶ライブラリと比較して厳密とされる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e12","s":"n1","t":"n3","rel":"後を追わない設計方針","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e13","s":"n1","t":"n3","rel":"書込み時の判断の立場が異なる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e14","s":"n1","t":"n3","rel":"比較・評価の対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e15","s":"n1","t":"n3","rel":"解決済み課題の共有","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e16","s":"n1","t":"n5","rel":"mem0 が会話から LLM を使って事実を取り出す","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e17","s":"n1","t":"n5","rel":"書込みの費用に関与","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e18","s":"n1","t":"n5","rel":"記憶を書き換える","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e19","s":"n1","t":"n8","rel":"弱いとされる分類","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e20","s":"n1","t":"n11","rel":"時間推論の非包含","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e21","s":"n1","t":"n15","rel":"mem0 の Platform が state key を使う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e22","s":"n1","t":"n15","rel":"state keyをPlatformに追加した","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e23","s":"n1","t":"n17","rel":"mem0 が忘却に delete を使う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e24","s":"n1","t":"n20","rel":"mem0 が訂正に update を使う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e25","s":"n1","t":"n21","rel":"mem0 が公開ベンチマークで評価する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e26","s":"n1","t":"n21","rel":"公開ベンチマークで評価される","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e27","s":"n1","t":"n23","rel":"mem0 が取り出しで実体を融合する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e28","s":"n1","t":"n24","rel":"新では設計が責任になる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e29","s":"n1","t":"n25","rel":"事実の根拠として用いた","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e30","s":"n1","t":"n27","rel":"役割を代替する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e31","s":"n1","t":"n28","rel":"弱いとされる分類","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e32","s":"n1","t":"n28","rel":"属する分類","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e33","s":"n1","t":"n28","rel":"重視すべきだと記述している","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e34","s":"n1","t":"n30","rel":"記憶の消し方をアプリケーション側で決める","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e35","s":"n1","t":"n30","rel":"にとって後退だと書かれている","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e36","s":"n1","t":"n32","rel":"mem0が手放した要素","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e37","s":"n1","t":"n35","rel":"Mem0gが言及される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e38","s":"n1","t":"n35","rel":"旧バージョンの構成要素","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e39","s":"n1","t":"n38","rel":"mem0 が取り出しで BM25 を使う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e40","s":"n1","t":"n41","rel":"mem0 の調査がまとめられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e41","s":"n1","t":"n43","rel":"事実の確定には用いない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e42","s":"n1","t":"n45","rel":"旧はなし、新はPlatformだけ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e43","s":"n1","t":"n50","rel":"旧は型付き関係、新は順位の加点","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e44","s":"n1","t":"n50","rel":"関係の構成要素","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e45","s":"n1","t":"n51","rel":"値（LoCoMo）","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e46","s":"n1","t":"n55","rel":"所有者・発信元","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e47","s":"n1","t":"n62","rel":"第三者の評の包含に関する記述","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e48","s":"n1","t":"n82","rel":"mem0 が取り出しを1回に約7,000 tokenで行う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e49","s":"n1","t":"n85","rel":"記憶の書き方を変更した時期","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e50","s":"n1","t":"n90","rel":"残る課題を挙げている","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e51","s":"n1","t":"n117","rel":"旧では自動、新では明示的","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e52","s":"n1","t":"n144","rel":"本番では成り立たないと記述している","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e53","s":"n1","t":"n145","rel":"旧方式の2段の書込みが言及される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e54","s":"n1","t":"n151","rel":"1回で約7,000 tokenで答える","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e55","s":"n1","t":"n152","rel":"セクションで論じられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e56","s":"n1","t":"n154","rel":"判断に対するmem0側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e57","s":"n1","t":"n254","rel":"mem0と比較する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e58","s":"n1","t":"n274","rel":"役割を代替する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e59","s":"n1","t":"n360","rel":"旧では無視されがち、新では同じ重み","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e60","s":"n1","t":"n366","rel":"判断に対するmem0側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e61","s":"n1","t":"n369","rel":"事実の根拠として用いた","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e62","s":"n1","t":"n373","rel":"未解決の課題として挙げる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e63","s":"n1","t":"n393","rel":"減衰が並べ替え-only とする mem0 の性質","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e64","s":"n1","t":"n404","rel":"対比対象として言及されている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e65","s":"n1","t":"n427","rel":"旧では更新・削除、新では残る","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e66","s":"n1","t":"n439","rel":"変化を進化として扱うべきだと記述している","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e67","s":"n1","t":"n443","rel":"取り出し機能に力を入れた","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e68","s":"n1","t":"n455","rel":"新では目標になる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e69","s":"n1","t":"n456","rel":"mem0が力を入れた要素","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e70","s":"n1","t":"n483","rel":"記述者","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e71","s":"n1","t":"n493","rel":"が当たる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e72","s":"n1","t":"n495","rel":"効く施策","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e73","s":"n1","t":"n496","rel":"判断に対するmem0側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e74","s":"n1","t":"n497","rel":"公開されているもの","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e75","s":"n1","t":"n497","rel":"判断に対するmem0側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e76","s":"n1","t":"n498","rel":"測り方の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e77","s":"n1","t":"n499","rel":"判断に対するmem0側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e78","s":"n1","t":"n500","rel":"判断に対するmem0側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e79","s":"n1","t":"n511","rel":"mem0が手放した要素","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e80","s":"n1","t":"n549","rel":"第三者の比較に関する記述","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e81","s":"n1","t":"n564","rel":"力を入れていた","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e82","s":"n1","t":"n578","rel":"旧は3軸、新は2軸","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e83","s":"n1","t":"n581","rel":"読み出しの構成要素","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e84","s":"n1","t":"n590","rel":"進化として扱うべきだと記述している","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e85","s":"n1","t":"n595","rel":"mem0とは無関係","dir":false,"neg":true,"cert":"stated","m":1,"docs":[3]},{"id":"e86","s":"n1","t":"n599","rel":"を使っていた","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e87","s":"n2","t":"n5","rel":"読み出しでLLM呼び出しを行わない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e88","s":"n2","t":"n11","rel":"との差が広がる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e89","s":"n2","t":"n11","rel":"差異","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e90","s":"n2","t":"n11","rel":"非対照","dir":false,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e91","s":"n2","t":"n14","rel":"時間推論を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e92","s":"n2","t":"n14","rel":"発表対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e93","s":"n2","t":"n14","rel":"動作の主体","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e94","s":"n2","t":"n14","rel":"機能を持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e95","s":"n2","t":"n15","rel":"同じ key の新しい状態が来ると古い状態の終了時刻が自動で入る","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e96","s":"n2","t":"n15","rel":"続いている状態に state key を付ける","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e97","s":"n2","t":"n15","rel":"動作","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e98","s":"n2","t":"n32","rel":"消滅の場所","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e99","s":"n2","t":"n32","rel":"返さない","dir":true,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e100","s":"n2","t":"n43","rel":"測定主体","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e101","s":"n2","t":"n61","rel":"減衰を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e102","s":"n2","t":"n61","rel":"機能を持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e103","s":"n2","t":"n100","rel":"を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e104","s":"n2","t":"n100","rel":"機能を持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e105","s":"n2","t":"n118","rel":"発表対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e106","s":"n2","t":"n491","rel":"共に案内される対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e107","s":"n2","t":"n514","rel":"ホスト版の名前","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e108","s":"n3","t":"n1","rel":"mem0 の弱点を設計で回避している","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e109","s":"n3","t":"n4","rel":"記憶を切り出して作成された","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e110","s":"n3","t":"n7","rel":"planを受け取る","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e111","s":"n3","t":"n7","rel":"意味の判断を置かれている主体と並置される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e112","s":"n3","t":"n9","rel":"配布形式","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e113","s":"n3","t":"n10","rel":"検証に使用する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e114","s":"n3","t":"n12","rel":"関係にある","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e115","s":"n3","t":"n15","rel":"eumenes_memory の時間扱いとほぼ同じ考え方","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e116","s":"n3","t":"n21","rel":"優先的に追加する設計","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e117","s":"n3","t":"n26","rel":"同じ条件で比べる対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e118","s":"n3","t":"n29","rel":"持つ機能の一つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e119","s":"n3","t":"n31","rel":"削除を厚く作った","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e120","s":"n3","t":"n34","rel":"持つ機能の一つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e121","s":"n3","t":"n34","rel":"CASで誤った削除を抑制する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e122","s":"n3","t":"n48","rel":"持っているもの","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e123","s":"n3","t":"n52","rel":"取り入れない理由で言及される性質","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e124","s":"n3","t":"n64","rel":"自然文の想起で全部渡すと収まらない対象の件数","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e125","s":"n3","t":"n66","rel":"自然文の回答の評価で実際に生成された件数","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e126","s":"n3","t":"n67","rel":"自然文の回答の評価で予定されていた件数","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e127","s":"n3","t":"n75","rel":"プライバシーを厚く作った","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e128","s":"n3","t":"n76","rel":"実行していない","dir":false,"neg":true,"cert":"stated","m":1,"docs":[3]},{"id":"e129","s":"n3","t":"n80","rel":"持っているもの","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e130","s":"n3","t":"n83","rel":"実行していない","dir":false,"neg":true,"cert":"stated","m":1,"docs":[3]},{"id":"e131","s":"n3","t":"n84","rel":"中身の違う tgz が存在する版番号","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e132","s":"n3","t":"n97","rel":"意味の判断を置かれている主体と並置される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e133","s":"n3","t":"n121","rel":"中身の違う tgz が存在する版番号","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e134","s":"n3","t":"n126","rel":"自然文の想起で送信全体が超えると拒否される上限","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e135","s":"n3","t":"n228","rel":"applyに通す","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e136","s":"n3","t":"n254","rel":"eumenes_memoryを評価する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e137","s":"n3","t":"n371","rel":"事実の根拠として用いた","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e138","s":"n3","t":"n379","rel":"事実の根拠として用いた","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e139","s":"n3","t":"n393","rel":"忘却を本人の操作に限定する変更","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e140","s":"n3","t":"n430","rel":"合成データの独自の評価で評価される","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e141","s":"n3","t":"n433","rel":"優先的に追加する設計","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e142","s":"n3","t":"n443","rel":"取り出し機能を持たない","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e143","s":"n3","t":"n471","rel":"優先的に追加する設計","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e144","s":"n3","t":"n478","rel":"意図を渡すだけで済む","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e145","s":"n3","t":"n523","rel":"本体を判断しない状態に保つ変更","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e146","s":"n3","t":"n551","rel":"合成データ全量送信時のサイズ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e147","s":"n3","t":"n564","rel":"持っていない","dir":true,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e148","s":"n3","t":"n568","rel":"記憶の件数で計測される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e149","s":"n3","t":"n594","rel":"優先的に追加する設計","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e150","s":"n4","t":"n8","rel":"未測定","dir":false,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e151","s":"n4","t":"n10","rel":"評価データ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e152","s":"n4","t":"n30","rel":"反映を決定される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e153","s":"n4","t":"n39","rel":"未測定","dir":false,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e154","s":"n4","t":"n54","rel":"確認に用いる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e155","s":"n4","t":"n97","rel":"steward が判断を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e156","s":"n4","t":"n98","rel":"想起の経路を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e157","s":"n4","t":"n98","rel":"想起を担当","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e158","s":"n4","t":"n142","rel":"確認対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e159","s":"n4","t":"n167","rel":"会話への注入を担当","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e160","s":"n4","t":"n175","rel":"取り込み状況","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e161","s":"n4","t":"n180","rel":"取り込みが未コミット","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e162","s":"n4","t":"n216","rel":"新しい版を取り込む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e163","s":"n4","t":"n249","rel":"ホストを持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e164","s":"n4","t":"n250","rel":"共有する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e165","s":"n4","t":"n268","rel":"方式が揃っていない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e166","s":"n4","t":"n290","rel":"本体の API を使う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e167","s":"n4","t":"n304","rel":"想起の経路を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e168","s":"n4","t":"n354","rel":"未決である","dir":false,"neg":false,"cert":"uncertain","m":1,"docs":[2]},{"id":"e169","s":"n4","t":"n370","rel":"反映を確かめる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e170","s":"n4","t":"n388","rel":"比較対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e171","s":"n4","t":"n523","rel":"索引を派生物として持つ主体","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e172","s":"n5","t":"n17","rel":"LLMを呼ばない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e173","s":"n5","t":"n17","rel":"選択対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e174","s":"n5","t":"n20","rel":"LLMを呼ばない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e175","s":"n5","t":"n20","rel":"選択対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e176","s":"n5","t":"n22","rel":"出典を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e177","s":"n5","t":"n31","rel":"LLMが選んでいた処理","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e178","s":"n5","t":"n47","rel":"LLM は本体の一部として機能する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e179","s":"n5","t":"n86","rel":"選択対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e180","s":"n5","t":"n112","rel":"関与する工程","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e181","s":"n5","t":"n115","rel":"LLMが選んでいた処理","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e182","s":"n5","t":"n200","rel":"選択対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e183","s":"n5","t":"n218","rel":"コードの照合を行う","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e184","s":"n5","t":"n392","rel":"LLMが選んでいた処理","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e185","s":"n5","t":"n485","rel":"関する工程","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e186","s":"n5","t":"n585","rel":"質問の意図を分類する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e187","s":"n5","t":"n587","rel":"LLMが選んでいた処理","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e188","s":"n6","t":"n13","rel":"矛盾した記憶が並んで溜まる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e189","s":"n6","t":"n70","rel":"がagent_inferredを残す","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e190","s":"n6","t":"n110","rel":"によって影響を受ける","dir":true,"neg":true,"cert":"stated","m":1,"docs":[2]},{"id":"e191","s":"n6","t":"n174","rel":"稼働状況","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e192","s":"n6","t":"n337","rel":"がuser_confirmedを残す","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e193","s":"n6","t":"n338","rel":"がuser_editedを残す","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e194","s":"n6","t":"n470","rel":"対象とする","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e195","s":"n6","t":"n482","rel":"に使う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e196","s":"n6","t":"n492","rel":"で増える","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e197","s":"n6","t":"n597","rel":"に使う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e198","s":"n7","t":"n6","rel":"記憶関係を6種で提案する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e199","s":"n7","t":"n16","rel":"許可された範囲のものを全部渡す","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e200","s":"n7","t":"n47","rel":"本体は host も含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e201","s":"n7","t":"n59","rel":"自分の派生物を登録している","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e202","s":"n7","t":"n102","rel":"備わっていない","dir":false,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e203","s":"n7","t":"n104","rel":"備わっていない","dir":false,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e204","s":"n7","t":"n164","rel":"同じ想起を使える","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e205","s":"n7","t":"n192","rel":"同じ想起を使える","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e206","s":"n7","t":"n194","rel":"上限超過時に拒否する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e207","s":"n7","t":"n235","rel":"実行せず確認に回す","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e208","s":"n7","t":"n276","rel":"候補を絞る手段を持たない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e209","s":"n7","t":"n311","rel":"実行せず確認に回す","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e210","s":"n7","t":"n396","rel":"両者を混ぜた計画を拒否する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e211","s":"n7","t":"n396","rel":"原子的に適用される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e212","s":"n7","t":"n413","rel":"切り捨てを行わない","dir":false,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e213","s":"n7","t":"n464","rel":"再開できる形で適用される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e214","s":"n7","t":"n469","rel":"自然文 recall を行う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e215","s":"n7","t":"n523","rel":"索引を派生物として持つ主体","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e216","s":"n8","t":"n14","rel":"影響要因","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e217","s":"n8","t":"n14","rel":"評価結果","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e218","s":"n8","t":"n49","rel":"評価結果","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e219","s":"n8","t":"n330","rel":"影響要因","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e220","s":"n8","t":"n331","rel":"影響要因","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e221","s":"n8","t":"n405","rel":"測定対象として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e222","s":"n8","t":"n504","rel":"値（ブログの表）","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e223","s":"n9","t":"n40","rel":"作成元 commit の追跡が版番号だけではできない","dir":false,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e224","s":"n9","t":"n79","rel":"版番号はtgzに付与される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e225","s":"n9","t":"n175","rel":"言及","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e226","s":"n10","t":"n106","rel":"共に先に確認に用いられる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e227","s":"n10","t":"n174","rel":"評価データ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e228","s":"n10","t":"n576","rel":"使用しているデータ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e229","s":"n11","t":"n263","rel":"実行環境","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e230","s":"n11","t":"n365","rel":"対応を外した","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e231","s":"n12","t":"n44","rel":"取り入れない代わりに担当する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e232","s":"n12","t":"n50","rel":"検索の経路","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e233","s":"n12","t":"n88","rel":"検索の融合に使う","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e234","s":"n12","t":"n129","rel":"同じ作り方である","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e235","s":"n12","t":"n234","rel":"が持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e236","s":"n12","t":"n299","rel":"が持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e237","s":"n12","t":"n374","rel":"検索の経路","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e238","s":"n12","t":"n403","rel":"検索の経路","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e239","s":"n12","t":"n454","rel":"検索の経路","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e240","s":"n12","t":"n466","rel":"が同じ考え方を適用する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e241","s":"n12","t":"n493","rel":"が同じ作り方","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e242","s":"n12","t":"n495","rel":"手本","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e243","s":"n13","t":"n6","rel":"が取り込む","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e244","s":"n13","t":"n31","rel":"新方式が実行しない処理","dir":true,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e245","s":"n13","t":"n46","rel":"書込みの新方式","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e246","s":"n13","t":"n58","rel":"同じ重みで保存する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e247","s":"n13","t":"n58","rel":"新方式で記憶にされる発言","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e248","s":"n13","t":"n60","rel":"新旧の対比","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e249","s":"n13","t":"n123","rel":"新方式のLLM呼び出し回数","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e250","s":"n13","t":"n217","rel":"が導入された","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e251","s":"n13","t":"n363","rel":"新方式で記憶にされる発言","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e252","s":"n13","t":"n381","rel":"新方式が実行しない処理","dir":true,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e253","s":"n13","t":"n502","rel":"壊れない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e254","s":"n13","t":"n503","rel":"が使いません","dir":true,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e255","s":"n13","t":"n543","rel":"を扱う","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e256","s":"n13","t":"n588","rel":"新方式の処理","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e257","s":"n14","t":"n138","rel":"発表時期","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e258","s":"n14","t":"n220","rel":"英語名","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e259","s":"n16","t":"n22","rel":"出典を参照する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e260","s":"n16","t":"n78","rel":"Stateへの包含数","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e261","s":"n16","t":"n78","rel":"合成の18件のうちStateには10件が入る","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e262","s":"n16","t":"n446","rel":"記憶の種類を含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e263","s":"n17","t":"n117","rel":"新で用いられる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e264","s":"n17","t":"n119","rel":"適用対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e265","s":"n17","t":"n459","rel":"記録する先","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e266","s":"n18","t":"n26","rel":"並べて比較する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e267","s":"n18","t":"n162","rel":"適用されるライセンス","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e268","s":"n18","t":"n263","rel":"既定のモデル","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e269","s":"n18","t":"n282","rel":"比較対象外","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e270","s":"n18","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e271","s":"n19","t":"n21","rel":"費用上限の基準である","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e272","s":"n19","t":"n130","rel":"対象タスク","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e273","s":"n20","t":"n117","rel":"新で用いられる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e274","s":"n20","t":"n459","rel":"記録する先","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e275","s":"n21","t":"n26","rel":"並べて測定する対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e276","s":"n21","t":"n430","rel":"評価の物差しが合わない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e277","s":"n22","t":"n492","rel":"が2 段目で渡す","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e278","s":"n22","t":"n553","rel":"読める範囲を制限する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e279","s":"n23","t":"n101","rel":"実体の一例","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e280","s":"n23","t":"n111","rel":"候補を増やさない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e281","s":"n23","t":"n111","rel":"融合される得点","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e282","s":"n23","t":"n490","rel":"採点対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e283","s":"n24","t":"n6","rel":"届ける","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e284","s":"n24","t":"n22","rel":"届ける","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e285","s":"n24","t":"n56","rel":"操作の主体","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e286","s":"n24","t":"n56","rel":"責任になる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e287","s":"n24","t":"n229","rel":"適用の一部として使用する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e288","s":"n24","t":"n300","rel":"計画作りの一部として使用する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e289","s":"n24","t":"n394","rel":"計算する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e290","s":"n24","t":"n428","rel":"忘却が予算内に収まる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e291","s":"n24","t":"n533","rel":"届ける","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e292","s":"n25","t":"n159","rel":"記載の場所","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e293","s":"n25","t":"n202","rel":"確認の出典として言及されている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e294","s":"n25","t":"n545","rel":"列挙","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e295","s":"n26","t":"n434","rel":"同じモデルである","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e296","s":"n26","t":"n434","rel":"同じモデルに合わせる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e297","s":"n27","t":"n44","rel":"取り入れない代わりに担当する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e298","s":"n27","t":"n181","rel":"接続部を持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e299","s":"n27","t":"n289","rel":"持たない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e300","s":"n27","t":"n415","rel":"別リポジトリに置かれる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e301","s":"n27","t":"n576","rel":"関係が属する領分","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e302","s":"n28","t":"n81","rel":"評価結果","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e303","s":"n28","t":"n124","rel":"評価値の対応","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e304","s":"n28","t":"n127","rel":"評価値の対応","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e305","s":"n28","t":"n405","rel":"測定対象として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e306","s":"n29","t":"n169","rel":"と突き合わせる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e307","s":"n29","t":"n401","rel":"検出対象","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e308","s":"n29","t":"n598","rel":"構成","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e309","s":"n30","t":"n4","rel":"利用開始を判断する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e310","s":"n30","t":"n4","rel":"承認する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e311","s":"n30","t":"n56","rel":"記憶の消し方を決定する責任を持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e312","s":"n30","t":"n517","rel":"決定する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e313","s":"n31","t":"n90","rel":"残る課題として挙げられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e314","s":"n32","t":"n367","rel":"同義・説明","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e315","s":"n33","t":"n47","rel":"本体への非帰属","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e316","s":"n33","t":"n101","rel":"ベクトルストアが持つもの","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e317","s":"n33","t":"n109","rel":"忘却の依存閉包への所属","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e318","s":"n33","t":"n492","rel":"が不要とする","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e319","s":"n33","t":"n493","rel":"で増える","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e320","s":"n33","t":"n528","rel":"索引による順位上げ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e321","s":"n35","t":"n36","rel":"古い関係を無効化していた","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e322","s":"n35","t":"n36","rel":"型付きの関係に用いたデータベース","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e323","s":"n35","t":"n36","rel":"使用","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e324","s":"n35","t":"n120","rel":"で遅延が増えた","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e325","s":"n35","t":"n364","rel":"を保つ費用に見合わなかった","dir":false,"neg":false,"cert":"uncertain","m":1,"docs":[1]},{"id":"e326","s":"n35","t":"n438","rel":"より全体で高い","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e327","s":"n35","t":"n515","rel":"持つ関係","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e328","s":"n36","t":"n44","rel":"グラフDBの一例","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e329","s":"n36","t":"n552","rel":"処理の対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e330","s":"n37","t":"n103","rel":"構成要素として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e331","s":"n37","t":"n134","rel":"公開時期","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e332","s":"n37","t":"n217","rel":"を含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e333","s":"n37","t":"n380","rel":"公開日が不明な理由に関連する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e334","s":"n37","t":"n406","rel":"正確な日付が確かめられていない","dir":false,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e335","s":"n38","t":"n99","rel":"BM25の役割","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e336","s":"n38","t":"n111","rel":"候補を増やさない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e337","s":"n38","t":"n111","rel":"融合される得点","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e338","s":"n39","t":"n504","rel":"値（ブログの表）","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e339","s":"n39","t":"n509","rel":"基準値（時間推論の記事）","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e340","s":"n40","t":"n280","rel":"commitはmanifestと一致する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e341","s":"n42","t":"n163","rel":"CIが実行する試験","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e342","s":"n42","t":"n280","rel":"verify:packageはmanifestのcommitを確認する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e343","s":"n43","t":"n287","rel":"根拠とする","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e344","s":"n43","t":"n375","rel":"値の食い違い","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e345","s":"n44","t":"n190","rel":"mem0 が外した理由の符号","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e346","s":"n45","t":"n57","rel":"有効性の判定主体","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e347","s":"n45","t":"n556","rel":"自前の運用では自分で作る","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e348","s":"n46","t":"n34","rel":"がによって行われる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e349","s":"n46","t":"n60","rel":"書込みの旧方式","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e350","s":"n46","t":"n112","rel":"構成要素","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e351","s":"n46","t":"n115","rel":"構成要素","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e352","s":"n46","t":"n306","rel":"がreplacesを含む","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e353","s":"n47","t":"n5","rel":"判断させる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e354","s":"n47","t":"n252","rel":"揃っている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e355","s":"n47","t":"n580","rel":"足さない","dir":true,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e356","s":"n48","t":"n354","rel":"根拠である","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e357","s":"n50","t":"n44","rel":"対応を外した","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e358","s":"n50","t":"n101","rel":"代わりに用いたもの","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e359","s":"n50","t":"n108","rel":"関係が入れた機能","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e360","s":"n50","t":"n450","rel":"新ではそれだけになる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e361","s":"n50","t":"n600","rel":"新では答えられない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e362","s":"n51","t":"n60","rel":"が述べる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e363","s":"n51","t":"n133","rel":"比較不可","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e364","s":"n52","t":"n155","rel":"導入すると生じる問題","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e365","s":"n53","t":"n103","rel":"構成要素として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e366","s":"n53","t":"n134","rel":"公開時期","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e367","s":"n53","t":"n217","rel":"を含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e368","s":"n55","t":"n146","rel":"根拠とする","dir":false,"neg":false,"cert":"uncertain","m":1,"docs":[1]},{"id":"e369","s":"n55","t":"n490","rel":"発表元","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e370","s":"n56","t":"n30","rel":"利用者の発言を操作に変換する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e371","s":"n57","t":"n29","rel":"追記する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e372","s":"n57","t":"n312","rel":"を有効にしている","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e373","s":"n58","t":"n360","rel":"同じ重みを持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e374","s":"n58","t":"n363","rel":"同じ重みでの記憶","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e375","s":"n59","t":"n523","rel":"索引を入れる仕組み","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e376","s":"n60","t":"n5","rel":"動作の主体","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e377","s":"n60","t":"n5","rel":"旧方式での事実選択","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e378","s":"n61","t":"n572","rel":"記憶の量を減らさない","dir":true,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e379","s":"n62","t":"n87","rel":"根拠とする","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e380","s":"n62","t":"n535","rel":"関連する","dir":false,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e381","s":"n62","t":"n557","rel":"頻繁な更新と削除が要る用途に向かないと評価","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e382","s":"n63","t":"n527","rel":"担当する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e383","s":"n64","t":"n172","rel":"使用データ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e384","s":"n65","t":"n581","rel":"採点の信号の数","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e385","s":"n66","t":"n173","rel":"評価した件数","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e386","s":"n67","t":"n173","rel":"評価対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e387","s":"n68","t":"n432","rel":"根拠のない断定を含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e388","s":"n68","t":"n524","rel":"誤りの事例","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e389","s":"n69","t":"n78","rel":"案内内容与実体の不一致","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e390","s":"n69","t":"n219","rel":"READMEはSeedを説明する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e391","s":"n69","t":"n448","rel":"実データSeedの除外","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e392","s":"n70","t":"n94","rel":"区分値を含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e393","s":"n71","t":"n354","rel":"根拠である","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e394","s":"n72","t":"n469","rel":"について合成のfixtureで示された値がある","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e395","s":"n73","t":"n178","rel":"中身を左右する依存関係にある","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e396","s":"n73","t":"n253","rel":"中身を左右する依存関係にある","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e397","s":"n73","t":"n516","rel":"を含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e398","s":"n75","t":"n90","rel":"残る課題として挙げられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e399","s":"n76","t":"n492","rel":"がモデルに渡す","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e400","s":"n77","t":"n160","rel":"超えないように管理している","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e401","s":"n78","t":"n219","rel":"Seedの説明は合成の18件に合わせる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e402","s":"n84","t":"n178","rel":"同じ版番号で中身が異なるものが複数存在する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e403","s":"n85","t":"n13","rel":"に発表された","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e404","s":"n87","t":"n153","rel":"限界を指摘する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e405","s":"n87","t":"n288","rel":"公開する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e406","s":"n88","t":"n493","rel":"で順位融合する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e407","s":"n89","t":"n216","rel":"S5 の前に済ませる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e408","s":"n90","t":"n114","rel":"残る課題として挙げられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e409","s":"n90","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e410","s":"n90","t":"n368","rel":"残る課題として挙げられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e411","s":"n90","t":"n537","rel":"残る課題として挙げられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e412","s":"n90","t":"n565","rel":"残る課題として挙げられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e413","s":"n91","t":"n501","rel":"出典","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e414","s":"n92","t":"n202","rel":"確認の出典として言及されている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e415","s":"n92","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e416","s":"n93","t":"n98","rel":"multilingual-e5 を使用","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e417","s":"n94","t":"n361","rel":"導入すると損なわれる区分","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e418","s":"n96","t":"n580","rel":"明記されている","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e419","s":"n99","t":"n490","rel":"採点対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e420","s":"n99","t":"n581","rel":"採点の信号","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e421","s":"n100","t":"n63","rel":"順位に使う","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e422","s":"n101","t":"n352","rel":"コレクションを作成する先","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e423","s":"n103","t":"n202","rel":"確認の出典として言及されている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e424","s":"n103","t":"n206","rel":"構成要素として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e425","s":"n103","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e426","s":"n105","t":"n95","rel":"で削除された","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e427","s":"n105","t":"n104","rel":"削除された","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e428","s":"n107","t":"n334","rel":"で拒否する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e429","s":"n107","t":"n420","rel":"前提としての関係","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e430","s":"n108","t":"n490","rel":"処理","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e431","s":"n108","t":"n528","rel":"実体リンクによる順位上げ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e432","s":"n110","t":"n492","rel":"で2回になる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e433","s":"n111","t":"n6","rel":"で取れなかった","dir":true,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e434","s":"n111","t":"n314","rel":"なければ結果になる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e435","s":"n113","t":"n426","rel":"並んで保存される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e436","s":"n114","t":"n148","rel":"追加された機能","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e437","s":"n114","t":"n514","rel":"機能が追加された版","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e438","s":"n115","t":"n5","rel":"処理主体","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e439","s":"n116","t":"n24","rel":"を保証しない","dir":true,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e440","s":"n116","t":"n107","rel":"保証対象外","dir":true,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e441","s":"n117","t":"n56","rel":"操作の主体","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e442","s":"n118","t":"n137","rel":"発表日付","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e443","s":"n118","t":"n148","rel":"追加された機能","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e444","s":"n118","t":"n198","rel":"英語名","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e445","s":"n118","t":"n514","rel":"機能が追加された版","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e446","s":"n119","t":"n132","rel":"公開日付","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e447","s":"n120","t":"n578","rel":"旧の評価の軸に含まれる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e448","s":"n122","t":"n581","rel":"融合による順位","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e449","s":"n125","t":"n376","rel":"具体例を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e450","s":"n128","t":"n578","rel":"新の評価の軸に含まれる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e451","s":"n129","t":"n445","rel":"揃えられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e452","s":"n129","t":"n553","rel":"統合しない","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e453","s":"n130","t":"n422","rel":"測る対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e454","s":"n130","t":"n524","rel":"受入の条件","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e455","s":"n135","t":"n340","rel":"時期","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e456","s":"n136","t":"n490","rel":"発表日付","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e457","s":"n139","t":"n486","rel":"記録が示す内容","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e458","s":"n147","t":"n372","rel":"具体例を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e459","s":"n150","t":"n380","rel":"相対日付の具体例を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e460","s":"n154","t":"n576","rel":"判断に対する評価の側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e461","s":"n158","t":"n558","rel":"APIの予算を使い切った","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e462","s":"n160","t":"n382","rel":"上限が設定されている","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e463","s":"n161","t":"n552","rel":"処理の対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e464","s":"n163","t":"n188","rel":"CIが実行される環境","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e465","s":"n163","t":"n277","rel":"CIが実行される環境","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e466","s":"n163","t":"n349","rel":"CIが実行する試験","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e467","s":"n163","t":"n350","rel":"CIが実行する試験","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e468","s":"n165","t":"n196","rel":"著者である","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e469","s":"n166","t":"n181","rel":"接続部を持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e470","s":"n166","t":"n415","rel":"別リポジトリに置かれる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e471","s":"n169","t":"n24","rel":"忘れたものを見えなくする","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e472","s":"n169","t":"n258","rel":"で止まる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e473","s":"n171","t":"n171","rel":"評価内容","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e474","s":"n174","t":"n21","rel":"測定非実施","dir":true,"neg":true,"cert":"stated","m":1,"docs":[2]},{"id":"e475","s":"n182","t":"n493","rel":"を用いる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e476","s":"n183","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e477","s":"n185","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e478","s":"n186","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e479","s":"n187","t":"n552","rel":"処理の対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e480","s":"n189","t":"n509","rel":"記事による分かれ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e481","s":"n191","t":"n284","rel":"測定条件の違いの符号","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e482","s":"n193","t":"n225","rel":"重複除去の判定方法","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e483","s":"n195","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e484","s":"n196","t":"n230","rel":"arXiv識別子を持つ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e485","s":"n197","t":"n552","rel":"処理の対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e486","s":"n199","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e487","s":"n201","t":"n552","rel":"処理の対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e488","s":"n204","t":"n340","rel":"対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e489","s":"n205","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e490","s":"n207","t":"n259","rel":"なければ無効になる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e491","s":"n211","t":"n214","rel":"並行して進められる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e492","s":"n215","t":"n424","rel":"受入を満たしてから行われる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e493","s":"n218","t":"n4","rel":"所有している","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e494","s":"n221","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e495","s":"n222","t":"n283","rel":"出典として含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e496","s":"n225","t":"n17","rel":"旧版が返す出来事","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e497","s":"n225","t":"n20","rel":"旧版が返す出来事","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e498","s":"n237","t":"n238","rel":"改名先","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e499","s":"n238","t":"n239","rel":"ともに改名・非推奨の対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e500","s":"n247","t":"n265","rel":"ともに削除された設定","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e501","s":"n249","t":"n250","rel":"上に配置される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e502","s":"n249","t":"n378","rel":"パッケージを含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e503","s":"n250","t":"n378","rel":"パッケージを含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e504","s":"n267","t":"n354","rel":"通す","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e505","s":"n270","t":"n412","rel":"合格","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e506","s":"n270","t":"n457","rel":"自己記述","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e507","s":"n274","t":"n289","rel":"持たない","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e508","s":"n275","t":"n251","rel":"の検討は後にする","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e509","s":"n275","t":"n453","rel":"の検討は後である","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e510","s":"n275","t":"n569","rel":"を記憶の出典として使うか判断する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e511","s":"n279","t":"n506","rel":"根拠とする","dir":false,"neg":false,"cert":"uncertain","m":1,"docs":[1]},{"id":"e512","s":"n288","t":"n407","rel":"要約である","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e513","s":"n295","t":"n521","rel":"分けて扱う対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e514","s":"n301","t":"n232","rel":"評価結果","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e515","s":"n301","t":"n264","rel":"評価結果","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e516","s":"n303","t":"n432","rel":"品質の目標を未達にした","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e517","s":"n303","t":"n481","rel":"技術の点数を達成した","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e518","s":"n324","t":"n325","rel":"測定結果が下がった","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e519","s":"n328","t":"n332","rel":"ともに変更された","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e520","s":"n329","t":"n578","rel":"旧の評価の軸に含まれる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e521","s":"n339","t":"n340","rel":"前の版","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e522","s":"n352","t":"n476","rel":"まとめる条件","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e523","s":"n353","t":"n1","rel":"mem0の記述の採用","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e524","s":"n354","t":"n487","rel":"根拠である","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e525","s":"n359","t":"n417","rel":"同じ重みで記憶になる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e526","s":"n362","t":"n417","rel":"同じ重みで記憶になる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e527","s":"n366","t":"n576","rel":"判断に対する評価の側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e528","s":"n372","t":"n376","rel":"対を成す","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e529","s":"n383","t":"n558","rel":"予定のうちの一部分を生成した","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e530","s":"n385","t":"n410","rel":"検証の規律で連続して行われる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e531","s":"n386","t":"n400","rel":"不採用","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e532","s":"n386","t":"n431","rel":"保留","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e533","s":"n386","t":"n452","rel":"採用","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e534","s":"n397","t":"n398","rel":"確認方法","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e535","s":"n399","t":"n466","rel":"で区別する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e536","s":"n409","t":"n561","rel":"採られた","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e537","s":"n410","t":"n484","rel":"検証の規律で連続して行われる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e538","s":"n414","t":"n19","rel":"判定を行う","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e539","s":"n423","t":"n432","rel":"未測定である","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e540","s":"n427","t":"n458","rel":"新では残る","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e541","s":"n432","t":"n574","rel":"独立した人のレビューではないと記述している","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e542","s":"n442","t":"n439","rel":"置き換えとして扱う","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e543","s":"n444","t":"n333","rel":"長くなる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e544","s":"n451","t":"n581","rel":"採点の信号","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e545","s":"n453","t":"n212","rel":"は使わない時期である","dir":true,"neg":true,"cert":"stated","m":1,"docs":[2]},{"id":"e546","s":"n456","t":"n3","rel":"eumenes_memoryの弱点","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e547","s":"n456","t":"n512","rel":"最優先の施策となる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e548","s":"n461","t":"n472","rel":"弱点とリスクで示される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e549","s":"n463","t":"n47","rel":"検出不能","dir":true,"neg":true,"cert":"stated","m":1,"docs":[0]},{"id":"e550","s":"n465","t":"n591","rel":"運用条件に適用される","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e551","s":"n466","t":"n567","rel":"で区別する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e552","s":"n467","t":"n390","rel":"が測られる単位","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e553","s":"n468","t":"n57","rel":"防止の責任","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e554","s":"n470","t":"n76","rel":"が渡す対象とする","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e555","s":"n470","t":"n466","rel":"が理由を付ける","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e556","s":"n470","t":"n492","rel":"で比較する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e557","s":"n470","t":"n493","rel":"で比較する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e558","s":"n470","t":"n542","rel":"で比較する","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e559","s":"n473","t":"n10","rel":"だけで進められる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e560","s":"n474","t":"n490","rel":"採点対象","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e561","s":"n475","t":"n581","rel":"採点の信号","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e562","s":"n488","t":"n41","rel":"順1の文書を含む","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e563","s":"n488","t":"n91","rel":"順3の文書を含む","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e564","s":"n488","t":"n254","rel":"順2の文書を含む","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e565","s":"n488","t":"n566","rel":"文書に分けられている","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e566","s":"n492","t":"n542","rel":"が目録を用いる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e567","s":"n496","t":"n576","rel":"判断に対する評価の側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e568","s":"n497","t":"n576","rel":"判断に対する評価の側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e569","s":"n500","t":"n576","rel":"判断に対する評価の側の根拠","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e570","s":"n508","t":"n74","rel":"使うかどうかを切り替える","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e571","s":"n508","t":"n110","rel":"質問の意図を明示する対象","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e572","s":"n516","t":"n89","rel":"で確定する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e573","s":"n516","t":"n522","rel":"を含む","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e574","s":"n516","t":"n534","rel":"に置き換える","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e575","s":"n532","t":"n589","rel":"比較の決定に用いる指標の組み合わせ","dir":false,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e576","s":"n538","t":"n540","rel":"〜が書かれていない","dir":false,"neg":true,"cert":"stated","m":1,"docs":[1]},{"id":"e577","s":"n539","t":"n536","rel":"を含む","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e578","s":"n544","t":"n576","rel":"関係が属する領分","dir":false,"neg":false,"cert":"stated","m":1,"docs":[3]},{"id":"e579","s":"n547","t":"n21","rel":"費用の上限とモデルを先に決めることを推奨する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e580","s":"n547","t":"n30","rel":"利用者に添えられる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e581","s":"n547","t":"n33","rel":"host に持つことを推奨する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e582","s":"n547","t":"n473","rel":"始めることを推奨する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e583","s":"n547","t":"n516","rel":"確定する方法を推奨する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[2]},{"id":"e584","s":"n550","t":"n578","rel":"評価の軸に含まれる","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e585","s":"n555","t":"n507","rel":"を作る必要がある","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e586","s":"n557","t":"n505","rel":"廃止され、明示的操作に置換された","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e587","s":"n558","t":"n579","rel":"採点を行った","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e588","s":"n560","t":"n122","rel":"融合による順位","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e589","s":"n560","t":"n581","rel":"3つの信号の融合","dir":false,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e590","s":"n562","t":"n570","rel":"記憶の数を増え続ける","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e591","s":"n563","t":"n24","rel":"が不可逆の忘却として持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e592","s":"n563","t":"n80","rel":"が以下の状態を持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e593","s":"n563","t":"n240","rel":"が可逆の停止として持つ","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e594","s":"n568","t":"n411","rel":"出典からの忘却のp95の値に対応する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e595","s":"n568","t":"n582","rel":"読み出しのp95の値に対応する","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e596","s":"n568","t":"n583","rel":"負荷条件で計測される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e597","s":"n568","t":"n591","rel":"運用条件で計測される","dir":false,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e598","s":"n581","t":"n148","rel":"機能追加の時期","dir":true,"neg":false,"cert":"stated","m":1,"docs":[1]},{"id":"e599","s":"n592","t":"n384","rel":"で決められる","dir":true,"neg":false,"cert":"stated","m":1,"docs":[0]},{"id":"e600","s":"n593","t":"n595","rel":"配布の行が属する主題","dir":true,"neg":false,"cert":"stated","m":1,"docs":[3]}],"evaluation":{"summary":{"entitiesInCorpus":32,"entityRecall":0.96875,"crossDocumentEntities":18,"mergedIntoOneNode":13,"meanBestNodeCoverage":0.8703703703703703,"meanNodesPerFoundEntity":1.3225806451612903,"relationRecall":0.8235294117647058,"relationEndpointsFound":17,"distinctViolations":0,"impureNodes":0},"entities":[{"id":"mem0","expectedDocuments":4,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["mem0"]},{"id":"mem0-oss","expectedDocuments":3,"found":true,"nodes":3,"bestNodeCoverage":0.6666666666666666,"unionCoverage":0.6666666666666666,"labels":["OSS","mem0 OSS","OSS 版"]},{"id":"mem0-platform","expectedDocuments":4,"found":true,"nodes":2,"bestNodeCoverage":1,"unionCoverage":1,"labels":["Platform","mem0 の Platform"]},{"id":"mem0g","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["Mem0g"]},{"id":"mem0-paper","expectedDocuments":1,"found":true,"nodes":3,"bestNodeCoverage":1,"unionCoverage":1,"labels":["2025 年の論文","Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory","arXiv 2504.19413"]},{"id":"neo4j","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["Neo4j"]},{"id":"add-only","expectedDocuments":3,"found":true,"nodes":1,"bestNodeCoverage":0.3333333333333333,"unionCoverage":0.3333333333333333,"labels":["ADD-only"]},{"id":"bm25","expectedDocuments":2,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["BM25"]},{"id":"locomo","expectedDocuments":2,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["LoCoMo"]},{"id":"longmemeval","expectedDocuments":3,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["LongMemEval"]},{"id":"beam","expectedDocuments":2,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["BEAM"]},{"id":"memory-benchmarks","expectedDocuments":2,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["memory-benchmarks"]},{"id":"gpt-4o","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["gpt-4o"]},{"id":"temporal-reasoning","expectedDocuments":2,"found":true,"nodes":2,"bestNodeCoverage":0.5,"unionCoverage":0.5,"labels":["時間推論","Temporal Reasoning"]},{"id":"memory-decay","expectedDocuments":2,"found":true,"nodes":3,"bestNodeCoverage":0.5,"unionCoverage":0.5,"labels":["減衰","記憶の減衰","Memory Decay"]},{"id":"graph-memory","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["グラフ記憶"]},{"id":"state-key","expectedDocuments":3,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["state key"]},{"id":"hysen-labs","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["Hysen Labs"]},{"id":"eumenes","expectedDocuments":2,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["Eumenes"]},{"id":"eumenes-memory","expectedDocuments":3,"found":true,"nodes":2,"bestNodeCoverage":1,"unionCoverage":1,"labels":["eumenes_memory","eumenes-memory"]},{"id":"eumenes-memory-host","expectedDocuments":1,"found":false,"nodes":0,"bestNodeCoverage":0,"unionCoverage":0,"labels":[]},{"id":"eumenes-knowledge","expectedDocuments":3,"found":true,"nodes":1,"bestNodeCoverage":0.6666666666666666,"unionCoverage":0.6666666666666666,"labels":["eumenes_knowledge"]},{"id":"steward","expectedDocuments":1,"found":true,"nodes":2,"bestNodeCoverage":1,"unionCoverage":1,"labels":["steward","Eumenes の steward"]},{"id":"cas","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["CAS"]},{"id":"journal","expectedDocuments":2,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["journal"]},{"id":"tombstone","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["墓標"]},{"id":"quality-80","expectedDocuments":2,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["quality-80"]},{"id":"rrf","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["RRF"]},{"id":"world","expectedDocuments":3,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["World"]},{"id":"multilingual-e5","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["multilingual-e5"]},{"id":"read-memory","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["read_memory"]},{"id":"model-input-too-large","expectedDocuments":1,"found":true,"nodes":1,"bestNodeCoverage":1,"unionCoverage":1,"labels":["MODEL_INPUT_TOO_LARGE"]}],"relations":[{"about":"Mem0g は Neo4j に型付きの関係を持っていた","endpointsFound":true,"hit":true,"relations":["古い関係を無効化していた","型付きの関係に用いたデータベース","使用"]},{"about":"OSS から外部のグラフ DB（Neo4j など）への対応を外した","endpointsFound":true,"hit":false,"relations":[]},{"about":"新方式は ADD-only の書込み","endpointsFound":true,"hit":false,"relations":[]},{"about":"Platform だけに時間推論を足した","endpointsFound":true,"hit":true,"relations":["時間推論を持つ","発表対象","動作の主体","機能を持つ"]},{"about":"Platform だけに記憶の減衰を足した","endpointsFound":true,"hit":true,"relations":["減衰を持つ","機能を持つ","発表対象"]},{"about":"Platform のグラフ記憶は共起から推定する","endpointsFound":true,"hit":true,"relations":["を持つ","機能を持つ"]},{"about":"2025 年の論文が旧方式と Mem0g を述べる","endpointsFound":true,"hit":true,"relations":["値（LoCoMo）"]},{"about":"mem0 がベンチマークの数値を公表した","endpointsFound":true,"hit":true,"relations":["弱いとされる分類","属する分類","重視すべきだと記述している"]},{"about":"評価の枠組みの既定モデルは gpt-4o","endpointsFound":true,"hit":true,"relations":["既定のモデル"]},{"about":"eumenes_memory は Eumenes の記憶を切り出したライブラリ","endpointsFound":true,"hit":true,"relations":["記憶を切り出して作成された"]},{"about":"書込みの競合を CAS で検出する","endpointsFound":true,"hit":true,"relations":["持つ機能の一つ","CASで誤った削除を抑制する"]},{"about":"忘却を journal に記録する","endpointsFound":true,"hit":true,"relations":["持つ機能の一つ"]},{"about":"quality-80 の評価","endpointsFound":true,"hit":false,"relations":[]},{"about":"mem0 と比べる","endpointsFound":true,"hit":true,"relations":["mem0 と eumenes_memory が同じ問いにどう答えているか並べられている","mem0 と eumenes_memory の比較","mem0 の変更を取り入れない対象とする","一般の記憶ライブラリと比較して厳密とされる","後を追わない設計方針","書込み時の判断の立場が異なる","比較・評価の対象","解決済み課題の共有","mem0 の弱点を設計で回避している"]},{"about":"2 つのパッケージは同じ作り方をする","endpointsFound":true,"hit":true,"relations":["関係にある"]},{"about":"検索は順位だけで融合する（RRF）","endpointsFound":true,"hit":true,"relations":["検索の融合に使う"]},{"about":"判断は Eumenes の steward が持つ","endpointsFound":true,"hit":true,"relations":["steward が判断を持つ"]}],"distinct":[{"pair":["mem0","mem0g"],"merged":[]},{"pair":["mem0-oss","mem0-platform"],"merged":[]},{"pair":["eumenes","eumenes-memory"],"merged":[]},{"pair":["eumenes-memory","eumenes-knowledge"],"merged":[]},{"pair":["eumenes-memory","eumenes-memory-host"],"merged":[]},{"pair":["locomo","longmemeval"],"merged":[]},{"pair":["temporal-reasoning","memory-decay"],"merged":[]}],"impureNodes":[]}}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+	(() => {
+		const D = JSON.parse(document.getElementById("kg-data").textContent);
+		const $ = (id) => document.getElementById(id);
+		const esc = (s) =>
+			String(s).replace(
+				/[&<>"']/g,
+				(c) =>
+					({
+						"&": "&amp;",
+						"<": "&lt;",
+						">": "&gt;",
+						'"': "&quot;",
+						"'": "&#39;",
+					})[c],
+			);
+		const fmt = (n) => Number(n).toLocaleString("ja-JP");
+		const pct = (x) =>
+			x === null || x === undefined ? "—" : `${Math.round(x * 100)}%`;
+		const docTitle = (i) => D.documents[i]?.title ?? "?";
+		// Relation names are free text, so the API's edges (one per node pair, direction, relation name,
+		// negation and certainty) rarely repeat. The picture draws one line per node pair instead and
+		// lists the relations themselves in the inspector. Relations inside one node are not drawn.
+		const pairs = new Map();
+		for (const e of D.edges) {
+			if (e.s === e.t) continue;
+			const [a, b] = e.s < e.t ? [e.s, e.t] : [e.t, e.s];
+			const key = `${a}|${b}`;
+			let p = pairs.get(key);
+			if (!p)
+				pairs.set(key, (p = { id: key, s: a, t: b, m: 0, docs: new Set() }));
+			p.m += e.m;
+			for (const d of e.docs) p.docs.add(d);
+		}
+		const P = [...pairs.values()].map((p) => ({ ...p, docs: [...p.docs] }));
+
+		// --- header ---------------------------------------------------------------
+		const r = D.run;
+		const how = r.keys
+			? `前の実行の抽出（${r.llm}）をそのまま使い、同一視はモデルに聞かずに、名前の正規化キー（${r.keys}）が同じ言及をつないで`
+			: r.relinked
+				? `前の実行の抽出をそのまま使い、同一視だけを ${r.llm}（LARM の profile ${r.profile}、同一視の指示 v${r.linkVersion}）でやり直して`
+				: `${r.llm}（LARM の profile ${r.profile}）で取り込み`;
+		$("lede").textContent =
+			`合成の調査 ${D.documents.length} 文書を、${how}、eumenes_knowledge のグラフ API から取り出したもの。手で描いた図ではなく、抽出と同一視の結果そのものです。${r.date} の 1 回の実行で、品質の基準値ではありません。`;
+		const facts = [
+			["文書", fmt(D.documents.length), `${fmt(r.bytes)} bytes`],
+			["断片", fmt(r.fragments), `抽出の失敗 ${fmt(r.extractionsFailed)}`],
+			["言及", fmt(r.entityMentions), `関係 ${fmt(r.relationMentions)}`],
+			[
+				"同一視の判断",
+				fmt(r.linksSame + r.linksDifferent + r.linksUnsure),
+				`same ${fmt(r.linksSame)} · different ${fmt(r.linksDifferent)} · unsure ${fmt(r.linksUnsure)}`,
+			],
+			[
+				"ノード",
+				fmt(D.nodes.length),
+				`文書をまたぐもの ${fmt(D.nodes.filter((n) => n.docs.length > 1).length)}`,
+			],
+			[
+				"関係",
+				fmt(D.edges.length),
+				`ノードの組 ${fmt(P.length)} · 2 文書以上で出る組 ${fmt(P.filter((p) => p.docs.length > 1).length)}`,
+			],
+			[
+				"根拠の確認",
+				`${fmt(r.evidenceValid)}/${fmt(r.evidenceTotal)}`,
+				"根拠 API で valid",
+			],
+			["実行時間", `${r.minutes} 分`, `モデル呼出し ${fmt(r.calls)} 回`],
+		];
+		$("facts").innerHTML = facts
+			.map(
+				([k, v, s]) =>
+					`<div class="fact"><span class="label">${esc(k)}</span><span class="value">${esc(v)}</span><span class="sub">${esc(s)}</span></div>`,
+			)
+			.join("");
+		const reasonText = {
+			linking_conflict: "矛盾する same を使わなかった",
+			linking_unsure: "モデルが判断できなかった組がある",
+			linking_pending: "同一視が終わっていない文書がある",
+			extraction_incomplete: "抽出に失敗した断片がある",
+			nodes_truncated: "ノードを上限で切った",
+			edges_truncated: "辺を上限で切った",
+		};
+		$("reasons").innerHTML = D.partialReasons
+			.map(
+				(p) =>
+					`<span class="reason">${esc(reasonText[p] ?? p)} <code>${esc(p)}</code></span>`,
+			)
+			.join("");
+
+		// --- graph ----------------------------------------------------------------
+		const svg = d3.select("#svg");
+		const root = svg.append("g");
+		const gEdges = root.append("g");
+		const gNodes = root.append("g");
+		const gLabels = root.append("g");
+		const zoom = d3
+			.zoom()
+			.scaleExtent([0.2, 6])
+			.on("zoom", (ev) => root.attr("transform", ev.transform));
+		svg.call(zoom);
+		const ramp = ["--d1", "--d2", "--d3", "--d4"];
+		const fill = (n) => `var(${ramp[Math.min(n.docs.length, 4) - 1]})`;
+		const radius = (n) => 3.5 + Math.sqrt(n.m) * 2.4;
+		$("legend").innerHTML =
+			"現れる文書の数 " +
+			[1, 2, 3, 4]
+				.map(
+					(k) =>
+						`<span><span class="swatch" style="background:var(${ramp[k - 1]})"></span>${k}</span>`,
+				)
+				.join("") +
+			` <span>· 大きさ＝言及の数 · 線＝関係のあるノードの組（太さ＝関係の言及数、濃い線＝2 文書以上で出る組）</span>`;
+		D.documents.forEach((d, i) => {
+			const o = document.createElement("option");
+			o.value = String(i);
+			o.textContent = d.title;
+			$("doc").append(o);
+		});
+
+		const byId = new Map(D.nodes.map((n) => [n.id, n]));
+		let selected = null;
+		let current = { nodes: [], edges: [] };
+		let fitK = 1;
+
+		function filtered() {
+			const minm = Number($("minm").value);
+			const doc = $("doc").value === "" ? null : Number($("doc").value);
+			const cross = $("cross").checked;
+			let nodes = D.nodes.filter(
+				(n) =>
+					n.m >= minm &&
+					(!cross || n.docs.length > 1) &&
+					(doc === null || n.docs.includes(doc)),
+			);
+			const keep = new Set(nodes.map((n) => n.id));
+			const edges = P.filter(
+				(e) =>
+					keep.has(e.s) &&
+					keep.has(e.t) &&
+					(doc === null || e.docs.includes(doc)),
+			);
+			if ($("iso").checked) {
+				const linked = new Set(edges.flatMap((e) => [e.s, e.t]));
+				nodes = nodes.filter((n) => linked.has(n.id) || n.id === selected);
+			}
+			return { nodes, edges };
+		}
+
+		function draw() {
+			const { nodes, edges } = filtered();
+			const box = $("canvas").getBoundingClientRect();
+			const w = Math.max(box.width, 320),
+				h = Math.max(box.height, 320);
+			const simNodes = nodes.map((n) => ({ ...n }));
+			const simIndex = new Map(simNodes.map((n) => [n.id, n]));
+			const simEdges = edges.map((e) => ({
+				...e,
+				source: simIndex.get(e.s),
+				target: simIndex.get(e.t),
+			}));
+			const sim = d3
+				.forceSimulation(simNodes)
+				.force("link", d3.forceLink(simEdges).distance(95).strength(0.25))
+				.force("charge", d3.forceManyBody().strength(-260).distanceMax(600))
+				.force(
+					"collide",
+					d3.forceCollide().radius((n) => radius(n) + 8),
+				)
+				.force("x", d3.forceX(0).strength(0.04))
+				.force("y", d3.forceY(0).strength(0.06))
+				.stop();
+			// Settled before the first frame: the page is complete at rest, no animation.
+			for (let i = 0; i < 400; i++) sim.tick();
+			current = { nodes: simNodes, edges: simEdges };
+			$("shown").textContent =
+				`表示 ${fmt(simNodes.length)} ノード · ${fmt(simEdges.length)} 組`;
+
+			gEdges
+				.selectAll("line")
+				.data(simEdges, (e) => e.id)
+				.join("line")
+				.attr("x1", (e) => e.source.x)
+				.attr("y1", (e) => e.source.y)
+				.attr("x2", (e) => e.target.x)
+				.attr("y2", (e) => e.target.y)
+				.attr("stroke", (e) =>
+					e.docs.length > 1 ? "var(--edge-cross)" : "var(--edge)",
+				)
+				.attr("stroke-width", (e) => 1 + Math.log2(e.m));
+			gNodes
+				.selectAll("circle")
+				.data(simNodes, (n) => n.id)
+				.join("circle")
+				.attr("cx", (n) => n.x)
+				.attr("cy", (n) => n.y)
+				.attr("r", radius)
+				.attr("fill", fill)
+				.attr("stroke", "var(--surface)")
+				.attr("stroke-width", 2)
+				.attr("tabindex", 0)
+				.attr("role", "button")
+				.attr(
+					"aria-label",
+					(n) => `${n.label}、言及 ${n.m}、文書 ${n.docs.length}`,
+				)
+				.style("cursor", "pointer")
+				.on("click", (ev, n) => select(n.id))
+				.on("keydown", (ev, n) => {
+					if (ev.key === "Enter" || ev.key === " ") {
+						ev.preventDefault();
+						select(n.id);
+					}
+				})
+				.on("mouseenter", (ev, n) => tip(ev, n))
+				.on("mousemove", (ev, n) => tip(ev, n))
+				.on("mouseleave", () => ($("tip").hidden = true));
+			// Fit the settled layout into the canvas (the legend strip at the bottom stays clear).
+			const xs = simNodes.map((n) => n.x),
+				ys = simNodes.map((n) => n.y);
+			if (simNodes.length) {
+				const x0 = Math.min(...xs) - 20,
+					x1 = Math.max(...xs) + 90,
+					y0 = Math.min(...ys) - 20,
+					y1 = Math.max(...ys) + 20;
+				const k = Math.min(2, (w - 24) / (x1 - x0), (h - 70) / (y1 - y0));
+				fitK = k;
+				svg.call(
+					zoom.transform,
+					d3.zoomIdentity
+						.translate(
+							(w - (x1 - x0) * k) / 2 - x0 * k,
+							(h - 50 - (y1 - y0) * k) / 2 - y0 * k,
+						)
+						.scale(k),
+				);
+			}
+			labels();
+			emphasize();
+		}
+		// Labels go to the nodes with the most mentions first, and a label that would overlap one already
+		// placed is left out (its node still shows its name on hover and in the inspector).
+		function labels() {
+			const near = new Set(selected ? [selected] : []);
+			if (selected)
+				for (const e of current.edges) {
+					if (e.s === selected) near.add(e.t);
+					if (e.t === selected) near.add(e.s);
+				}
+			const order = [...current.nodes].sort(
+				(a, b) =>
+					near.has(b.id) - near.has(a.id) ||
+					b.m - a.m ||
+					b.docs.length - a.docs.length,
+			);
+			const placed = [];
+			// Labels keep 12px on screen at the fitted zoom, so their boxes are measured at that scale.
+			const f = 1 / fitK;
+			const width = (t) =>
+				[...t].reduce((s, c) => s + (c.charCodeAt(0) > 0x2e7f ? 12 : 7), 0) * f;
+			const top = new Set(order.slice(0, 10).map((n) => n.id));
+			const shown = [];
+			for (const n of order) {
+				if (!near.has(n.id) && shown.length >= 40) break;
+				const t = clip(n.label, 20);
+				const b = {
+					x0: n.x + radius(n) + 2 * f,
+					y0: n.y - 8 * f,
+					x1: n.x + radius(n) + 4 * f + width(t),
+					y1: n.y + 8 * f,
+				};
+				const hitsLabel = placed.some(
+					(p) => b.x0 < p.x1 && p.x0 < b.x1 && b.y0 < p.y1 && p.y0 < b.y1,
+				);
+				// The ten nodes with the most mentions are labelled even over a neighbouring node.
+				const hitsNode =
+					!top.has(n.id) &&
+					current.nodes.some(
+						(o) =>
+							o !== n &&
+							o.x + radius(o) > b.x0 &&
+							o.x - radius(o) < b.x1 &&
+							o.y + radius(o) > b.y0 &&
+							o.y - radius(o) < b.y1,
+					);
+				if (n.id !== selected && (hitsLabel || hitsNode)) continue;
+				placed.push(b);
+				shown.push({ n, t });
+			}
+			gLabels
+				.selectAll("text")
+				.data(shown, (d) => d.n.id)
+				.join("text")
+				.attr("x", (d) => d.n.x + radius(d.n) + 3 * f)
+				.attr("y", (d) => d.n.y + 4 * f)
+				.text((d) => d.t)
+				.attr("font-size", 12 * f)
+				.attr("fill", "var(--ink)")
+				.attr("stroke", "var(--surface)")
+				.attr("stroke-width", 3 * f)
+				.attr("paint-order", "stroke")
+				.style("pointer-events", "none");
+		}
+		const clip = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+		function tip(ev, n) {
+			const t = $("tip"),
+				box = $("canvas").getBoundingClientRect();
+			t.innerHTML = `<strong>${esc(n.label)}</strong><br><span class="num">言及 ${n.m} · 文書 ${n.docs.length}</span>`;
+			t.hidden = false;
+			const x = Math.min(ev.clientX - box.left + 12, box.width - 270),
+				y = Math.max(ev.clientY - box.top - 40, 8);
+			t.style.left = `${x}px`;
+			t.style.top = `${y}px`;
+		}
+		function emphasize() {
+			const near = new Set();
+			if (selected) {
+				near.add(selected);
+				for (const e of current.edges) {
+					if (e.s === selected) near.add(e.t);
+					if (e.t === selected) near.add(e.s);
+				}
+			}
+			const q = $("q").value.trim().toLowerCase();
+			const hit = (n) => q && n.names.some((x) => x.toLowerCase().includes(q));
+			gNodes
+				.selectAll("circle")
+				.attr("opacity", (n) =>
+					selected ? (near.has(n.id) ? 1 : 0.18) : q ? (hit(n) ? 1 : 0.25) : 1,
+				)
+				.attr("stroke", (n) =>
+					n.id === selected || hit(n) ? "var(--ink)" : "var(--surface)",
+				);
+			gEdges
+				.selectAll("line")
+				.attr("opacity", (e) =>
+					selected
+						? e.s === selected || e.t === selected
+							? 1
+							: 0.08
+						: q
+							? 0.3
+							: 0.9,
+				);
+			gLabels
+				.selectAll("text")
+				.attr("opacity", (d) => (selected ? (near.has(d.n.id) ? 1 : 0.2) : 1));
+		}
+		function select(id) {
+			selected = id;
+			inspect(id ? byId.get(id) : null);
+			// The layout is kept unless the chosen node is not drawn (a search can pick a filtered-out node).
+			if (id && !current.nodes.some((n) => n.id === id)) draw();
+			else {
+				labels();
+				emphasize();
+			}
+		}
+		function inspect(n) {
+			const el = $("inspector");
+			if (!n) {
+				el.innerHTML = `<p class="empty">ノードを選ぶと、名前の表記・種類・現れる文書・関係をここに出します。</p><p class="empty">ノード 1 つは、モデルが「同じ実体」と判断した言及のまとまりです。判断が食い違った組（same と different）はつないでいません。</p>`;
+				return;
+			}
+			const out = D.edges
+				.filter((e) => e.s === n.id || e.t === n.id)
+				.sort((a, b) => b.m - a.m);
+			const rel = out
+				.map((e) => {
+					const other = byId.get(e.s === n.id ? e.t : e.s);
+					const arrow =
+						e.s === e.t ? "↺" : !e.dir ? "—" : e.s === n.id ? "→" : "←";
+					const q = [
+						e.neg ? "否定" : null,
+						e.cert !== "stated"
+							? e.cert === "uncertain"
+								? "不確か"
+								: "仮定"
+							: null,
+					]
+						.filter(Boolean)
+						.join("・");
+					const end =
+						e.s === e.t
+							? `<span class="meta">同じノードの中</span>`
+							: `<button type="button" data-id="${esc(other.id)}">${esc(other.label)}</button>`;
+					return `<li><span>${arrow} <strong>${esc(e.rel)}</strong>${q ? `（${esc(q)}）` : ""} ${end}</span><span class="meta num">言及 ${e.m} · ${e.docs.map((d) => esc(docTitle(d))).join(" / ")}</span></li>`;
+				})
+				.join("");
+			el.innerHTML = `
+			<div><span class="label">ノード</span><h3 style="font-size:17px">${esc(n.label)}</h3><span class="num label">言及 ${n.m} · 文書 ${n.docs.length}</span></div>
+			<div><span class="label">書かれた名前</span><div class="chips">${n.names.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div></div>
+			<div><span class="label">抽出時の種類</span><div class="chips">${n.types.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div></div>
+			<div><span class="label">現れる文書</span><div>${n.docs.map((d) => esc(docTitle(d))).join("<br>")}</div></div>
+			${n.summary ? `<div><span class="label">要約（モデルが作った派生データ。根拠ではない）</span><p class="summary">${esc(n.summary)}</p></div>` : ""}
+			<div><span class="label">関係 ${out.length} 件</span>${out.length ? `<ul class="rel">${rel}</ul>` : `<p class="empty">関係はありません。</p>`}</div>
+			<button type="button" id="clear" class="chip" style="justify-self:start;cursor:pointer;background:none">選択を外す</button>`;
+			el.querySelectorAll("button[data-id]").forEach((b) =>
+				b.addEventListener("click", () => select(b.dataset.id)),
+			);
+			$("clear").addEventListener("click", () => select(null));
+		}
+		["minm", "doc", "cross", "iso"].forEach((id) =>
+			$(id).addEventListener("change", draw),
+		);
+		$("q").addEventListener("input", emphasize);
+		$("q").addEventListener("keydown", (ev) => {
+			if (ev.key !== "Enter") return;
+			const q = $("q").value.trim().toLowerCase();
+			const hit = D.nodes
+				.filter((n) => n.names.some((x) => x.toLowerCase().includes(q)))
+				.sort((a, b) => b.m - a.m)[0];
+			if (hit) {
+				$("minm").value = "1";
+				select(hit.id);
+			}
+		});
+		let resizeTimer;
+		window.addEventListener("resize", () => {
+			clearTimeout(resizeTimer);
+			resizeTimer = setTimeout(draw, 200);
+		});
+		inspect(null);
+		draw();
+
+		// --- evaluation -----------------------------------------------------------
+		const ev = D.evaluation;
+		const s = ev.summary;
+		$("evalnote").innerHTML =
+			`正解表は、素材を書いた側が先に決めた実体 ${s.entitiesInCorpus} 件と関係 ${D.evaluation.relations.length} 件です。ノードの名前のどれかが別名と一致すれば「見つかった」とします。実体の再現 <strong class="num">${pct(s.entityRecall)}</strong>、複数の文書に出る実体 ${s.crossDocumentEntities} 件のうち 1 つのノードにまとまったもの <strong class="num">${s.mergedIntoOneNode}</strong> 件、関係の再現 <strong class="num">${pct(s.relationRecall)}</strong>、混ぜてはいけない組を混ぜたもの <strong class="num">${s.distinctViolations}</strong> 件${s.impureNodes === undefined ? "" : `、正解表の 2 つ以上の実体を含むノード <strong class="num">${s.impureNodes}</strong> 件`}${r.largestSameComponent === null ? "" : `。same のリンクだけで（矛盾の規則なしに）つなぐと、最大のまとまりは言及 <strong class="num">${fmt(r.largestSameComponent)}</strong> 件`}。`;
+		const mark = (b) =>
+			b ? `<span class="ok">✓ あり</span>` : `<span class="ng">✕ なし</span>`;
+		$("t-ent").innerHTML =
+			`<thead><tr><th>実体</th><th class="n">出る文書</th><th>ノード</th><th class="n">分かれた数</th><th class="n">1 ノードの被覆</th></tr></thead><tbody>${ev.entities
+				.filter((e) => e.expectedDocuments > 0)
+				.map(
+					(e) =>
+						`<tr><td>${esc(e.id)}${e.labels.length ? `<br><span class="label">${esc(e.labels.slice(0, 3).join(" / "))}</span>` : ""}</td><td class="n">${e.expectedDocuments}</td><td>${mark(e.found)}</td><td class="n">${e.nodes}</td><td class="n">${pct(e.bestNodeCoverage)}</td></tr>`,
+				)
+				.join("")}</tbody>`;
+		$("t-rel").innerHTML =
+			`<thead><tr><th>つながるべき関係</th><th>辺</th><th>取り出された関係名</th></tr></thead><tbody>${ev.relations.map((x) => `<tr><td>${esc(x.about)}</td><td>${x.hit ? mark(true) : x.endpointsFound ? `<span class="ng">✕ 端点はある</span>` : mark(false)}</td><td>${esc(x.relations.slice(0, 3).join(" / "))}</td></tr>`).join("")}</tbody>`;
+
+		// --- node table (the table view of the graph) -----------------------------
+		const top = [...D.nodes]
+			.sort((a, b) => b.m - a.m || b.docs.length - a.docs.length)
+			.slice(0, 60);
+		$("t-nodes").innerHTML =
+			`<thead><tr><th>ノード</th><th class="n">言及</th><th class="n">文書</th><th class="n">関係</th><th class="n">名前の数</th><th>種類</th></tr></thead><tbody>${top.map((n) => `<tr><td>${esc(n.label)}</td><td class="n">${n.m}</td><td class="n">${n.docs.length}</td><td class="n">${D.edges.filter((e) => e.s === n.id || e.t === n.id).length}</td><td class="n">${n.names.length}</td><td>${esc(n.types.slice(0, 2).join(" / "))}</td></tr>`).join("")}</tbody>`;
+	})();
+</script>

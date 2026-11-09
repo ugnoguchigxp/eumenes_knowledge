@@ -1,0 +1,6 @@
+{
+	"about": "kg2.md §7.3 の上位 40 ノードの分け方（Claude の初版）。entity は正解表の実体か名前のあるもの、topic は用語として意味はあるが実体ではない話題の語、noise は英語の機能語・単位・ログやメモの印・コードの語・一般の動作語。scripts/kg-alt.ts --labels で数える。",
+	"entity": ["E1023", "Hikidashi", "LANTERN_TOKEN", "Lantern", "Lantern Search", "Mira", "Mira Okafor", "Mitsumori Seisakusho", "MySQL", "Northwind", "Northwind Cloud", "Okafor", "OpenSearch", "PostgreSQL", "Postgres", "VM", "hikidashi-sync", "lantern-api", "lantern-worker", "pg_bigm", "ランタン", "三ツ森製作所", "佐々木", "全文検索", "品証", "品質保証部", "夜間バッチ", "大野", "大野健太", "情報システム課", "書き込み", "森田", "検索サーバー", "浜松工場", "索引", "Ono-san", "Hono"],
+	"topic": ["API", "DB", "PDF", "Markdown", "再構築", "設計メモ", "品質保証", "取り込み", "手順", "検索", "wiki", "件数", "index", "Full-text", "Northwind Cloud VM"],
+	"noise": ["Doc", "GB", "INFO", "Japanese", "March", "Mixed English", "Notes", "Open", "Promise", "Proposal", "done", "internal", "keep", "new", "old", "sync", "構築", "確認", "LED", "ERROR E1023", "at", "by", "the", "It", "TODO", "こと", "pages", "replaces", "timeout", "token", "--full", "--since", ".values", "16GB", "500k", "search", "too"]
+}

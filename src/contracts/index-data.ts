@@ -99,7 +99,10 @@ export type EvidenceRange = {
 	byteEnd: number;
 	/** sha256 of the quoted UTF-8 bytes. */
 	quoteSha256: string;
-	/** The quotation occurs more than once in the fragment; the first occurrence is used. */
+	/**
+	 * The quotation occurs more than once in the fragment. A model's quotation is located at the
+	 * first occurrence; the model-free extractor's at the occurrence it quotes.
+	 */
 	ambiguous: boolean;
 };
 
@@ -120,6 +123,8 @@ export const extractionDropReasons = [
 	"unknown_entity",
 	/** Two elements share an id. */
 	"duplicate_id",
+	/** Beyond a fragment's limit of the model-free extractor (kg2.md G3), or too far apart to quote. */
+	"over_limit",
 ] as const;
 export type ExtractionDropReason = (typeof extractionDropReasons)[number];
 

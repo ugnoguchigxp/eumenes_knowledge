@@ -29,7 +29,13 @@ import {
 } from "../index.js";
 
 /** Names the scripted extraction finds in a text (a test double: the real code never does this). */
-export const KNOWN_NAMES = ["Alpha Corp", "Beta Ltd", "Gamma Inc", "Delta"];
+export const KNOWN_NAMES = [
+	"Alpha Corp",
+	"Beta Ltd",
+	"Gamma Inc",
+	"Delta",
+	"Alpha Corp Japan",
+];
 
 export type MentionJson = {
 	name: string;

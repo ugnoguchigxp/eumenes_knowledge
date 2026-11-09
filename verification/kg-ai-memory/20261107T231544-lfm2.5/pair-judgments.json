@@ -1,0 +1,1419 @@
+{
+	"about": "組は entity id（小さい方-大きい方）。truth は原文から見た正解（same / different、決められないものは null）。verdict は組の出どころ: キー・モデル・？ は食い違いの一覧（kg.md §8.3）でどちらが正しかったか、票 はローカル LLM の票が選んだ組（kg.md §8.7）、取込 は取り込んだ v3 の same のうち attach で使われた組（kg.md §8.8）。",
+	"extraction": "抽出は verification/kg-ai-memory/20261107T231544-lfm2.5（entity id はこの抽出のもの）。判定の初版は Claude（素材を書いた者）が原文を見て付けた。人の確認はまだ。",
+	"pairs": {
+		"684-780": {
+			"verdict": "キー",
+			"note": "同じ前提 M1",
+			"names": [
+				"M1",
+				"M1"
+			],
+			"truth": "same"
+		},
+		"400-896": {
+			"verdict": "キー",
+			"note": "mem0 の Platform",
+			"names": [
+				"Platform",
+				"Platform"
+			],
+			"truth": "same"
+		},
+		"710-739": {
+			"verdict": "キー",
+			"note": "同じ examples の場所",
+			"names": [
+				"examples",
+				"examples"
+			],
+			"truth": "same"
+		},
+		"62-837": {
+			"verdict": "キー",
+			"note": "同じ概念",
+			"names": [
+				"byte 範囲",
+				"byte 範囲"
+			],
+			"truth": "same"
+		},
+		"27-185": {
+			"verdict": "キー",
+			"note": "同じ記憶の区分",
+			"names": [
+				"State",
+				"State"
+			],
+			"truth": "same"
+		},
+		"203-919": {
+			"verdict": "？",
+			"note": "一般語",
+			"names": [
+				"試験",
+				"試験"
+			],
+			"truth": null
+		},
+		"826-848": {
+			"verdict": "キー",
+			"note": "",
+			"names": [
+				"Eumenes",
+				"Eumenes"
+			],
+			"truth": "same"
+		},
+		"239-740": {
+			"verdict": "キー",
+			"note": "同じ品質の目標",
+			"names": [
+				"quality-80",
+				"quality-80"
+			],
+			"truth": "same"
+		},
+		"332-890": {
+			"verdict": "キー",
+			"note": "mem0 の 3 つの信号",
+			"names": [
+				"3 つの信号",
+				"3 つの信号"
+			],
+			"truth": "same"
+		},
+		"255-686": {
+			"verdict": "キー",
+			"note": "",
+			"names": [
+				"公開ベンチマーク",
+				"公開ベンチマーク"
+			],
+			"truth": "same"
+		},
+		"574-916": {
+			"verdict": "キー",
+			"note": "mem0 の数値",
+			"names": [
+				"ベンチマークの数値",
+				"ベンチマークの数値"
+			],
+			"truth": "same"
+		},
+		"749-836": {
+			"verdict": "？",
+			"note": "一般語",
+			"names": [
+				"版",
+				"版"
+			],
+			"truth": null
+		},
+		"662-705": {
+			"verdict": "キー",
+			"note": "",
+			"names": [
+				"mem0",
+				"mem0"
+			],
+			"truth": "same"
+		},
+		"695-920": {
+			"verdict": "？",
+			"note": "一般語",
+			"names": [
+				"モデル",
+				"モデル"
+			],
+			"truth": null
+		},
+		"694-743": {
+			"verdict": "キー",
+			"note": "同じ想起",
+			"names": [
+				"想起",
+				"想起"
+			],
+			"truth": "same"
+		},
+		"457-687": {
+			"verdict": "？",
+			"note": "一般語",
+			"names": [
+				"記憶",
+				"記憶"
+			],
+			"truth": null
+		},
+		"411-474": {
+			"verdict": "モデル",
+			"note": "旧の出来事と新の操作",
+			"names": [
+				"DELETE",
+				"delete"
+			],
+			"truth": "different"
+		},
+		"319-768": {
+			"verdict": "キー",
+			"note": "",
+			"names": [
+				"外部のグラフ DB",
+				"外部のグラフ DB"
+			],
+			"truth": "same"
+		},
+		"477-817": {
+			"verdict": "モデル",
+			"note": "mem0 の関係と検索の経路",
+			"names": [
+				"関係",
+				"関係"
+			],
+			"truth": "different"
+		},
+		"349-705": {
+			"verdict": "キー",
+			"note": "部分と全体",
+			"names": [
+				"Platform",
+				"mem0"
+			],
+			"truth": "different"
+		},
+		"23-227": {
+			"verdict": "キー",
+			"note": "別の実体",
+			"names": [
+				"Eumenes",
+				"eumenes_memory"
+			],
+			"truth": "different"
+		},
+		"21-176": {
+			"verdict": "？",
+			"note": "版と本体",
+			"names": [
+				"eumenes-memory 0.0.4（本体）",
+				"0.0.4"
+			],
+			"truth": null
+		},
+		"503-619": {
+			"verdict": "キー",
+			"note": "紹介する文書",
+			"names": [
+				"mem0",
+				"この文書"
+			],
+			"truth": "different"
+		},
+		"665-870": {
+			"verdict": "キー",
+			"note": "部分",
+			"names": [
+				"意味・キーワード・実体の3つの信号",
+				"mem0"
+			],
+			"truth": "different"
+		},
+		"550-621": {
+			"verdict": "キー",
+			"note": "記事",
+			"names": [
+				"mem0",
+				"The Token-Efficient Memory Algorithm"
+			],
+			"truth": "different"
+		},
+		"461-640": {
+			"verdict": "キー",
+			"note": "論文",
+			"names": [
+				"mem0",
+				"Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory"
+			],
+			"truth": "different"
+		},
+		"461-793": {
+			"verdict": "キー",
+			"note": "OSS 版は別の実体",
+			"names": [
+				"mem0",
+				"mem0 OSS"
+			],
+			"truth": "different"
+		},
+		"673-906": {
+			"verdict": "キー",
+			"note": "機能",
+			"names": [
+				"記憶の更新",
+				"mem0"
+			],
+			"truth": "different"
+		},
+		"285-758": {
+			"verdict": "キー",
+			"note": "ファイルと Seed",
+			"names": [
+				"examples/seeds/README.md",
+				"Seed"
+			],
+			"truth": "different"
+		},
+		"105-807": {
+			"verdict": "キー",
+			"note": "別の概念",
+			"names": [
+				"fail closed",
+				"出典"
+			],
+			"truth": "different"
+		},
+		"352-580": {
+			"verdict": "キー",
+			"note": "数値",
+			"names": [
+				"ベンチマークの数値",
+				"mem0"
+			],
+			"truth": "different"
+		},
+		"23-200": {
+			"verdict": "モデル",
+			"note": "ホスト＝Eumenes",
+			"names": [
+				"Eumenes",
+				"ホスト"
+			],
+			"truth": "same"
+		},
+		"805-829": {
+			"verdict": "キー",
+			"note": "持ち主と知識",
+			"names": [
+				"Eumenes",
+				"knowledge"
+			],
+			"truth": "different"
+		},
+		"248-870": {
+			"verdict": "キー",
+			"note": "操作",
+			"names": [
+				"update",
+				"mem0"
+			],
+			"truth": "different"
+		},
+		"318-538": {
+			"verdict": "キー",
+			"note": "OSS 版は別の実体",
+			"names": [
+				"OSS 版",
+				"mem0"
+			],
+			"truth": "different"
+		},
+		"524-793": {
+			"verdict": "モデル",
+			"note": "同じ OSS",
+			"names": [
+				"OSS",
+				"mem0 OSS"
+			],
+			"truth": "same"
+		},
+		"404-637": {
+			"verdict": "キー",
+			"note": "部分",
+			"names": [
+				"OSS の SDK",
+				"mem0"
+			],
+			"truth": "different"
+		},
+		"682-903": {
+			"verdict": "キー",
+			"note": "施策と配布物",
+			"names": [
+				"tgz",
+				"施策 5 配布の管理"
+			],
+			"truth": "different"
+		},
+		"207-737": {
+			"verdict": "キー",
+			"note": "試験の時点",
+			"names": [
+				"最新の source の host",
+				"host"
+			],
+			"truth": "different"
+		},
+		"58-715": {
+			"verdict": "キー",
+			"note": "同じ本体",
+			"names": [
+				"本体",
+				"本体"
+			],
+			"truth": "same"
+		},
+		"249-376": {
+			"verdict": "モデル",
+			"note": "新の操作と旧の処理",
+			"names": [
+				"delete",
+				"DELETE"
+			],
+			"truth": "different"
+		},
+		"736-811": {
+			"verdict": "キー",
+			"note": "",
+			"names": [
+				"eumenes_memory",
+				"eumenes_memory"
+			],
+			"truth": "same"
+		},
+		"96-446": {
+			"verdict": "？",
+			"note": "一般語",
+			"names": [
+				"記憶",
+				"記憶"
+			],
+			"truth": null
+		},
+		"251-322": {
+			"verdict": "キー",
+			"note": "mem0 の実体の信号",
+			"names": [
+				"実体",
+				"実体"
+			],
+			"truth": "same"
+		},
+		"239-794": {
+			"verdict": "キー",
+			"note": "同じ品質の目標",
+			"names": [
+				"quality-80",
+				"quality-80"
+			],
+			"truth": "same"
+		},
+		"317-817": {
+			"verdict": "モデル",
+			"note": "mem0 の関係と検索の経路",
+			"names": [
+				"関係",
+				"関係"
+			],
+			"truth": "different"
+		},
+		"248-410": {
+			"verdict": "モデル",
+			"note": "新の操作と旧の出来事",
+			"names": [
+				"update",
+				"UPDATE"
+			],
+			"truth": "different"
+		},
+		"170-660": {
+			"verdict": "キー",
+			"note": "同じ合成データ",
+			"names": [
+				"合成データ",
+				"合成データ"
+			],
+			"truth": "same"
+		},
+		"83-370": {
+			"verdict": "モデル",
+			"note": "eumenes_memory と mem0 の書込み",
+			"names": [
+				"書込み",
+				"書込み"
+			],
+			"truth": "different"
+		},
+		"124-309": {
+			"verdict": "キー",
+			"note": "mem0 の新方式",
+			"names": [
+				"新方式",
+				"新方式"
+			],
+			"truth": "same"
+		},
+		"100-109": {
+			"verdict": "？",
+			"note": "一般語",
+			"names": [
+				"出典",
+				"出典"
+			],
+			"truth": null
+		},
+		"108-185": {
+			"verdict": "キー",
+			"note": "同じ記憶の区分",
+			"names": [
+				"State",
+				"State"
+			],
+			"truth": "same"
+		},
+		"76-744": {
+			"verdict": "キー",
+			"note": "同じ状態の名前",
+			"names": [
+				"superseded",
+				"superseded"
+			],
+			"truth": "same"
+		},
+		"362-626": {
+			"verdict": "モデル",
+			"note": "版とリリースノート",
+			"names": [
+				"TypeScript v3.0.0",
+				"TypeScript v3.0.0"
+			],
+			"truth": "different"
+		},
+		"640-828": {
+			"verdict": "キー",
+			"note": "論文",
+			"names": [
+				"Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory",
+				"mem0"
+			],
+			"truth": "different"
+		},
+		"23-913": {
+			"verdict": "キー",
+			"note": "別の実体",
+			"names": [
+				"Eumenes",
+				"eumenes_memory"
+			],
+			"truth": "different"
+		},
+		"405-570": {
+			"verdict": "モデル",
+			"note": "同じファイル",
+			"names": [
+				"mem0/memory/main.py",
+				"main.py"
+			],
+			"truth": "same"
+		},
+		"656-720": {
+			"verdict": "モデル",
+			"note": "同じ施策",
+			"names": [
+				"回答の品質の受入",
+				"2. 回答の品質の受入を終える（E3）"
+			],
+			"truth": "same"
+		},
+		"516-633": {
+			"verdict": "キー",
+			"note": "ファイル",
+			"names": [
+				"mem0",
+				"mem0/memory/main.py"
+			],
+			"truth": "different"
+		},
+		"302-643": {
+			"verdict": "キー",
+			"note": "上位と下位",
+			"names": [
+				"書込み",
+				"2段の書込み"
+			],
+			"truth": "different"
+		},
+		"254-735": {
+			"verdict": "モデル",
+			"note": "同じ Platform",
+			"names": [
+				"Platform",
+				"mem0 の Platform"
+			],
+			"truth": "same"
+		},
+		"5-793": {
+			"verdict": "キー",
+			"note": "OSS 版は別の実体",
+			"names": [
+				"mem0",
+				"mem0 OSS"
+			],
+			"truth": "different"
+		},
+		"5-645": {
+			"verdict": "モデル",
+			"note": "mem0 のリポジトリ",
+			"names": [
+				"mem0",
+				"mem0ai/mem0"
+			],
+			"truth": "same"
+		},
+		"737-838": {
+			"verdict": "キー",
+			"note": "部分",
+			"names": [
+				"host",
+				"host の plan"
+			],
+			"truth": "different"
+		},
+		"538-869": {
+			"verdict": "キー",
+			"note": "紹介する文書",
+			"names": [
+				"mem0",
+				"mem0 のアーキテクチャ転換が何をもたらすか"
+			],
+			"truth": "different"
+		},
+		"249-569": {
+			"verdict": "キー",
+			"note": "主張",
+			"names": [
+				"delete",
+				"明示の `update`・`delete`・`history` が残る"
+			],
+			"truth": "different"
+		},
+		"617-628": {
+			"verdict": "キー",
+			"note": "ページ",
+			"names": [
+				"Platform",
+				"Graph Memory（Platform）"
+			],
+			"truth": "different"
+		},
+		"183-268": {
+			"verdict": "？",
+			"note": "どの README か不明",
+			"names": [
+				"README",
+				"README.md"
+			],
+			"truth": null
+		},
+		"659-751": {
+			"verdict": "モデル",
+			"note": "同じ施策",
+			"names": [
+				"配布の管理",
+				"5. 配布の管理を正す（E5）"
+			],
+			"truth": "same"
+		},
+		"252-267": {
+			"verdict": "モデル",
+			"note": "同じ量",
+			"names": [
+				"約 7,000 token",
+				"7,000 token"
+			],
+			"truth": "same"
+		},
+		"13-857": {
+			"verdict": "？",
+			"note": "版と本体",
+			"names": [
+				"0.0.4",
+				"本体 0.0.4"
+			],
+			"truth": null
+		},
+		"4-224": {
+			"verdict": "キー",
+			"note": "評価項目",
+			"names": [
+				"host",
+				"host の稼働"
+			],
+			"truth": "different"
+		},
+		"4-295": {
+			"verdict": "キー",
+			"note": "置き場所",
+			"names": [
+				"host",
+				"vendor/eumenes-memory-host/"
+			],
+			"truth": "different"
+		},
+		"19-262": {
+			"verdict": "モデル",
+			"note": "同じ機能",
+			"names": [
+				"記憶から小さな予算で取り出す",
+				"多くの記憶から小さな予算で取り出す"
+			],
+			"truth": "same"
+		},
+		"2-16": {
+			"verdict": "票",
+			"note": "取り込み役と Eumenes",
+			"names": [
+				"Eumenes",
+				"Eumenes 側の取り込み"
+			],
+			"truth": "different"
+		},
+		"21-716": {
+			"verdict": "票",
+			"note": "版つきの本体とパッケージ名（境界）",
+			"names": [
+				"eumenes-memory 0.0.4（本体）",
+				"eumenes-memory"
+			],
+			"truth": "different"
+		},
+		"2-22": {
+			"verdict": "票",
+			"note": "別のパッケージ",
+			"names": [
+				"Eumenes",
+				"eumenes-memory-host 0.1.0"
+			],
+			"truth": "different"
+		},
+		"3-24": {
+			"verdict": "票",
+			"note": "Eumenes の steward",
+			"names": [
+				"steward",
+				"Eumenes の steward"
+			],
+			"truth": "same"
+		},
+		"2-25": {
+			"verdict": "票",
+			"note": "host と Eumenes",
+			"names": [
+				"Eumenes",
+				"Eumenes の host"
+			],
+			"truth": "different"
+		},
+		"26-58": {
+			"verdict": "票",
+			"note": "文脈不明",
+			"names": [
+				"色の付いた本体",
+				"本体"
+			],
+			"truth": null
+		},
+		"34-726": {
+			"verdict": "票",
+			"note": "同じ区分",
+			"names": [
+				"他人についての覚え書き（other_person_note）",
+				"other_person_note"
+			],
+			"truth": "same"
+		},
+		"39-324": {
+			"verdict": "票",
+			"note": "全文索引は索引の一種",
+			"names": [
+				"全文索引",
+				"索引"
+			],
+			"truth": "different"
+		},
+		"57-831": {
+			"verdict": "票",
+			"note": "memory の指すものが不明",
+			"names": [
+				"memory ドメイン",
+				"memory"
+			],
+			"truth": null
+		},
+		"4-69": {
+			"verdict": "票",
+			"note": "ファイルと host",
+			"names": [
+				"host",
+				"spec/host/implementation.md"
+			],
+			"truth": "different"
+		},
+		"4-99": {
+			"verdict": "票",
+			"note": "計画と host",
+			"names": [
+				"host",
+				"host の計画"
+			],
+			"truth": "different"
+		},
+		"44-101": {
+			"verdict": "票",
+			"note": "同じ World",
+			"names": [
+				"World",
+				"別リポジトリの World"
+			],
+			"truth": "same"
+		},
+		"62-110": {
+			"verdict": "票",
+			"note": "同じ概念",
+			"names": [
+				"byte 範囲",
+				"UTF-8 の byte 範囲"
+			],
+			"truth": "same"
+		},
+		"82-121": {
+			"verdict": "票",
+			"note": "まとまりと忘却",
+			"names": [
+				"忘却",
+				"忘却のまとまり"
+			],
+			"truth": "different"
+		},
+		"2-175": {
+			"verdict": "票",
+			"note": "vendor と Eumenes",
+			"names": [
+				"Eumenes",
+				"Eumenes の vendor"
+			],
+			"truth": "different"
+		},
+		"1-178": {
+			"verdict": "票",
+			"note": "成果物と本体",
+			"names": [
+				"eumenes_memory",
+				"eumenes_memory の artifacts"
+			],
+			"truth": "different"
+		},
+		"82-194": {
+			"verdict": "票",
+			"note": "忘却の一種",
+			"names": [
+				"忘却",
+				"大きな忘却"
+			],
+			"truth": "different"
+		},
+		"4-207": {
+			"verdict": "票",
+			"note": "試験の時点と host",
+			"names": [
+				"host",
+				"最新の source の host"
+			],
+			"truth": "different"
+		},
+		"216-239": {
+			"verdict": "票",
+			"note": "取得の試験と品質の目標",
+			"names": [
+				"quality-80 の取得",
+				"quality-80"
+			],
+			"truth": "different"
+		},
+		"4-273": {
+			"verdict": "票",
+			"note": "ファイルと host",
+			"names": [
+				"host",
+				"spec/host/contracts.md"
+			],
+			"truth": "different"
+		},
+		"268-284": {
+			"verdict": "票",
+			"note": "別の README",
+			"names": [
+				"README.md",
+				"examples/standalone/README.md"
+			],
+			"truth": "different"
+		},
+		"268-285": {
+			"verdict": "票",
+			"note": "別の README",
+			"names": [
+				"README.md",
+				"examples/seeds/README.md"
+			],
+			"truth": "different"
+		},
+		"294-716": {
+			"verdict": "票",
+			"note": "置き場所とパッケージ",
+			"names": [
+				"vendor/eumenes-memory/",
+				"eumenes-memory"
+			],
+			"truth": "different"
+		},
+		"2-295": {
+			"verdict": "票",
+			"note": "置き場所と Eumenes",
+			"names": [
+				"Eumenes",
+				"vendor/eumenes-memory-host/"
+			],
+			"truth": "different"
+		},
+		"268-296": {
+			"verdict": "票",
+			"note": "別の README",
+			"names": [
+				"README.md",
+				"spec/verification/memory-live-2026-11-07/README.md"
+			],
+			"truth": "different"
+		},
+		"318-497": {
+			"verdict": "票",
+			"note": "OSS 版",
+			"names": [
+				"OSS 版",
+				"OSS"
+			],
+			"truth": "same"
+		},
+		"319-525": {
+			"verdict": "票",
+			"note": "同じグラフ DB か不明",
+			"names": [
+				"外部のグラフ DB",
+				"グラフ DB"
+			],
+			"truth": null
+		},
+		"325-449": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"検索の順位",
+				"順位"
+			],
+			"truth": "different"
+		},
+		"251-326": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"実体",
+				"実体リンク"
+			],
+			"truth": "different"
+		},
+		"251-331": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"実体",
+				"実体の一致"
+			],
+			"truth": "different"
+		},
+		"333-449": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"1 つの順位",
+				"順位"
+			],
+			"truth": "different"
+		},
+		"89-337": {
+			"verdict": "票",
+			"note": "減衰を選ぶべき",
+			"names": [
+				"記憶",
+				"記憶の減衰"
+			],
+			"truth": "different"
+		},
+		"306-342": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"更新",
+				"知識の更新"
+			],
+			"truth": "different"
+		},
+		"317-347": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"関係",
+				"型付きの関係"
+			],
+			"truth": "different"
+		},
+		"317-380": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"関係",
+				"有向・ラベル付きの関係"
+			],
+			"truth": "different"
+		},
+		"404-497": {
+			"verdict": "票",
+			"note": "OSS の SDK と OSS（境界）",
+			"names": [
+				"OSS の SDK",
+				"OSS"
+			],
+			"truth": null
+		},
+		"374-408": {
+			"verdict": "票",
+			"note": "メソッドと出来事の種別",
+			"names": [
+				"ADD",
+				"add()"
+			],
+			"truth": "different"
+		},
+		"459-750": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"質問の意図",
+				"意図"
+			],
+			"truth": "different"
+		},
+		"89-468": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"記憶",
+				"古い記憶"
+			],
+			"truth": "different"
+		},
+		"487-488": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"token",
+				"1回の取得あたりのtoken"
+			],
+			"truth": "different"
+		},
+		"89-504": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"記憶",
+				"既存の記憶"
+			],
+			"truth": "different"
+		},
+		"89-507": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"記憶",
+				"記憶の数"
+			],
+			"truth": "different"
+		},
+		"5-575": {
+			"verdict": "票",
+			"note": "測定と mem0",
+			"names": [
+				"mem0",
+				"mem0 自身の測定"
+			],
+			"truth": "different"
+		},
+		"402-595": {
+			"verdict": "票",
+			"note": "記事と機能",
+			"names": [
+				"時間推論",
+				"時間推論の記事"
+			],
+			"truth": "different"
+		},
+		"602-604": {
+			"verdict": "票",
+			"note": "同じ日付",
+			"names": [
+				"ページの内部情報の日付",
+				"内部情報の日付"
+			],
+			"truth": "same"
+		},
+		"612-613": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"第三者の比較",
+				"第三者"
+			],
+			"truth": "different"
+		},
+		"5-622": {
+			"verdict": "票",
+			"note": "研究のページと mem0",
+			"names": [
+				"mem0",
+				"Mem0 Research"
+			],
+			"truth": "different"
+		},
+		"5-640": {
+			"verdict": "票",
+			"note": "論文と mem0",
+			"names": [
+				"mem0",
+				"Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory"
+			],
+			"truth": "different"
+		},
+		"67-653": {
+			"verdict": "票",
+			"note": "同じ概念",
+			"names": [
+				"依存閉包",
+				"忘却の依存閉包"
+			],
+			"truth": "same"
+		},
+		"334-702": {
+			"verdict": "票",
+			"note": "方式と一般語",
+			"names": [
+				"融合",
+				"方式B. 索引と順位の融合"
+			],
+			"truth": "different"
+		},
+		"2-716": {
+			"verdict": "票",
+			"note": "別の実体（正解表の混ぜてはいけない組）",
+			"names": [
+				"Eumenes",
+				"eumenes-memory"
+			],
+			"truth": "different"
+		},
+		"89-727": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"記憶",
+				"本人の記憶"
+			],
+			"truth": "different"
+		},
+		"337-776": {
+			"verdict": "票",
+			"note": "忘却と減衰",
+			"names": [
+				"記憶の減衰",
+				"使われない記憶の減衰による自動の忘却"
+			],
+			"truth": "different"
+		},
+		"803-840": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"2 つのパッケージ",
+				"パッケージ"
+			],
+			"truth": "different"
+		},
+		"89-832": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"記憶",
+				"本人についての記憶"
+			],
+			"truth": "different"
+		},
+		"4-838": {
+			"verdict": "票",
+			"note": "plan と host",
+			"names": [
+				"host",
+				"host の plan"
+			],
+			"truth": "different"
+		},
+		"695-855": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"モデル",
+				"回答・採点のモデル"
+			],
+			"truth": "different"
+		},
+		"89-861": {
+			"verdict": "票",
+			"note": "一般語",
+			"names": [
+				"記憶",
+				"実際の会話や記憶"
+			],
+			"truth": "different"
+		},
+		"1-871": {
+			"verdict": "票",
+			"note": "評価と eumenes_memory",
+			"names": [
+				"eumenes_memory",
+				"eumenes_memory の評価（2026-11-07 時点）"
+			],
+			"truth": "different"
+		},
+		"889-908": {
+			"verdict": "票",
+			"note": "同じ施策",
+			"names": [
+				"施策 1 候補の絞り込み",
+				"施策 1"
+			],
+			"truth": "same"
+		},
+		"459-898": {
+			"verdict": "票",
+			"note": "分類と意図",
+			"names": [
+				"質問の意図",
+				"質問の意図の分類"
+			],
+			"truth": "different"
+		},
+		"659-903": {
+			"verdict": "票",
+			"note": "同じ施策",
+			"names": [
+				"配布の管理",
+				"施策 5 配布の管理"
+			],
+			"truth": "same"
+		},
+		"683-908": {
+			"verdict": "票",
+			"note": "施策 1 と一般語",
+			"names": [
+				"施策",
+				"施策 1"
+			],
+			"truth": "different"
+		},
+		"683-909": {
+			"verdict": "票",
+			"note": "施策 3 と一般語",
+			"names": [
+				"施策",
+				"施策 3"
+			],
+			"truth": "different"
+		},
+		"2-21": {
+			"verdict": "取込",
+			"note": "Eumenes と版つきの本体",
+			"names": [
+				"Eumenes",
+				"eumenes-memory 0.0.4（本体）"
+			],
+			"truth": "different"
+		},
+		"4-22": {
+			"verdict": "取込",
+			"note": "同じ host のパッケージ（版つきの名前）",
+			"names": [
+				"host",
+				"eumenes-memory-host 0.1.0"
+			],
+			"truth": "same"
+		},
+		"4-25": {
+			"verdict": "取込",
+			"note": "同じ host",
+			"names": [
+				"host",
+				"Eumenes の host"
+			],
+			"truth": "same"
+		},
+		"9-891": {
+			"verdict": "取込",
+			"note": "同じ件数",
+			"names": [
+				"1,001 件",
+				"合成の 1,001 件"
+			],
+			"truth": "same"
+		},
+		"99-112": {
+			"verdict": "取込",
+			"note": "計画と host",
+			"names": [
+				"host の計画",
+				"host"
+			],
+			"truth": "different"
+		},
+		"110-837": {
+			"verdict": "取込",
+			"note": "同じ概念",
+			"names": [
+				"UTF-8 の byte 範囲",
+				"byte 範囲"
+			],
+			"truth": "same"
+		},
+		"112-838": {
+			"verdict": "取込",
+			"note": "plan と host",
+			"names": [
+				"host",
+				"host の plan"
+			],
+			"truth": "different"
+		},
+		"139-207": {
+			"verdict": "取込",
+			"note": "試験の時点と host",
+			"names": [
+				"host",
+				"最新の source の host"
+			],
+			"truth": "different"
+		},
+		"151-831": {
+			"verdict": "取込",
+			"note": "想起の経路と記憶",
+			"names": [
+				"read_memory",
+				"memory"
+			],
+			"truth": "different"
+		},
+		"170-264": {
+			"verdict": "取込",
+			"note": "評価とデータ",
+			"names": [
+				"合成データ",
+				"合成データの独自の評価"
+			],
+			"truth": "different"
+		},
+		"186-758": {
+			"verdict": "取込",
+			"note": "Seed の一部",
+			"names": [
+				"実データの Seed",
+				"Seed"
+			],
+			"truth": "different"
+		},
+		"248-518": {
+			"verdict": "取込",
+			"note": "列挙",
+			"names": [
+				"update",
+				"明示の `update`・`delete`・`delete_all`"
+			],
+			"truth": "different"
+		},
+		"302-763": {
+			"verdict": "取込",
+			"note": "下位の方式",
+			"names": [
+				"書込み",
+				"ADD-only の書込み"
+			],
+			"truth": "different"
+		},
+		"349-628": {
+			"verdict": "取込",
+			"note": "ページと Platform",
+			"names": [
+				"Platform",
+				"Graph Memory（Platform）"
+			],
+			"truth": "different"
+		},
+		"383-627": {
+			"verdict": "取込",
+			"note": "版とリリースノート（境界）",
+			"names": [
+				"v2.0.0b0",
+				"Python v2.0.0b0"
+			],
+			"truth": null
+		},
+		"390-665": {
+			"verdict": "取込",
+			"note": "列挙",
+			"names": [
+				"キーワード",
+				"意味・キーワード・実体の3つの信号"
+			],
+			"truth": "different"
+		},
+		"402-572": {
+			"verdict": "取込",
+			"note": "列挙",
+			"names": [
+				"時間推論",
+				"3 つの信号の融合、時間推論、減衰の仕組み"
+			],
+			"truth": "different"
+		},
+		"489-879": {
+			"verdict": "取込",
+			"note": "制約と機能",
+			"names": [
+				"小さな予算",
+				"小さな予算での取り出し"
+			],
+			"truth": "different"
+		},
+		"550-640": {
+			"verdict": "取込",
+			"note": "論文と mem0",
+			"names": [
+				"mem0",
+				"Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory"
+			],
+			"truth": "different"
+		}
+	}
+}

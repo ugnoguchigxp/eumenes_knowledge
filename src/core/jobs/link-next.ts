@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
 	KNOWLEDGE_JOB_KINDS,
+	KnowledgeError,
 	LINK_LIMITS,
 	linkNextDedupeKey,
 	linkNextPayloadSchema,
@@ -34,7 +35,6 @@ import {
 	listMentionsAfterInTransaction,
 	markLinkVersionDoneInTransaction,
 	pickVersionToCompareInTransaction,
-	readLinkCandidatesInTransaction,
 	readMentionQuotesInTransaction,
 	readSameClusterInTransaction,
 	recordLinkDecisionsInTransaction,
@@ -51,6 +51,7 @@ import {
 	LINK_INSTRUCTION_ID,
 	SUMMARIZE_INSTRUCTION_ID,
 } from "../link/request.js";
+import { pickLinkCandidatesInTransaction } from "../link/candidates.js";
 import { verifyLinkAnswer, verifySummaryAnswer } from "../link/verify.js";
 import {
 	DEFAULT_TRANSIENT_RETRY_DELAY_MS,
@@ -64,6 +65,10 @@ import {
 } from "./link-start.js";
 
 const DEFAULT_MAX_CANDIDATES_PER_MENTION = 10;
+/** Candidates of one mention read at once before one per part of a node is offered (kg.md §7.2). */
+const CANDIDATE_POOL = 200;
+/** The most candidates of one mention ever read (the read grows fourfold up to it). */
+const MAX_CANDIDATE_POOL = 3_200;
 const DEFAULT_MAX_MENTIONS_PER_VERSION = 200;
 const DEFAULT_INFERENCE_TIMEOUT_MS = 120_000;
 /** Characters of one quotation shown to the model (the extraction's own limit). */
@@ -150,6 +155,11 @@ function buildHandler(deps: IngestDeps, options: LinkOptions): LinkNextHandler {
 		options.maxCandidatesPerMention ?? DEFAULT_MAX_CANDIDATES_PER_MENTION;
 	const maxMentions =
 		options.maxMentionsPerVersion ?? DEFAULT_MAX_MENTIONS_PER_VERSION;
+	const candidateMatch = options.candidateMatch ?? "name";
+	if (candidateMatch !== "name" && candidateMatch !== "text")
+		throw new KnowledgeError("invalid_input");
+	const candidatePool = Math.max(CANDIDATE_POOL, maxCandidates);
+	const maxCandidatePool = Math.max(MAX_CANDIDATE_POOL, candidatePool);
 	const summaryMinMentions =
 		options.summaryMinMentions ?? DEFAULT_SUMMARY_MIN_MENTIONS;
 	const inferenceTimeoutMs =
@@ -400,13 +410,14 @@ function buildHandler(deps: IngestDeps, options: LinkOptions): LinkNextHandler {
 				if (!isVersionComparableInTransaction(tx, versionId)) return null;
 				const self = getCurrentMentionInTransaction(tx, mention.entityId);
 				if (!self) return null;
-				// One more than the limit tells whether the mention has candidates left over.
-				const found = readLinkCandidatesInTransaction(
-					tx,
-					mention.entityId,
-					maxCandidates + 1,
-				);
-				const candidates = found.slice(0, maxCandidates).map((candidate) => ({
+				// One candidate per part of a node; `hasMore` tells whether parts are left over.
+				const found = pickLinkCandidatesInTransaction(tx, mention.entityId, {
+					limit: maxCandidates,
+					pool: candidatePool,
+					maxPool: maxCandidatePool,
+					match: candidateMatch,
+				});
+				const candidates = found.candidates.map((candidate) => ({
 					entityId: candidate.entityId,
 					view: {
 						name: candidate.name,
@@ -431,7 +442,7 @@ function buildHandler(deps: IngestDeps, options: LinkOptions): LinkNextHandler {
 						),
 					},
 					candidates,
-					hasMore: found.length > maxCandidates,
+					hasMore: found.hasMore,
 				};
 			});
 			if (prepared === null) return stale;

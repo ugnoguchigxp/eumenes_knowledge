@@ -15,7 +15,9 @@ import {
 } from "./graph.js";
 
 async function populated(): Promise<LinkEnv> {
-	const env = makeLinkEnv();
+	// `text` candidates: Beta Ltd is compared with the Alpha Corp of its document's text, so the
+	// store also holds `different` links.
+	const env = makeLinkEnv({ candidateMatch: "text" });
 	putDoc(env, 1, "Alpha Corp and Beta Ltd.", "wiki");
 	putDoc(env, 2, "Alpha Corp again.", "wiki");
 	putDoc(env, 3, "Alpha Corp abroad.", "other");

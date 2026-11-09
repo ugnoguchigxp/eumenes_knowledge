@@ -68,7 +68,7 @@ export const CHAIN_STALE_AFTER_MS = 60 * 60 * 1000;
  */
 export class PortFailure extends Error {
 	override readonly name = "PortFailure";
-	constructor(readonly port: "inference" | "embedding") {
+	constructor(readonly port: "inference" | "embedding" | "tokenizer") {
 		super(port);
 	}
 }

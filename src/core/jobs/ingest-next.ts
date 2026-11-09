@@ -54,6 +54,9 @@ import {
 	EXTRACT_INSTRUCTION_ID,
 	mergeGleaning,
 	verifyExtraction,
+	createCharclassTokenizer,
+	extractNames,
+	TokenizerFailure,
 } from "../extract/index.js";
 import {
 	DEFAULT_MAX_FRAGMENTS_PER_DOCUMENT,
@@ -178,6 +181,10 @@ function buildHandler(
 	const inferenceTimeoutMs =
 		options.inferenceTimeoutMs ?? DEFAULT_INFERENCE_TIMEOUT_MS;
 	const extractInstruction = instruction(EXTRACT_INSTRUCTION_ID);
+	const extractor = options.extractor ?? "model";
+	if (extractor !== "model" && extractor !== "names")
+		throw new KnowledgeError("invalid_input");
+	const tokenizer = deps.tokenizer ?? createCharclassTokenizer();
 
 	/**
 	 * An ingest ended without applying anything because of the content (digest, size, contract).
@@ -232,6 +239,23 @@ function buildHandler(
 		signal: AbortSignal,
 		jobDeadlineAtMs: number | null,
 	): Promise<FragmentExtraction> {
+		if (extractor === "names") {
+			// The extraction is synchronous: one turn of the event loop per fragment keeps the
+			// host's timers (heartbeats, deadlines) running through a long document.
+			await new Promise<void>((resolve) => setImmediate(resolve));
+			signal.throwIfAborted();
+			try {
+				return extractNames(fragment, tokenizer);
+			} catch (error) {
+				// A tokenizer that throws: the host's port failed, not the fragment (the ingest ends
+				// as a temporary failure; the job's error code is `tokenizer`). Tokens that do not
+				// fit the text fail the fragment alone (`invalid_tokens`); anything else is a fault
+				// of this package and fails the job.
+				if (error instanceof TokenizerFailure)
+					throw new PortFailure("tokenizer");
+				throw error;
+			}
+		}
 		const complete = async (
 			request: InferenceRequest,
 		): Promise<InferenceResult> => {

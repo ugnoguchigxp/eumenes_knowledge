@@ -12,7 +12,8 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 | P1 配布骨格・examples ホスト | 実装済み・固定検証済み | [p1.md](p1.md) |
 | P2 分割・抽出・ベクトル・根拠・失効 | 実装済み・固定検証済み | [p2.md](p2.md) |
 | P3 検索・関連探索・根拠取得 | 実装済み・固定検証済み | [p3.md](p3.md) |
-| KG グラフの読み取り・実モデルでの試行 | 実装済み。実モデルで 1 回実行した（examples の中だけ） | [kg.md](kg.md) |
+| KG グラフの読み取り・実モデルでの試行 | 実装済み。実モデルで 1 回実行し、同一視だけを方式を変えて比べた（examples の中だけ）。LLM で作る部分は費用に見合わず、KG2 へ切り替える | [kg.md](kg.md) |
+| KG2 LLM に頼らない知識グラフ | 計画を確定（2026-11-09）。G1・G2・G6（scripts）と G3（src: モデルを使わない抽出器。取り込みの設定 `extractor: "names"` で選ぶ。既定はまだ LLM）まで。次は G4（決定的な同一視）。言及・同一視・辺を、取り込みに LLM を使わずに作る | [kg2.md](kg2.md) |
 | P4 CLI・MCP | 未着手（入口のスタブだけ） | — |
 | P5 tgz 受入 | 配布の検査は通る。clean な commit からの受入は未実施 | — |
 | P6 Eumenes 統合 | 未着手。examples で十分に検証してから着手する | — |
@@ -49,11 +50,11 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 | `src/contracts/` | 文書・認可・ホストの port・ジョブ・API・抽出結果の契約（Zod） |
 | `src/core/` | 分割（`text/`）、抽出の要求と検証（`extract/`）、検索と根拠取得（`search/`）、同一視・要約・関連文書（`link/`）、ジョブ（`jobs/`） |
 | `src/sqlite/` | migration と transaction 内の操作、読み取り |
-| `src/contexts/` | 版付きの指示資源（`extract` v1・v2、`link` v1・v2、`summarize` v1。ジョブは最も高い版を使う） |
+| `src/contexts/` | 版付きの指示資源（`extract` v1・v2、`link` v1〜v3、`summarize` v1。ジョブは最も高い版を使う） |
 | `src/client/` | Eumenes の公開 API の client と接続設定 |
 | `src/cli/`、`src/mcp/` | P4 で実装する入口のスタブ |
 | `examples/` | Eumenes の実行環境のエミュレーター（[examples/README.md](examples/README.md)）。`examples/larm/` は Eumenes と同じ手順の LARM 接続、`examples/corpus/ai-memory/` は実モデルの試行に使う合成の調査資料と正解表 |
-| `scripts/` | build・manifest・pack・検証・比較評価（`eval:search`）、実モデルでの試行（`kg-live.ts`）とグラフを見るページの生成（`kg-view.ts`）のスクリプト |
+| `scripts/` | build・manifest・pack・検証・比較評価（`eval:search`）、実モデルでの試行（`kg-live.ts`）、モデルに聞かない名前のキーでの同一視（`kg-keys.ts`）とその採点（`kg-score.ts`）、LLM に頼らない作り方の比較（`kg-alt.ts`）、グラフを見るページの生成（`kg-view.ts`）のスクリプト |
 | `verification/` | 比較評価の記録（fixture の結果。意味の品質を示さない）と、実モデルでの試行の記録（`kg-ai-memory/`） |
 | `p0/` | P0 の調査資料と方式確認用の spike（製品コードではない） |
 
@@ -75,11 +76,25 @@ bun run eval:search      # 合成資料での検索の比較（本パッケー�
 
 ```sh
 LARM_API_TOKEN=… KG_LARM_BASE_URL=… KG_LARM_PROFILE=… KG_LARM_AUDIENCE=… \
-  bun scripts/kg-live.ts [--docs <拡張子なしの名前>,…] [--max-minutes 240]   # verification/kg-ai-memory/<時刻>-<profile>/ に graph.json と report.json
+  bun scripts/kg-live.ts [--docs <拡張子なしの名前>,…] [--max-minutes 240]   # verification/kg-ai-memory/<時刻>-<profile>/ に graph.json・report.json・knowledge.db
+LARM_API_TOKEN=… KG_LARM_BASE_URL=… KG_LARM_PROFILE=… KG_LARM_AUDIENCE=… \
+  bun scripts/kg-live.ts --relink verification/kg-ai-memory/<前の実行>/knowledge.db   # 抽出はそのまま、同一視だけをやり直す
+LARM_API_TOKEN=… KG_LARM_BASE_URL=… KG_LARM_PROFILE=… KG_LARM_AUDIENCE=… \
+  bun scripts/kg-live.ts --corpus notes-mixed --extract none   # LLM の抽出なしで分割と埋め込みだけ（kg2.md G6。出力は verification/kg-<素材>/）
+  bun scripts/kg-live.ts --corpus notes-mixed --extract names [--tokenizer charclass|sudachi-napi|kuromoji|lindera] [--js-modules <dir>]   # package のモデルを使わない抽出器で取り込む（kg2.md G3。同一視はしない。kg-keys.ts でキーごとに結ぶ）
+bun scripts/kg-keys.ts --from verification/kg-ai-memory/<前の実行>/knowledge.db [--corpus <素材>] [--key nfkc|sudachi] [--rules] [--compare <比べる実行>/knowledge.db] [--judgments <判定>.json]   # LARM なし。名前の正規化キーで同一視する（kg.md §8）
+LARM_API_TOKEN=… KG_LARM_BASE_URL=… KG_LARM_PROFILE=… KG_LARM_AUDIENCE=… \
+  bun scripts/kg-keys.ts --from … --rules --vote run   # 名前を含む組だけをローカル LLM に問い、票を足す（kg.md §8.7。--vote dry は問いを数えるだけ）
+bun scripts/kg-keys.ts --from … --rules --import-same <別の実行>/knowledge.db [--llm-merge attach|free]   # 別の実行の same だけを取り込む（kg.md §8.8。既定の attach は言及 1 件を付けるだけ）
+bun scripts/kg-score.ts --judgments <判定>.json <実行>…   # 同じ抽出の実行を、DB から同じ判定で採点し直す（kg.md §8.8。書き込みなし）
+bun scripts/kg-alt.ts --from <実行>/knowledge.db [--corpus <名前>] [--labels <判定>.json] [--nodes <実行>]… [--nlp | --engine sudachi|charclass|kuromoji|lindera|sudachi-napi …] [--js-modules <dir>] [--name-embeddings] [--name-edges <n>] [--out <dir>]   # LLM に頼らない作り方の比較（kg.md §9。--name-embeddings と --name-edges は LARM を使う）
 bun scripts/kg-view.ts verification/kg-ai-memory/<時刻>-<profile>   # 同じ場所に graph.html
 ```
 
-4 文書の取り込みには約 4 時間かかりました（大半は同一視）。
+- `knowledge.db` は、実行の DB の写しです。commit しません。
+- 4 文書の取り込みには約 4 時間かかりました（大半は同一視。[kg.md](kg.md) §7 で減らしました）。
+- `kg-keys.ts --key sudachi` は、[uv](https://docs.astral.sh/uv/) で `sudachipy` と `sudachidict_core`（版は固定）を一時の環境に入れて使います。`--key nfkc` は追加の道具なしで動きます。
+- kuromoji・lindera・`@nikkei/napi-sudachi` は package の依存ではありません。リポジトリの外のフォルダに入れ、`--js-modules` で渡します。sudachi-napi は `NAPI_SUDACHI_ROOT` と `SUDACHI_DICT_PATH` を実行の外から渡します（辞書は 20241021 で動き、20261015 は読めません。[kg2.md](kg2.md) §7.4）。
 
 ## 技術スタック
 
@@ -102,7 +117,7 @@ bun scripts/kg-view.ts verification/kg-ai-memory/<時刻>-<profile>   # 同じ�
 | [p1.md](p1.md) | P1 の設計、Eumenes の queue との整合、実施結果 |
 | [p2.md](p2.md) | P2 の設計（取り込みの連鎖、抽出、保存と失効）、実施結果 |
 | [p3.md](p3.md) | P3 の設計（検索、根拠取得、比較評価、同一視・要約・関連文書）、実施結果 |
-| [kg.md](kg.md) | KG の設計（グラフの読み取り、文書の中の同一視、指示 v2、LARM 接続）、実モデルでの結果と問題 |
+| [kg.md](kg.md) | KG の設計（グラフの読み取り、文書の中の同一視、指示 v2、LARM 接続）、実モデルでの結果と問題、同一視の改善（候補・ノードごとの比較・指示 v3・やり直しの実行） |
 | [p0/lightrag.md](p0/lightrag.md) | LightRAG の参照 commit の固定と移植範囲 |
 | [p0/mcp-cli.md](p0/mcp-cli.md) | MCP SDK の選定と CLI/MCP の接続方式 |
 | [p0/search-storage.md](p0/search-storage.md) | SQLite の全文・ベクトル検索、引用 byte 範囲、検証用 writer の測定 |

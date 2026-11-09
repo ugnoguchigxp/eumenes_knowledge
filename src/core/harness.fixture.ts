@@ -308,7 +308,10 @@ export type Env = {
 	events: Array<{ type: string; fields?: unknown }>;
 };
 
-export function makeEnv(options: IngestOptions = {}): Env {
+export function makeEnv(
+	options: IngestOptions = {},
+	extra: Pick<IngestDeps, "tokenizer"> = {},
+): Env {
 	const db = makeDb();
 	const source = new FakeSource();
 	const sink = new FakeJobSink();
@@ -325,6 +328,7 @@ export function makeEnv(options: IngestOptions = {}): Env {
 		inference,
 		embedding,
 		writer,
+		...extra,
 	};
 	return {
 		db,

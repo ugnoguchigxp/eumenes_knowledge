@@ -19,6 +19,7 @@ import type {
 	SearchOptions,
 	SnapshotReader,
 	StatusOptions,
+	TokenizerPort,
 	VectorIndex,
 } from "../../src/contracts/index.js";
 import { createExampleApp } from "./app.js";
@@ -58,6 +59,11 @@ export type ExampleHostOptions = {
 	inference: InferencePort;
 	/** 取り込みが使う埋め込み。必須。 */
 	embedding: EmbeddingPort;
+	/**
+	 * モデルを使わない抽出（ingest の `extractor: "names"`）が使う tokenizer。省略すると package の
+	 * 辞書なし tokenizer（charclass）。
+	 */
+	tokenizer?: TokenizerPort;
 	handlerFactories: readonly HandlerFactory[];
 	readStatusInSnapshot: ReadStatusInSnapshot;
 	readScanInSnapshot: ReadScanInSnapshot;
@@ -139,6 +145,8 @@ export function createExampleHost(options: ExampleHostOptions): ExampleHost {
 		inference: options.inference,
 		embedding: options.embedding,
 		writer,
+		// 指定したときだけ渡す（省略時は package 側の既定）。
+		...(options.tokenizer ? { tokenizer: options.tokenizer } : {}),
 	};
 	// Build the handlers before creating anything on disk: a factory that throws leaves nothing.
 	const handlers = options.handlerFactories.map((create) => create(deps));

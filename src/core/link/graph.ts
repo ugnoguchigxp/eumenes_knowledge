@@ -31,6 +31,7 @@ import {
 } from "../../sqlite/links.js";
 import { readSearchCoverageInSnapshot } from "../../sqlite/search.js";
 import { normalizeForSearch } from "../text/normalize.js";
+import { constrainedComponents } from "./components.js";
 
 type Reason = GraphResponse["partialReasons"][number];
 type Node = GraphResponse["nodes"][number];
@@ -137,13 +138,9 @@ function pickEvidence(points: readonly Point[]): EvidencePoint[] {
 }
 
 /**
- * Components of the read mentions joined by `same` links, under the `different` judgments as
- * cannot-link constraints. The links are applied in a fixed order: first those between mentions
- * with an equal normalized name, then the others, each group by (entity_a, entity_b). A link
- * that would join two components holding a pair judged `different` is not used (`rejected`).
- * `unsure` is neither a link nor a constraint. Smaller components are merged into larger ones
- * and only their members' `different` neighbours are looked at, so the work stays near
- * (links + constraints) log (mentions).
+ * Components of the read mentions joined by `same` links under the `different` judgments as
+ * cannot-link constraints (`constrainedComponents`, the rule shared with the identity chain).
+ * The links come in (entity_a, entity_b) order.
  */
 function components(
 	mentions: readonly GraphMention[],
@@ -155,61 +152,25 @@ function components(
 	const norm = mentions.map((m) =>
 		m.nameNorm !== "" ? m.nameNorm : normalizeForSearch(m.name),
 	);
-	const different = new Map<number, number[]>();
+	const different: [number, number][] = [];
 	const sameLinks: { a: number; b: number; link: GraphLink }[] = [];
 	for (const link of links) {
 		const a = index.get(link.a);
 		const b = index.get(link.b);
 		if (a === undefined || b === undefined) continue;
-		if (link.decision === "different") {
-			for (const [x, y] of [
-				[a, b],
-				[b, a],
-			] as const) {
-				const list = different.get(x);
-				if (list) list.push(y);
-				else different.set(x, [y]);
-			}
-		} else sameLinks.push({ a, b, link });
+		if (link.decision === "different") different.push([a, b]);
+		else sameLinks.push({ a, b, link });
 	}
-	// `links` come in (a, b) order, so a stable split keeps it inside each group.
-	const ordered = [
-		...sameLinks.filter((l) => norm[l.a] === norm[l.b]),
-		...sameLinks.filter((l) => norm[l.a] !== norm[l.b]),
-	];
-	const of = mentions.map((_, i) => i);
-	const members = mentions.map((_, i) => [i]);
-	const used: GraphLink[] = [];
-	let rejected = 0;
-	for (const { a, b, link } of ordered) {
-		const ca = of[a] as number;
-		const cb = of[b] as number;
-		if (ca === cb) {
-			used.push(link);
-			continue;
-		}
-		let small = members[ca] as number[];
-		let large = members[cb] as number[];
-		let smallId = ca;
-		let largeId = cb;
-		if (small.length > large.length) {
-			[small, large] = [large, small];
-			[smallId, largeId] = [largeId, smallId];
-		}
-		const conflict = small.some((m) =>
-			(different.get(m) ?? []).some((d) => of[d] === largeId),
-		);
-		if (conflict) {
-			rejected++;
-			continue;
-		}
-		for (const m of small) {
-			of[m] = largeId;
-			large.push(m);
-		}
-		members[smallId] = [];
-		used.push(link);
-	}
+	const joined = constrainedComponents(
+		norm,
+		sameLinks.map((l) => [l.a, l.b] as const),
+		different,
+	);
+	const of = joined.of;
+	const used = joined.used.map(
+		(i) => (sameLinks[i] as { link: GraphLink }).link,
+	);
+	const rejected = joined.rejected;
 	const byComp = new Map<number, Component>();
 	const ofEntity = new Map<number, Component>();
 	mentions.forEach((m, i) => {

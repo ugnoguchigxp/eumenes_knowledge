@@ -148,6 +148,39 @@ export function embeddingSpaceKey(space: EmbeddingSpace): string {
 }
 
 // ---------------------------------------------------------------------------
+// Tokenizer (kg2.md §3.2): the model-free extractor's words
+// ---------------------------------------------------------------------------
+
+/**
+ * One token of a text, as the model-free extractor reads it. The host's adapter maps its
+ * tokenizer's part of speech to `kind` and `proper`; the package keeps no tokenizer's tag set.
+ */
+export type NameToken = {
+	/** Exactly `text.slice(start, end)` of the text that was tokenized. */
+	surface: string;
+	/** UTF-16 offsets into the text that was tokenized. */
+	start: number;
+	end: number;
+	/** A noun (part of a name), a prefix or a noun-like suffix, white space, or anything else. */
+	kind: "noun" | "prefix" | "suffix" | "space" | "other";
+	/** The tokenizer tags it a proper noun. */
+	proper: boolean;
+	/** The tokenizer's normalized form (the surface when it has none); name keys use it. */
+	norm: string;
+};
+
+/**
+ * Splits a text into tokens for the model-free extractor (kg2.md G3). Synchronous and local: no
+ * network, no model. The package's own is `createCharclassTokenizer` (no dictionary); a host may
+ * pass one backed by a morphological analyzer. A throw is a port failure (the ingest is retried).
+ */
+export interface TokenizerPort {
+	/** The tokenizer and its dictionary, recorded with every extraction (`charclass`, ...). */
+	readonly id: string;
+	tokenize(text: string): NameToken[];
+}
+
+// ---------------------------------------------------------------------------
 // Clock and events
 // ---------------------------------------------------------------------------
 

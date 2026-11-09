@@ -1,0 +1,886 @@
+{
+	"kind": "kg-keys",
+	"note": "Identity by equal normalized name keys on an earlier run's extraction; no model is asked. A single run: not a benchmark.",
+	"startedAt": "2026-11-09T03:56:36.300Z",
+	"elapsedMinutes": 0,
+	"finished": true,
+	"extractedIn": "verification/kg-notes-mixed/20261109-names-sudachi-napi/knowledge.db",
+	"relinkedFrom": null,
+	"key": "sudachi",
+	"sudachi": {
+		"sudachipy": "0.7.0",
+		"dictionary": "20261015"
+	},
+	"rules": 1,
+	"judged": null,
+	"keyLinks": {
+		"keys": 255,
+		"joinedKeys": 72,
+		"links": 122
+	},
+	"imported": null,
+	"vote": null,
+	"instructions": {
+		"extract": null,
+		"link": null,
+		"summarize": null
+	},
+	"larm": {
+		"profile": "lfm2.5",
+		"catalogRevision": "73bfa004e4f37de8a989a756b5464a99b3d8143f13d907fb6e9364a2de74debf",
+		"llm": {
+			"name": "llm",
+			"model": "ornith1.5-strix",
+			"contextWindow": {
+				"maxTokens": 200000,
+				"outputReserveTokens": 4096,
+				"outputLimit": "remaining-context"
+			}
+		},
+		"embedding": {
+			"name": "embedding",
+			"model": "multilingual-e5-small",
+			"space": {
+				"modelId": "intfloat/multilingual-e5-small",
+				"revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+				"artifactDigest": "63bc913284590439c0fdadcd5f61ee9ad9630591075314bc975fb190983ed62c",
+				"dimension": 384,
+				"queryPrefix": "query: ",
+				"passagePrefix": "passage: "
+			}
+		},
+		"reasoning": "off"
+	},
+	"documents": [
+		{
+			"documentId": "wiki-d29ea7b915e7b326cbaae62a78c17166",
+			"path": "notes-mixed/2026-10-02-定例.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-e0ab197fd4b4d6a2e64dc1c857ffd822",
+			"path": "notes-mixed/english-notes.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-ebde228c64ca866b68ad1cd33ad1cbff",
+			"path": "notes-mixed/lantern-設計メモ.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-cc79f4ce21b22769049c02ce341f1a29",
+			"path": "notes-mixed/移行手順_v0.3.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-c710ba0dc7e7b33d68aa730333724392",
+			"path": "notes-mixed/障害報告-0917.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-87fbc670d298c6a414da001271f9e49b",
+			"path": "notes-mixed/雑メモ.md",
+			"state": "current"
+		}
+	],
+	"corpus": [
+		{
+			"path": "notes-mixed/2026-10-02-定例.md",
+			"bytes": 1569
+		},
+		{
+			"path": "notes-mixed/english-notes.md",
+			"bytes": 849
+		},
+		{
+			"path": "notes-mixed/lantern-設計メモ.md",
+			"bytes": 1215
+		},
+		{
+			"path": "notes-mixed/移行手順_v0.3.md",
+			"bytes": 1310
+		},
+		{
+			"path": "notes-mixed/障害報告-0917.md",
+			"bytes": 941
+		},
+		{
+			"path": "notes-mixed/雑メモ.md",
+			"bytes": 979
+		}
+	],
+	"inference": {},
+	"store": {
+		"fragments": 18,
+		"extractionsFailed": 0,
+		"entityMentions": 377,
+		"relationMentions": 668,
+		"linksSame": 122,
+		"linksDifferent": 0,
+		"linksUnsure": 0
+	},
+	"linking": {
+		"decisionsByNames": {
+			"equal": {
+				"same": 105
+			},
+			"other": {
+				"same": 15
+			},
+			"contains": {
+				"same": 2
+			}
+		},
+		"largestSameComponent": 13
+	},
+	"status": {
+		"complete": true,
+		"partialReasons": []
+	},
+	"graph": {
+		"request": {
+			"maxNodes": 1000,
+			"maxEdges": 2000
+		},
+		"complete": true,
+		"partialReasons": [],
+		"nodes": 255,
+		"edges": 621,
+		"singletonNodes": 183,
+		"multiDocumentNodes": 64,
+		"nodesWithSummary": 0,
+		"multiMentionEdges": 47,
+		"crossDocumentEdges": 37,
+		"maxNamesPerNode": 3,
+		"nodesWithFiveNamesOrMore": 0,
+		"topNodes": [
+			{
+				"label": "Lantern",
+				"mentions": 13,
+				"documents": 6,
+				"types": [
+					"固有名",
+					"名詞"
+				]
+			},
+			{
+				"label": "夜間バッチ",
+				"mentions": 5,
+				"documents": 4,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "検索",
+				"mentions": 5,
+				"documents": 4,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "森田",
+				"mentions": 5,
+				"documents": 3,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "VM",
+				"mentions": 4,
+				"documents": 4,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "hikidashi-sync",
+				"mentions": 4,
+				"documents": 4,
+				"types": [
+					"固有名",
+					"名詞"
+				]
+			},
+			{
+				"label": "全文検索",
+				"mentions": 4,
+				"documents": 4,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "Okafor",
+				"mentions": 4,
+				"documents": 3,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "インデックス",
+				"mentions": 4,
+				"documents": 3,
+				"types": [
+					"名詞",
+					"固有名"
+				]
+			},
+			{
+				"label": "佐々木",
+				"mentions": 4,
+				"documents": 3,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "Hikidashi",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "LANTERN_TOKEN",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "PDF",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"固有名",
+					"名詞"
+				]
+			},
+			{
+				"label": "wiki",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"名詞",
+					"固有名"
+				]
+			},
+			{
+				"label": "件数",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "取り込み",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "品質保証部",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "情報システム課",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "書き込み",
+				"mentions": 3,
+				"documents": 3,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "sync",
+				"mentions": 3,
+				"documents": 2,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "大野",
+				"mentions": 3,
+				"documents": 2,
+				"types": [
+					"固有名"
+				]
+			},
+			{
+				"label": "手順",
+				"mentions": 3,
+				"documents": 2,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "検索サーバー",
+				"mentions": 3,
+				"documents": 2,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "構築",
+				"mentions": 3,
+				"documents": 2,
+				"types": [
+					"名詞"
+				]
+			},
+			{
+				"label": "確認",
+				"mentions": 3,
+				"documents": 2,
+				"types": [
+					"名詞"
+				]
+			}
+		]
+	},
+	"evidence": {
+		"valid": 1076,
+		"stale": 0,
+		"unavailable": 0,
+		"mismatch": 0,
+		"not_available": 0
+	},
+	"evaluation": {
+		"summary": {
+			"entitiesInCorpus": 30,
+			"entityRecall": 0.9666666666666667,
+			"crossDocumentEntities": 25,
+			"mergedIntoOneNode": 14,
+			"meanBestNodeCoverage": 0.8453333333333333,
+			"meanNodesPerFoundEntity": 1.5172413793103448,
+			"relationRecall": 1,
+			"relationEndpointsFound": 6,
+			"distinctViolations": 0,
+			"impureNodes": 0
+		},
+		"entities": [
+			{
+				"id": "lantern",
+				"expectedDocuments": 6,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"Lantern",
+					"Lantern Search"
+				]
+			},
+			{
+				"id": "hikidashi",
+				"expectedDocuments": 5,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.6,
+				"unionCoverage": 0.6,
+				"labels": [
+					"Hikidashi",
+					"ひきだし"
+				]
+			},
+			{
+				"id": "mitsumori",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.6666666666666666,
+				"unionCoverage": 1,
+				"labels": [
+					"三ツ森製作所",
+					"Mitsumori Seisakusho"
+				]
+			},
+			{
+				"id": "sasaki",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.75,
+				"unionCoverage": 0.75,
+				"labels": [
+					"佐々木",
+					"佐々木遥"
+				]
+			},
+			{
+				"id": "ono",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 0.75,
+				"labels": [
+					"大野",
+					"大野健太"
+				]
+			},
+			{
+				"id": "morita",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"森田",
+					"森田さくら"
+				]
+			},
+			{
+				"id": "okafor",
+				"expectedDocuments": 5,
+				"found": true,
+				"nodes": 4,
+				"bestNodeCoverage": 0.6,
+				"unionCoverage": 1,
+				"labels": [
+					"Okafor",
+					"Mira",
+					"Mira Okafor",
+					"オカフォー"
+				]
+			},
+			{
+				"id": "takahashi",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"高橋"
+				]
+			},
+			{
+				"id": "hamamatsu",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"浜松工場"
+				]
+			},
+			{
+				"id": "qa",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.75,
+				"unionCoverage": 0.75,
+				"labels": [
+					"品質保証部",
+					"Quality Assurance"
+				]
+			},
+			{
+				"id": "is",
+				"expectedDocuments": 6,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 0.8333333333333334,
+				"labels": [
+					"情報システム課",
+					"情シス"
+				]
+			},
+			{
+				"id": "fulltext",
+				"expectedDocuments": 5,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.8,
+				"unionCoverage": 0.8,
+				"labels": [
+					"全文検索",
+					"フルテキスト検索"
+				]
+			},
+			{
+				"id": "postgres",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.5,
+				"unionCoverage": 1,
+				"labels": [
+					"PostgreSQL",
+					"Postgres"
+				]
+			},
+			{
+				"id": "opensearch",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"OpenSearch"
+				]
+			},
+			{
+				"id": "mysql",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"ＭｙＳＱＬ"
+				]
+			},
+			{
+				"id": "pg-bigm",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"pg_bigm"
+				]
+			},
+			{
+				"id": "hikidashi-sync",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"hikidashi-sync"
+				]
+			},
+			{
+				"id": "nightly-batch",
+				"expectedDocuments": 5,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 0.8,
+				"unionCoverage": 0.8,
+				"labels": [
+					"夜間バッチ"
+				]
+			},
+			{
+				"id": "lantern-api",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"lantern-api"
+				]
+			},
+			{
+				"id": "lantern-worker",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"lantern-worker"
+				]
+			},
+			{
+				"id": "lantern-token",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"LANTERN_TOKEN"
+				]
+			},
+			{
+				"id": "e1023",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"E1023"
+				]
+			},
+			{
+				"id": "northwind",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 0.6666666666666666,
+				"unionCoverage": 1,
+				"labels": [
+					"Northwind",
+					"Northwind Cloud"
+				]
+			},
+			{
+				"id": "vm",
+				"expectedDocuments": 4,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"VM"
+				]
+			},
+			{
+				"id": "search-server",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"検索サーバー"
+				]
+			},
+			{
+				"id": "index",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 2,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"インデックス",
+					"索引"
+				]
+			},
+			{
+				"id": "meeting",
+				"expectedDocuments": 2,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"打ち合わせ"
+				]
+			},
+			{
+				"id": "write",
+				"expectedDocuments": 3,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"書き込み"
+				]
+			},
+			{
+				"id": "procedure",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "sso",
+				"expectedDocuments": 1,
+				"found": true,
+				"nodes": 1,
+				"bestNodeCoverage": 1,
+				"unionCoverage": 1,
+				"labels": [
+					"SSO"
+				]
+			}
+		],
+		"relations": [
+			{
+				"about": "Lantern がひきだしを置き換える",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "hikidashi-sync がひきだしのページを取り込む",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "全文検索は PostgreSQL で作る",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "E1023 はひきだし側の API のタイムアウト",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "LANTERN_TOKEN の置き場所は情報システム課が管理する案",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			},
+			{
+				"about": "Okafor は Northwind の支援",
+				"endpointsFound": true,
+				"hit": true,
+				"relations": [
+					"同じ文"
+				]
+			}
+		],
+		"distinct": [
+			{
+				"pair": [
+					"lantern",
+					"hikidashi"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"sasaki",
+					"morita"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"ono",
+					"okafor"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"postgres",
+					"opensearch"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"lantern",
+					"lantern-api"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"hikidashi",
+					"hikidashi-sync"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"search-server",
+					"postgres"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"postgres",
+					"mysql"
+				],
+				"merged": []
+			}
+		],
+		"impureNodes": []
+	},
+	"evaluationAllNames": {
+		"entitiesInCorpus": 30,
+		"entityRecall": 0.9666666666666667,
+		"crossDocumentEntities": 25,
+		"mergedIntoOneNode": 14,
+		"meanBestNodeCoverage": 0.8453333333333333,
+		"meanNodesPerFoundEntity": 1.5172413793103448,
+		"relationRecall": 1,
+		"relationEndpointsFound": 6,
+		"distinctViolations": 0,
+		"impureNodes": 0
+	},
+	"connections": {
+		"keys": {
+			"mentions": 377,
+			"nodes": 255,
+			"singletonNodes": 183,
+			"multiDocumentNodes": 64,
+			"largestNode": 13,
+			"relationMentionsInsideOneNode": 2,
+			"relationNodePairs": 620,
+			"relationNodePairsAcrossDocuments": 36,
+			"cooccurrenceNodePairs": 5236,
+			"cooccurrenceNodePairsAcrossDocuments": 169,
+			"fragmentsWithMentions": 18,
+			"fragmentsSharingANodeWithAnotherDocument": 18,
+			"sharedNodesByDocumentPair": {
+				"notes-mixed/2026-10-02-定例 / notes-mixed/english-notes": 11,
+				"notes-mixed/2026-10-02-定例 / notes-mixed/lantern-設計メモ": 7,
+				"notes-mixed/english-notes / notes-mixed/lantern-設計メモ": 4,
+				"notes-mixed/移行手順_v0.3 / notes-mixed/2026-10-02-定例": 21,
+				"notes-mixed/移行手順_v0.3 / notes-mixed/english-notes": 13,
+				"notes-mixed/移行手順_v0.3 / notes-mixed/lantern-設計メモ": 7,
+				"notes-mixed/障害報告-0917 / notes-mixed/2026-10-02-定例": 9,
+				"notes-mixed/障害報告-0917 / notes-mixed/english-notes": 3,
+				"notes-mixed/障害報告-0917 / notes-mixed/lantern-設計メモ": 11,
+				"notes-mixed/障害報告-0917 / notes-mixed/移行手順_v0.3": 5,
+				"notes-mixed/雑メモ / notes-mixed/2026-10-02-定例": 10,
+				"notes-mixed/雑メモ / notes-mixed/english-notes": 10,
+				"notes-mixed/雑メモ / notes-mixed/lantern-設計メモ": 9,
+				"notes-mixed/雑メモ / notes-mixed/移行手順_v0.3": 4,
+				"notes-mixed/雑メモ / notes-mixed/障害報告-0917": 5
+			}
+		},
+		"compared": []
+	},
+	"disagreements": []
+}

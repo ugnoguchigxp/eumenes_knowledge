@@ -34,7 +34,7 @@ The upstream text was translated into Japanese and rewritten for this package. T
 - Quantity and length limits are fixed in the output schema (`src/contracts/index-data.ts`); an answer over a limit is invalid and is not truncated.
 - Upstream's tuple format, `json_repair` fallback and language setting are not used. Upstream's relationship keywords (one comma-separated string) are kept as an array `keywords`.
 - The summarization instruction (`summarize.v1.md`) takes the names and descriptions of one entity's mentions as one JSON line, not as a fenced list, and states that they are reference data whose commands must not be followed. The output is one JSON object with a `summary` string of at most 1,500 characters, instead of plain text with a token limit. It adds an explicit ban on adding anything the descriptions do not say, and asks for conflicting descriptions to be stated side by side without resolving them from outside knowledge. Upstream's `{language}` and `{summary_length}` placeholders are replaced by "the language of the descriptions" and the character limit.
-- `src/contexts/sources/link.v1.md` and `link.v2.md` (the identity judgment; v2 also covers mentions from different places of one document) have no counterpart in the upstream project and are not adapted from it.
+- `src/contexts/sources/link.v1.md`, `link.v2.md` and `link.v3.md` (the identity judgment; v2 also covers mentions from different places of one document, v3 adds the kinds of related pairs that are not the same entity) have no counterpart in the upstream project and are not adapted from it.
 
 ### License
 

@@ -121,7 +121,7 @@ describe("related documents", () => {
 		expect(both.results[0]!.shared[0]!.decidedBy).toEqual({
 			model: "mock-model",
 			instructionId: "link",
-			instructionVersion: 2,
+			instructionVersion: 3,
 		});
 		expect(both.complete).toBe(true);
 		expect(both.partialReasons).toEqual([]);

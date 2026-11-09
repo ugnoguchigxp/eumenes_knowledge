@@ -1,0 +1,548 @@
+{
+	"kind": "kg-live",
+	"note": "Synthetic research notes ingested with a real model through LARM. A single run: not a benchmark.",
+	"startedAt": "2026-11-09T02:50:08.317Z",
+	"elapsedMinutes": 0,
+	"finished": true,
+	"relinkedFrom": null,
+	"instructions": {
+		"extract": 2,
+		"link": 3,
+		"summarize": 1
+	},
+	"linkOptions": {
+		"candidateMatch": "name"
+	},
+	"jobs": {
+		"knowledge.sync-page:completed": 1,
+		"knowledge.ingest-next:completed": 6,
+		"knowledge.link-next:completed": 6
+	},
+	"documents": [
+		{
+			"documentId": "wiki-d29ea7b915e7b326cbaae62a78c17166",
+			"path": "notes-mixed/2026-10-02-定例.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-e0ab197fd4b4d6a2e64dc1c857ffd822",
+			"path": "notes-mixed/english-notes.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-ebde228c64ca866b68ad1cd33ad1cbff",
+			"path": "notes-mixed/lantern-設計メモ.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-cc79f4ce21b22769049c02ce341f1a29",
+			"path": "notes-mixed/移行手順_v0.3.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-c710ba0dc7e7b33d68aa730333724392",
+			"path": "notes-mixed/障害報告-0917.md",
+			"state": "current"
+		},
+		{
+			"documentId": "wiki-87fbc670d298c6a414da001271f9e49b",
+			"path": "notes-mixed/雑メモ.md",
+			"state": "current"
+		}
+	],
+	"larm": {
+		"profile": "lfm2.5",
+		"catalogRevision": "73bfa004e4f37de8a989a756b5464a99b3d8143f13d907fb6e9364a2de74debf",
+		"llm": {
+			"name": "llm",
+			"model": "ornith1.5-strix",
+			"contextWindow": {
+				"maxTokens": 200000,
+				"outputReserveTokens": 4096,
+				"outputLimit": "remaining-context"
+			}
+		},
+		"embedding": {
+			"name": "embedding",
+			"model": "multilingual-e5-small",
+			"space": {
+				"modelId": "intfloat/multilingual-e5-small",
+				"revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+				"artifactDigest": "63bc913284590439c0fdadcd5f61ee9ad9630591075314bc975fb190983ed62c",
+				"dimension": 384,
+				"queryPrefix": "query: ",
+				"passagePrefix": "passage: "
+			}
+		},
+		"reasoning": "off"
+	},
+	"corpus": [
+		{
+			"path": "notes-mixed/2026-10-02-定例.md",
+			"bytes": 1569
+		},
+		{
+			"path": "notes-mixed/english-notes.md",
+			"bytes": 849
+		},
+		{
+			"path": "notes-mixed/lantern-設計メモ.md",
+			"bytes": 1215
+		},
+		{
+			"path": "notes-mixed/移行手順_v0.3.md",
+			"bytes": 1310
+		},
+		{
+			"path": "notes-mixed/障害報告-0917.md",
+			"bytes": 941
+		},
+		{
+			"path": "notes-mixed/雑メモ.md",
+			"bytes": 979
+		}
+	],
+	"inference": {
+		"extract": {
+			"calls": 18,
+			"ok": 18,
+			"errors": {},
+			"ms": 0,
+			"inputTokens": 0,
+			"outputTokens": 0
+		}
+	},
+	"larmStats": {
+		"calls": 6,
+		"ok": 6,
+		"failures": {},
+		"inputTokens": 0,
+		"outputTokens": 0,
+		"reasoningTokens": 0,
+		"totalMs": 403
+	},
+	"store": {
+		"fragments": 18,
+		"extractionsOk": 18,
+		"extractionsFailed": 0,
+		"droppedItems": 0,
+		"entityMentions": 0,
+		"relationMentions": 0,
+		"linksSame": 0,
+		"linksDifferent": 0,
+		"linksUnsure": 0,
+		"summariesOk": 0
+	},
+	"linking": {
+		"decisionsByNames": {},
+		"largestSameComponent": 0
+	},
+	"status": {
+		"complete": true,
+		"partialReasons": []
+	},
+	"graph": {
+		"complete": true,
+		"partialReasons": [],
+		"nodes": 0,
+		"edges": 0,
+		"singletonNodes": 0,
+		"multiDocumentNodes": 0,
+		"nodesWithSummary": 0,
+		"multiMentionEdges": 0,
+		"crossDocumentEdges": 0,
+		"maxNamesPerNode": 0,
+		"nodesWithFiveNamesOrMore": 0,
+		"topNodes": []
+	},
+	"evidence": {
+		"valid": 0,
+		"stale": 0,
+		"unavailable": 0,
+		"mismatch": 0,
+		"not_available": 0
+	},
+	"evaluation": {
+		"summary": {
+			"entitiesInCorpus": 30,
+			"entityRecall": 0,
+			"crossDocumentEntities": 25,
+			"mergedIntoOneNode": 0,
+			"meanBestNodeCoverage": 0,
+			"meanNodesPerFoundEntity": null,
+			"relationRecall": 0,
+			"relationEndpointsFound": 0,
+			"distinctViolations": 0,
+			"impureNodes": 0
+		},
+		"entities": [
+			{
+				"id": "lantern",
+				"expectedDocuments": 6,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "hikidashi",
+				"expectedDocuments": 5,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "mitsumori",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "sasaki",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "ono",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "morita",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "okafor",
+				"expectedDocuments": 5,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "takahashi",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "hamamatsu",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "qa",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "is",
+				"expectedDocuments": 6,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "fulltext",
+				"expectedDocuments": 5,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "postgres",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "opensearch",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "mysql",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "pg-bigm",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "hikidashi-sync",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "nightly-batch",
+				"expectedDocuments": 5,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "lantern-api",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "lantern-worker",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "lantern-token",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "e1023",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "northwind",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "vm",
+				"expectedDocuments": 4,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "search-server",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "index",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "meeting",
+				"expectedDocuments": 2,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "write",
+				"expectedDocuments": 3,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "procedure",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			},
+			{
+				"id": "sso",
+				"expectedDocuments": 1,
+				"found": false,
+				"nodes": 0,
+				"bestNodeCoverage": 0,
+				"unionCoverage": 0,
+				"labels": []
+			}
+		],
+		"relations": [
+			{
+				"about": "Lantern がひきだしを置き換える",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "hikidashi-sync がひきだしのページを取り込む",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "全文検索は PostgreSQL で作る",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "E1023 はひきだし側の API のタイムアウト",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "LANTERN_TOKEN の置き場所は情報システム課が管理する案",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			},
+			{
+				"about": "Okafor は Northwind の支援",
+				"endpointsFound": false,
+				"hit": false,
+				"relations": []
+			}
+		],
+		"distinct": [
+			{
+				"pair": [
+					"lantern",
+					"hikidashi"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"sasaki",
+					"morita"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"ono",
+					"okafor"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"postgres",
+					"opensearch"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"lantern",
+					"lantern-api"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"hikidashi",
+					"hikidashi-sync"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"search-server",
+					"postgres"
+				],
+				"merged": []
+			},
+			{
+				"pair": [
+					"postgres",
+					"mysql"
+				],
+				"merged": []
+			}
+		],
+		"impureNodes": []
+	}
+}
