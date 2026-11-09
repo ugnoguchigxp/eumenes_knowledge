@@ -95,7 +95,11 @@ describe("graph()", () => {
 			expect(result).toEqual(answer as never);
 			expect(calls[0]?.url).toBe(`${BASE}${apiPaths.graph}`);
 			expect(calls[0]?.init.method).toBe("POST");
-			expect(JSON.parse(calls[0]?.init.body as string)).toEqual(request);
+			expect(JSON.parse(calls[0]?.init.body as string)).toEqual({
+				...request,
+				minDocuments: 1,
+				minEdgeDocuments: 1,
+			});
 		}
 		// An empty request is valid: the host applies the defaults.
 		const { calls, fetch } = recorder(json(empty));

@@ -1,0 +1,147 @@
+{
+	"kind": "kg-alt",
+	"note": "Ways to connect fragments across documents, on an earlier run's fragments. Related pairs come from expected.json aliases in the text. A single run: not a benchmark.",
+	"startedAt": "2026-11-09T05:38:23.691Z",
+	"from": "verification/kg-notes-mixed/20261109-g4-names-sudachi-napi/knowledge.db",
+	"corpus": "notes-mixed",
+	"jsEngines": null,
+	"labels": null,
+	"specificShare": 0.2,
+	"sudachi": null,
+	"nlpVersion": null,
+	"rules": null,
+	"connections": [
+		{
+			"gold": "all",
+			"entities": 30,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.844,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.811,
+					"hit3": 0.944,
+					"mrr": 0.921
+				},
+				{
+					"method": "nodes:20261109-g4-names-sudachi-napi",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.9,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "embedding+nodes:20261109-g4-names-sudachi-napi",
+					"seconds": 0,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.9,
+					"hit3": 1,
+					"mrr": 1
+				},
+				{
+					"method": "related:20261109-g4-names-sudachi-napi",
+					"seconds": 0.02,
+					"evaluable": 18,
+					"ranked": 18,
+					"baseRate": 0.739,
+					"p5Ceiling": 1,
+					"p5": 0.9,
+					"hit3": 1,
+					"mrr": 1
+				}
+			]
+		},
+		{
+			"gold": "specific",
+			"entities": 16,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.338,
+					"hit3": 0.846,
+					"mrr": 0.699
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.338,
+					"hit3": 0.923,
+					"mrr": 0.728
+				},
+				{
+					"method": "nodes:20261109-g4-names-sudachi-napi",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.508,
+					"hit3": 1,
+					"mrr": 0.91
+				},
+				{
+					"method": "embedding+nodes:20261109-g4-names-sudachi-napi",
+					"seconds": 0,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.462,
+					"hit3": 0.846,
+					"mrr": 0.795
+				},
+				{
+					"method": "related:20261109-g4-names-sudachi-napi",
+					"seconds": 0.02,
+					"evaluable": 13,
+					"ranked": 13,
+					"baseRate": 0.197,
+					"p5Ceiling": 0.554,
+					"p5": 0.462,
+					"hit3": 0.846,
+					"mrr": 0.795
+				}
+			]
+		}
+	],
+	"mentions": {},
+	"relationEdges": {
+		"nodes:20261109-g4-names-sudachi-napi": {
+			"nodePairs": 628,
+			"nodePairsAcrossDocuments": 37,
+			"relationRecall": 1
+		}
+	},
+	"nameAliases": null,
+	"namedEdges": null
+}

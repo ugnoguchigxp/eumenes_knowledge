@@ -231,9 +231,13 @@ export type CreateLinkNextHandler = (
 	options?: LinkOptions,
 ) => KnowledgeJobHandler<LinkNextPayload, unknown, unknown>;
 
-/** Documents that share entities with one document, as far as `access` may read (never writes). */
+/**
+ * Documents related to one document, as far as `access` may read (never writes): by shared
+ * entities and, when `deps.vectors` is given (the search's index), by the nearness of fragments.
+ */
 export type ReadRelated = (
-	deps: Pick<SearchDeps, "read" | "clock" | "options">,
+	deps: Pick<SearchDeps, "read" | "clock" | "options"> &
+		Partial<Pick<SearchDeps, "vectors">>,
 	access: AccessContext,
 	request: RelatedRequest,
 ) => RelatedResponse;

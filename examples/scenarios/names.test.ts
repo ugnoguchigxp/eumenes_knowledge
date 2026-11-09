@@ -96,7 +96,9 @@ test("名前の抽出器: キーを共有する文書が関連文書になり、
 	const [a, b, c] = ["names/a.md", "names/b.md", "names/c.md"].map((p) =>
 		idOf(scenario, p),
 	) as [string, string, string];
-	const related = await scenario.client(ALICE).related({ documentId: a });
+	const related = await scenario
+		.client(ALICE)
+		.related({ documentId: a, routes: ["entities"] });
 	expect(related).toMatchObject({ status: "ok", complete: true });
 	expect(related.results.map((r) => r.documentId)).toEqual([b]);
 	const labels = related.results[0]?.shared.map((s) => s.label).sort();
@@ -104,6 +106,47 @@ test("名前の抽出器: キーを共有する文書が関連文書になり、
 	for (const s of related.results[0]?.shared ?? [])
 		expect(s.decidedBy).toEqual(KEY);
 	// Bob reads `work` alone: its Lantern shares a key with nothing he may read.
+	const bob = await scenario
+		.client(BOB)
+		.related({ documentId: c, routes: ["entities"] });
+	expect(bob.results).toEqual([]);
+});
+
+test("関連文書の 2 つの経路: 名前と埋め込みで見つけた文書が先、埋め込みだけの文書は共有する実体なし、断片の組は根拠として確かめられる", async () => {
+	const scenario = await open();
+	await scenario.sync();
+	const [a, b, c] = ["names/a.md", "names/b.md", "names/c.md"].map((p) =>
+		idOf(scenario, p),
+	) as [string, string, string];
+	const related = await scenario.client(ALICE).related({ documentId: a });
+	expect(related).toMatchObject({ status: "ok", complete: true });
+	expect(related.results.map((r) => [r.documentId, r.routes])).toEqual([
+		[b, ["entities", "embedding"]],
+		[c, ["embedding"]],
+	]);
+	expect(related.results[1]?.shared).toEqual([]);
+	const bodies = new Map<string, string>();
+	for (const r of related.results) {
+		expect(r.passages.length).toBeGreaterThan(0);
+		for (const pair of r.passages)
+			for (const [documentId, markdownSha256, point] of [
+				[a, related.document?.markdownSha256 as string, pair.document],
+				[r.documentId, r.markdownSha256, pair.related],
+			] as const) {
+				const answer = await scenario.client(ALICE).evidence({
+					documentId,
+					markdownSha256,
+					byteStart: point.byteStart,
+					byteEnd: point.byteEnd,
+					quoteSha256: point.quoteSha256,
+				});
+				expect(answer.status).toBe("valid");
+				if (answer.status === "valid") bodies.set(documentId, answer.quote);
+			}
+	}
+	// The whole fragment is the quotation.
+	expect(bodies.get(c)).toContain("Lantern という同じ名前の別の道具。");
+	// Bob reads `work` alone: nothing else is near c for him.
 	const bob = await scenario.client(BOB).related({ documentId: c });
 	expect(bob.results).toEqual([]);
 });

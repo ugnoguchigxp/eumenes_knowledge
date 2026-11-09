@@ -1,0 +1,147 @@
+{
+	"kind": "kg-alt",
+	"note": "Ways to connect fragments across documents, on an earlier run's fragments. Related pairs come from expected.json aliases in the text. A single run: not a benchmark.",
+	"startedAt": "2026-11-09T05:38:23.907Z",
+	"from": "verification/kg-ai-memory/20261109-g4-names-charclass/knowledge.db",
+	"corpus": "ai-memory",
+	"jsEngines": null,
+	"labels": null,
+	"specificShare": 0.2,
+	"sudachi": null,
+	"nlpVersion": null,
+	"rules": null,
+	"connections": [
+		{
+			"gold": "all",
+			"entities": 32,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.837,
+					"hit3": 0.983,
+					"mrr": 0.954
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0.02,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.76,
+					"hit3": 0.95,
+					"mrr": 0.881
+				},
+				{
+					"method": "nodes:20261109-g4-names-charclass",
+					"seconds": 0.01,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.843,
+					"hit3": 1,
+					"mrr": 0.947
+				},
+				{
+					"method": "embedding+nodes:20261109-g4-names-charclass",
+					"seconds": 0,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.887,
+					"hit3": 0.983,
+					"mrr": 0.963
+				},
+				{
+					"method": "related:20261109-g4-names-charclass",
+					"seconds": 0.1,
+					"evaluable": 60,
+					"ranked": 60,
+					"baseRate": 0.398,
+					"p5Ceiling": 0.973,
+					"p5": 0.887,
+					"hit3": 0.983,
+					"mrr": 0.963
+				}
+			]
+		},
+		{
+			"gold": "specific",
+			"entities": 27,
+			"methods": [
+				{
+					"method": "embedding",
+					"seconds": 0,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.377,
+					"hit3": 0.86,
+					"mrr": 0.697
+				},
+				{
+					"method": "tfidf",
+					"seconds": 0.02,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.335,
+					"hit3": 0.674,
+					"mrr": 0.501
+				},
+				{
+					"method": "nodes:20261109-g4-names-charclass",
+					"seconds": 0.01,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.395,
+					"hit3": 0.907,
+					"mrr": 0.696
+				},
+				{
+					"method": "embedding+nodes:20261109-g4-names-charclass",
+					"seconds": 0,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.414,
+					"hit3": 0.884,
+					"mrr": 0.667
+				},
+				{
+					"method": "related:20261109-g4-names-charclass",
+					"seconds": 0.1,
+					"evaluable": 43,
+					"ranked": 43,
+					"baseRate": 0.089,
+					"p5Ceiling": 0.744,
+					"p5": 0.414,
+					"hit3": 0.884,
+					"mrr": 0.667
+				}
+			]
+		}
+	],
+	"mentions": {},
+	"relationEdges": {
+		"nodes:20261109-g4-names-charclass": {
+			"nodePairs": 5845,
+			"nodePairsAcrossDocuments": 566,
+			"relationRecall": 0.7058823529411765
+		}
+	},
+	"nameAliases": null,
+	"namedEdges": null
+}

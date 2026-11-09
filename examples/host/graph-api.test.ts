@@ -130,7 +130,11 @@ describe("POST /graph", () => {
 		expect(res.status).toBe(200);
 		expect(await res.json()).toEqual(OK);
 		expect(w.calls.map((c) => c.access)).toEqual([ALICE]);
-		expect(w.calls[0]?.request).toEqual(REQUEST);
+		expect(w.calls[0]?.request).toEqual({
+			...REQUEST,
+			minDocuments: 1,
+			minEdgeDocuments: 1,
+		});
 		const deps = w.calls[0]?.deps as Pick<
 			SearchDeps,
 			"read" | "clock" | "options"
@@ -148,6 +152,8 @@ describe("POST /graph", () => {
 		expect(w.calls[0]?.request).toEqual({
 			maxNodes: GRAPH_LIMITS.defaultNodes,
 			maxEdges: GRAPH_LIMITS.defaultEdges,
+			minDocuments: 1,
+			minEdgeDocuments: 1,
 		});
 	});
 

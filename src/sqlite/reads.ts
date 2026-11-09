@@ -481,3 +481,92 @@ FROM knowledge_fragments WHERE version_id = ? AND byte_end > ? AND byte_start < 
 		.all(versionId, byteStart, byteEnd)
 		.map(toFragment);
 }
+
+// ---------------------------------------------------------------------------
+// Related fragments (kg2.md §3.5): the scope's size, a version's space, fragment points
+// ---------------------------------------------------------------------------
+
+/** The ordinals of a version's fragments, in order (no text read). */
+export function listFragmentOrdinalsInSnapshot(
+	db: Tx,
+	versionId: number,
+): number[] {
+	return db
+		.query<{ ordinal: number }>(
+			"SELECT ordinal FROM knowledge_fragments WHERE version_id = ? ORDER BY ordinal",
+		)
+		.all(versionId)
+		.map((r) => r.ordinal);
+}
+
+/** Fragments of the published versions of `current` documents in `namespaces`. */
+export function countScopeFragmentsInSnapshot(
+	db: Tx,
+	namespaces: readonly string[],
+): number {
+	if (!Array.isArray(namespaces)) throw new KnowledgeError("invalid_input");
+	if (namespaces.length === 0) return 0;
+	return (
+		db
+			.query<{ n: number }>(
+				`SELECT COUNT(*) AS n FROM knowledge_fragments f
+JOIN knowledge_documents d ON d.published_version_id = f.version_id AND d.state = 'current'
+WHERE d.namespace IN (SELECT value FROM json_each(?1))`,
+			)
+			.get(JSON.stringify(namespaces))?.n ?? 0
+	);
+}
+
+/** The embedding space of a version's vectors, or null when it has none. */
+export function readVersionSpaceInSnapshot(
+	db: Tx,
+	versionId: number,
+): { key: string; dimension: number } | null {
+	const r = db
+		.query<{ space_key: string; dimension: number }>(
+			`SELECT v.space_key, s.dimension FROM knowledge_versions v
+JOIN knowledge_embedding_spaces s ON s.space_key = v.space_key
+WHERE v.version_id = ?1`,
+		)
+		.get(versionId);
+	return r ? { key: r.space_key, dimension: r.dimension } : null;
+}
+
+export type FragmentPoint = {
+	versionId: number;
+	ordinal: number;
+	byteStart: number;
+	byteEnd: number;
+	/** sha256 of the fragment's UTF-8 bytes: the whole fragment is the quotation. */
+	quoteSha256: string;
+};
+
+/** The byte ranges and digests of fragments, by (version id, ordinal). */
+export function readFragmentPointsInSnapshot(
+	db: Tx,
+	refs: readonly { versionId: number; ordinal: number }[],
+): FragmentPoint[] {
+	if (!Array.isArray(refs)) throw new KnowledgeError("invalid_input");
+	if (refs.length === 0) return [];
+	return db
+		.query<{
+			version_id: number;
+			ordinal: number;
+			byte_start: number;
+			byte_end: number;
+			text_sha256: string;
+		}>(
+			`SELECT f.version_id, f.ordinal, f.byte_start, f.byte_end, f.text_sha256
+FROM json_each(?1) j
+JOIN knowledge_fragments f ON f.version_id = json_extract(j.value, '$[0]')
+ AND f.ordinal = json_extract(j.value, '$[1]')`,
+		)
+		.all(JSON.stringify(refs.map((r) => [r.versionId, r.ordinal])))
+		.map((r) => ({
+			versionId: r.version_id,
+			ordinal: r.ordinal,
+			byteStart: r.byte_start,
+			byteEnd: r.byte_end,
+			quoteSha256: r.text_sha256,
+		}));
+}

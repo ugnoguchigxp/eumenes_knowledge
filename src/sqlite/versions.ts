@@ -559,12 +559,19 @@ export function stageExtractionsInTransaction(
 				mentionSearchText([e.name]),
 				e.key ?? "",
 			);
+			// A model-free mention (it has a key) is indexed by its name alone: its type is one of two
+			// fixed words and its description is empty, so they would match every mention.
 			indexEntity.run(
 				r.lastInsertRowid,
-				mentionSearchText([e.name, e.type, e.description]),
+				mentionSearchText(
+					e.key !== undefined ? [e.name] : [e.name, e.type, e.description],
+				),
 			);
 			evidence("entity", Number(r.lastInsertRowid), e.evidence);
 		}
+		const keyed = new Set(
+			x.entities.filter((e) => e.key !== undefined).map((e) => e.id),
+		);
 		for (const rel of x.relations) {
 			const r = insertRelation.run(
 				versionId,
@@ -580,10 +587,13 @@ export function stageExtractionsInTransaction(
 				rel.qualifiers.condition,
 				rel.qualifiers.certainty,
 			);
-			indexRelation.run(
-				r.lastInsertRowid,
-				mentionSearchText([rel.relation, rel.description, ...rel.keywords]),
-			);
+			// A relation between two model-free mentions (same sentence, kg2.md §3.1) names nothing
+			// but the fixed word 同じ文: it is not indexed (the search's relation route skips it).
+			if (!(keyed.has(rel.source) && keyed.has(rel.target)))
+				indexRelation.run(
+					r.lastInsertRowid,
+					mentionSearchText([rel.relation, rel.description, ...rel.keywords]),
+				);
 			evidence("relation", Number(r.lastInsertRowid), rel.evidence);
 		}
 	}

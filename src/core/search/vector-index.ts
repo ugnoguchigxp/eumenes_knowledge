@@ -115,6 +115,8 @@ export type VectorSearchOutcome =
  * Bring the space up to date with the snapshot and return the `limit` fragments with the
  * largest inner product with `query`, among the versions the caller may read. Synchronous: it
  * runs inside the snapshot, so the list of published versions and the rows it loads agree.
+ * `excludeVersionId`'s fragments are counted in `scored` but never returned (a document's own
+ * fragments, for related documents).
  */
 export function searchVectorIndexInSnapshot(
 	index: VectorIndex,
@@ -123,6 +125,7 @@ export function searchVectorIndexInSnapshot(
 	query: Float32Array,
 	namespaces: readonly string[],
 	limit: number,
+	excludeVersionId: number | null = null,
 ): VectorSearchOutcome {
 	const state = stateOf(index);
 	if (query.length !== space.dimension) {
@@ -144,6 +147,7 @@ export function searchVectorIndexInSnapshot(
 		if (!chunk) continue;
 		const { ordinals, matrix } = chunk;
 		scored += ordinals.length;
+		if (versionId === excludeVersionId) continue;
 		for (let row = 0; row < ordinals.length; row++) {
 			const off = row * dim;
 			let s0 = 0;

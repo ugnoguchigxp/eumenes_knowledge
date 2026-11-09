@@ -1,6 +1,7 @@
 // P3 scenarios (p3.md §8): identity across documents is a model judgment kept as a link with its
 // provenance; related documents and summaries are read through the API within the caller's scope,
-// and follow the current versions. The scripts answer by call order and purpose only.
+// and follow the current versions. The scripts answer by call order and purpose only. They read
+// the `entities` route alone: the embedding route (kg2.md G5) is in names.test.ts.
 import { afterEach, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import type { ScriptedCallInfo } from "../mocks/inference.js";
@@ -94,7 +95,9 @@ test("同じ実体: LLM が same と判断した言及で文書がつながり�
 	const a = idOf(scenario, "rel/a.md");
 	const b = idOf(scenario, "rel/b.md");
 
-	const related = await scenario.client(ALICE).related({ documentId: a });
+	const related = await scenario
+		.client(ALICE)
+		.related({ documentId: a, routes: ["entities"] });
 	expect(related).toMatchObject({ status: "ok", complete: true });
 	expect(related.document).toEqual({ documentId: a, markdownSha256: sha(A) });
 	expect(related.results).toHaveLength(1);
@@ -128,7 +131,9 @@ test("同じ実体: LLM が same と判断した言及で文書がつながり�
 		).toMatchObject({ status: "valid", quote: NAME });
 	}
 	// The other direction gives the same pair.
-	const back = await scenario.client(ALICE).related({ documentId: b });
+	const back = await scenario
+		.client(ALICE)
+		.related({ documentId: b, routes: ["entities"] });
 	expect(back.results.map((r) => r.documentId)).toEqual([a]);
 });
 
@@ -140,9 +145,10 @@ test("different と unsure: 同じ実体として数えず、unsure は partial 
 			linking: linking(decision),
 		});
 		await scenario.sync();
-		const related = await scenario
-			.client(ALICE)
-			.related({ documentId: idOf(scenario, "rel/a.md") });
+		const related = await scenario.client(ALICE).related({
+			documentId: idOf(scenario, "rel/a.md"),
+			routes: ["entities"],
+		});
 		expect(related.results).toEqual([]);
 		if (decision === "unsure") {
 			expect(related.complete).toBe(false);
@@ -185,17 +191,23 @@ test("範囲外: bob には notes の文書の関連が見えず、範囲外の�
 	const b = idOf(scenario, "rel/b.md");
 	const c = idOf(scenario, "rel/c.md");
 
-	expect(await scenario.client(BOB).related({ documentId: a })).toMatchObject({
+	expect(
+		await scenario.client(BOB).related({ documentId: a, routes: ["entities"] }),
+	).toMatchObject({
 		status: "not_available",
 		results: [],
 		document: null,
 	});
-	const fromB = await scenario.client(BOB).related({ documentId: b });
+	const fromB = await scenario
+		.client(BOB)
+		.related({ documentId: b, routes: ["entities"] });
 	expect(fromB.results.map((r) => r.documentId)).toEqual([c]);
 	// The entity also has a mention in `notes` (outside Bob's scope): no summary for Bob.
 	expect(fromB.results[0]!.shared[0]!.summary).toBeNull();
 	// Alice sees every mention of the entity: the summary is returned.
-	const forAlice = await scenario.client(ALICE).related({ documentId: b });
+	const forAlice = await scenario
+		.client(ALICE)
+		.related({ documentId: b, routes: ["entities"] });
 	expect(forAlice.results.map((r) => r.documentId).sort()).toEqual(
 		[a, c].sort(),
 	);
@@ -236,14 +248,14 @@ test("比べる前: 取り込んだばかりで同一視の連鎖がまだなら
 	}
 	const related = await scenario
 		.client(ALICE)
-		.related({ documentId: idOf(scenario, "rel/a.md") });
+		.related({ documentId: idOf(scenario, "rel/a.md"), routes: ["entities"] });
 	expect(related.complete).toBe(false);
 	expect(related.partialReasons).toContain("linking_pending");
 
 	await scenario.host.runner.runUntilIdle({ maxSteps: 1000 });
 	const after = await scenario
 		.client(ALICE)
-		.related({ documentId: idOf(scenario, "rel/a.md") });
+		.related({ documentId: idOf(scenario, "rel/a.md"), routes: ["entities"] });
 	expect(after.complete).toBe(true);
 	expect(after.results).toHaveLength(1);
 });
@@ -267,7 +279,11 @@ test("新版で言及が消える: リンクとまとまりが現在の版に従
 	const a = idOf(scenario, "rel/a.md");
 	const b = idOf(scenario, "rel/b.md");
 	expect(
-		(await scenario.client(ALICE).related({ documentId: b })).results,
+		(
+			await scenario
+				.client(ALICE)
+				.related({ documentId: b, routes: ["entities"] })
+		).results,
 	).toHaveLength(1);
 
 	aWithoutEntity = true;
@@ -276,7 +292,9 @@ test("新版で言及が消える: リンクとまとまりが現在の版に従
 		"# 水門の点検\n\n点検は毎週火曜日に行う。\n",
 	);
 	await scenario.sync();
-	const after = await scenario.client(ALICE).related({ documentId: b });
+	const after = await scenario
+		.client(ALICE)
+		.related({ documentId: b, routes: ["entities"] });
 	expect(after.results).toEqual([]);
 	expect(after.complete).toBe(true);
 	// The old version's mention and its link were cleaned up with the retired version.
@@ -294,7 +312,9 @@ test("取り込み待ちの文書: 関連文書の起点にすると stale を�
 	scenario.docling.control.setMarkdown(a, `# 水門\n\n${NAME}の新版。\n`);
 	await scenario.client(ALICE).requestSync(crypto.randomUUID());
 	await scenario.host.runner.step(); // the listing only
-	const related = await scenario.client(ALICE).related({ documentId: a });
+	const related = await scenario
+		.client(ALICE)
+		.related({ documentId: a, routes: ["entities"] });
 	expect(related).toMatchObject({
 		status: "stale",
 		document: null,
@@ -336,9 +356,13 @@ test("範囲外の言及を橋にしない: b と c が notes の a を通して
 	});
 	await scenario.sync();
 	const b = idOf(scenario, "rel/b.md");
-	const forBob = await scenario.client(BOB).related({ documentId: b });
+	const forBob = await scenario
+		.client(BOB)
+		.related({ documentId: b, routes: ["entities"] });
 	expect(forBob.results).toEqual([]);
 	expect(forBob.partialReasons).toContain("linking_unsure");
-	const forAlice = await scenario.client(ALICE).related({ documentId: b });
+	const forAlice = await scenario
+		.client(ALICE)
+		.related({ documentId: b, routes: ["entities"] });
 	expect(forAlice.results).toHaveLength(2);
 });

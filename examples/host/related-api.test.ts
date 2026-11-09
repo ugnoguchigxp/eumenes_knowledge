@@ -45,6 +45,8 @@ const OK: RelatedResponse = {
 			title: "B",
 			markdownSha256: SHA,
 			state: "current",
+			routes: ["entities"],
+			passages: [{ document: point, related: point, routes: ["entities"] }],
 			shared: [
 				{
 					label: "Acme",

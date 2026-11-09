@@ -77,7 +77,11 @@ export type ExampleHostOptions = {
 	search?: Search;
 	/** 根拠確認 API の実装（package の `readEvidence`）。省略すると `/evidence` を持たない。 */
 	readEvidence?: ReadEvidence;
-	/** 関連文書 API の実装（package の `readRelated`）。省略すると `/related` を持たない。`searchOptions` が要る。 */
+	/**
+	 * 関連文書 API の実装（package の `readRelated`）。省略すると `/related` を持たない。`searchOptions`
+	 * が要る。`search` と `createVectorIndex` もあると、検索と同じベクトルの索引で埋め込みの近さの
+	 * 経路も使う（`search` がないと索引を作らないので、名前の経路だけになる）。
+	 */
 	readRelated?: ReadRelated;
 	/** 知識グラフ API の実装（package の `readGraph`）。省略すると `/graph` を持たない。`searchOptions` が要る。 */
 	readGraph?: ReadGraph;
@@ -249,6 +253,8 @@ export function createExampleHost(options: ExampleHostOptions): ExampleHost {
 								read: readSnapshot,
 								clock,
 								options: searchOptions,
+								// 検索と同じベクトルの索引（あれば埋め込みの経路も使う）。
+								...(vectors ? { vectors } : {}),
 							},
 							access,
 							request,

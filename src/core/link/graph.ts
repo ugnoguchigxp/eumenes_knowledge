@@ -76,6 +76,9 @@ export const readGraph: ReadGraph = (deps, access, request) => {
 		compute(db, {
 			maxNodes: req.maxNodes,
 			maxEdges: req.maxEdges,
+			minDocuments: req.minDocuments,
+			minEdgeDocuments: req.minEdgeDocuments,
+			types: req.types ? new Set(req.types) : null,
 			scope: [...new Set(scope)],
 			now: deps.clock.now(),
 			verifiedWithinMs,
@@ -90,6 +93,9 @@ export const readGraph: ReadGraph = (deps, access, request) => {
 type Params = {
 	maxNodes: number;
 	maxEdges: number;
+	minDocuments: number;
+	minEdgeDocuments: number;
+	types: Set<string> | null;
 	scope: string[];
 	now: number;
 	verifiedWithinMs: number;
@@ -281,7 +287,14 @@ function compute(db: Tx, p: Params): GraphResponse {
 	);
 	const labelOf = (c: Component): string =>
 		(namesOf.get(c) as string[])[0] as string;
-	const ordered = [...all.list].sort(
+	// The request's filters (kg2.md §3.5): documents spanned and types written.
+	const wanted = all.list.filter(
+		(c) =>
+			c.documentIds.size >= p.minDocuments &&
+			(p.types === null ||
+				c.members.some((m) => (p.types as Set<string>).has(m.type))),
+	);
+	const ordered = [...wanted].sort(
 		(x, y) =>
 			y.members.length - x.members.length ||
 			y.documentIds.size - x.documentIds.size ||
@@ -409,13 +422,20 @@ function compute(db: Tx, p: Params): GraphResponse {
 			});
 		}
 	}
-	const orderedGroups = [...groups.values()].sort(
-		(x, y) =>
-			y.relations.length - x.relations.length ||
-			x.source - y.source ||
-			x.target - y.target ||
-			cmp(x.tie, y.tie),
-	);
+	const orderedGroups = [...groups.values()]
+		.filter(
+			(g) =>
+				p.minEdgeDocuments <= 1 ||
+				new Set(g.relations.map((r) => documentOf(r.versionId))).size >=
+					p.minEdgeDocuments,
+		)
+		.sort(
+			(x, y) =>
+				y.relations.length - x.relations.length ||
+				x.source - y.source ||
+				x.target - y.target ||
+				cmp(x.tie, y.tie),
+		);
 	if (orderedGroups.length > p.maxEdges) reasons.add("edges_truncated");
 	const keptGroups = orderedGroups.slice(0, p.maxEdges);
 	const relationEvidence = evidenceOf(
@@ -453,6 +473,31 @@ function compute(db: Tx, p: Params): GraphResponse {
 			),
 		};
 	});
+
+	// The answer's size (GRAPH_LIMITS.responseChars, less room for the envelope).
+	const docSize = new Map<string, number>();
+	for (const d of documents.values())
+		docSize.set(
+			d.documentId,
+			JSON.stringify({
+				documentId: d.documentId,
+				namespace: d.namespace,
+				path: d.path,
+				title: d.title,
+				markdownSha256: d.markdownSha256,
+				state: "unverified",
+			}).length + 1,
+		);
+	const fitted = fitGraphAnswer(
+		nodes,
+		edges,
+		(id) => docSize.get(id) ?? 0,
+		GRAPH_LIMITS.responseChars - 4_096,
+	);
+	if (fitted.nodes.length < nodes.length) reasons.add("nodes_truncated");
+	if (fitted.edges.length < edges.length) reasons.add("edges_truncated");
+	nodes.splice(0, nodes.length, ...fitted.nodes);
+	edges.splice(0, edges.length, ...fitted.edges);
 
 	// The documents the returned nodes and edges come from.
 	const used = new Set<string>();
@@ -503,6 +548,68 @@ function compute(db: Tx, p: Params): GraphResponse {
 		complete: partialReasons.length === 0,
 		partialReasons,
 	};
+}
+
+/**
+ * Nodes and edges that fit in `room` characters of JSON with the documents they name (each
+ * document counted once, `docSize` its size in the answer). When everything does not fit, the
+ * first nodes in order take at most half of the room, then the edges between those nodes, in
+ * order, the rest; edge ids are numbered again (node ids stay: the kept nodes are a prefix).
+ * Exported for tests.
+ */
+export function fitGraphAnswer(
+	nodes: readonly Node[],
+	edges: readonly Edge[],
+	docSize: (documentId: string) => number,
+	room: number,
+): { nodes: Node[]; edges: Edge[] } {
+	const sizeOf = (x: unknown): number => JSON.stringify(x).length + 1;
+	const counted = new Set<string>();
+	const newDocs = (ids: readonly string[]): number => {
+		let total = 0;
+		for (const id of new Set(ids)) if (!counted.has(id)) total += docSize(id);
+		return total;
+	};
+	const take = (ids: readonly string[]) => {
+		for (const id of ids) counted.add(id);
+	};
+	const nodeSizes = nodes.map(sizeOf);
+	const edgeSizes = edges.map(sizeOf);
+	let whole = 0;
+	for (const n of nodes) {
+		whole += newDocs(n.documentIds);
+		take(n.documentIds);
+	}
+	for (const e of edges) {
+		whole += newDocs(e.documentIds);
+		take(e.documentIds);
+	}
+	for (const x of nodeSizes) whole += x;
+	for (const x of edgeSizes) whole += x;
+	if (whole <= room) return { nodes: [...nodes], edges: [...edges] };
+
+	counted.clear();
+	let used = 0;
+	const keptNodes: Node[] = [];
+	for (let i = 0; i < nodes.length; i++) {
+		const n = nodes[i] as Node;
+		const cost = (nodeSizes[i] as number) + newDocs(n.documentIds);
+		if (used + cost > room / 2) break;
+		used += cost;
+		take(n.documentIds);
+		keptNodes.push(n);
+	}
+	const keptIds = new Set(keptNodes.map((n) => n.nodeId));
+	const keptEdges: Edge[] = [];
+	for (const e of edges) {
+		if (!keptIds.has(e.source) || !keptIds.has(e.target)) continue;
+		const cost = sizeOf(e) + newDocs(e.documentIds);
+		if (used + cost > room) break;
+		used += cost;
+		take(e.documentIds);
+		keptEdges.push({ ...e, edgeId: `e${keptEdges.length + 1}` });
+	}
+	return { nodes: keptNodes, edges: keptEdges };
 }
 
 /**

@@ -261,6 +261,9 @@ export type EvidenceResponse = z.infer<typeof evidenceResponseSchema>;
 // Related documents (p3.md §8)
 // ---------------------------------------------------------------------------
 
+/** How a related document was found (kg2.md §3.5): shared entities, or nearness of fragments. */
+export const relatedRoutes = ["entities", "embedding"] as const;
+
 export const relatedRequestSchema = z.strictObject({
 	documentId: doclingDocumentIdSchema,
 	limit: z
@@ -270,6 +273,11 @@ export const relatedRequestSchema = z.strictObject({
 		.max(SEARCH_LIMITS.maxResults)
 		.default(SEARCH_LIMITS.defaultResults),
 	namespaces: z.array(z.string().min(1).max(512)).max(100).optional(),
+	/**
+	 * The routes to use (default both). `embedding` needs the host's vector index; without it the
+	 * route finds nothing.
+	 */
+	routes: z.array(z.enum(relatedRoutes)).min(1).max(2).optional(),
 });
 export type RelatedRequest = z.input<typeof relatedRequestSchema>;
 
@@ -279,6 +287,17 @@ const evidencePoint = z.strictObject({
 	quoteSha256: sha256HexSchema,
 });
 
+export const RELATED_LIMITS = {
+	/** Shared entities listed per result, the most specific (highest IDF) first. */
+	sharedPerResult: 20,
+	/** Pairs of fragments listed per result, best first. */
+	passagesPerResult: 3,
+	/** Fragments of the requested document that are compared; more is `response_truncated`. */
+	fragmentsPerDocument: 64,
+	/** Nearest fragments read per fragment of the requested document (the embedding route). */
+	nearestPerFragment: 200,
+} as const;
+
 export const relatedPartialReasons = [
 	...partialReasons,
 	/** Some current documents in scope were not compared for identity yet. */
@@ -286,6 +305,11 @@ export const relatedPartialReasons = [
 	/** The model was unsure for some candidate pairs; they are not counted as the same entity. */
 	"linking_unsure",
 	"response_truncated",
+	/**
+	 * The embedding route could not run (the vector index is too large, the document has no
+	 * vectors) or did not see some documents in scope (another embedding space).
+	 */
+	"vector_unavailable",
 ] as const;
 
 export const relatedResponseSchema = z.strictObject({
@@ -300,7 +324,13 @@ export const relatedResponseSchema = z.strictObject({
 		.nullable(),
 	results: z.array(
 		z.strictObject({
-			/** By the number of shared entities (a count, not a measure of truth). */
+			/**
+			 * Documents that share an entity first, then those the embedding route alone found (the
+			 * nearest fragments, without a threshold: near is not the same as related). Within each,
+			 * by the best pair of fragments (one of the requested document, one of this one): the
+			 * reciprocal rank fusion of the fragments' shared entities (weighted by IDF) and of their
+			 * embedding nearness; equal scores by document id. An order, not a measure of truth.
+			 */
 			rank: z.number().int().min(1),
 			documentId: doclingDocumentIdSchema,
 			namespace: z.string(),
@@ -308,35 +338,61 @@ export const relatedResponseSchema = z.strictObject({
 			title: z.string(),
 			markdownSha256: sha256HexSchema,
 			state: z.enum(["current", "unverified"]),
-			shared: z.array(
-				z.strictObject({
-					/** The entity's name in the requested document and in this one, as written. */
-					label: z.string(),
-					relatedLabel: z.string(),
-					/** Quotations of the two mentions the model judged to be the same entity. */
-					evidence: z.strictObject({
-						document: z.array(evidencePoint),
-						related: z.array(evidencePoint),
+			/** The routes that found any pair of fragments of this document (`passages` shows the best). */
+			routes: z.array(z.enum(relatedRoutes)),
+			/**
+			 * The best pairs of fragments, at most `RELATED_LIMITS.passagesPerResult`: each fragment as a
+			 * quotation of its document (the whole fragment), and the routes that ranked the pair.
+			 */
+			passages: z
+				.array(
+					z.strictObject({
+						document: evidencePoint,
+						related: evidencePoint,
+						routes: z.array(z.enum(relatedRoutes)),
 					}),
-					/** Who decided it: the link is a model judgment with its provenance (p0.md #2). */
-					decidedBy: z.strictObject({
-						model: z.string().nullable(),
-						instructionId: z.string(),
-						instructionVersion: z.number().int().min(1),
+				)
+				.max(RELATED_LIMITS.passagesPerResult),
+			/**
+			 * Entities both documents name, the most specific first (IDF over the fragments in the
+			 * caller's scope), at most `RELATED_LIMITS.sharedPerResult`. Empty when only the embedding
+			 * route found the document.
+			 */
+			shared: z
+				.array(
+					z.strictObject({
+						/** The entity's name in the requested document and in this one, as written. */
+						label: z.string(),
+						relatedLabel: z.string(),
+						/** Quotations of the two mentions joined as the same entity. */
+						evidence: z.strictObject({
+							document: z.array(evidencePoint),
+							related: z.array(evidencePoint),
+						}),
+						/**
+						 * Who decided it: a model's or a person's link with its provenance (p0.md #2), or the
+						 * model-free extractor's identity key (`name_key`).
+						 */
+						decidedBy: z.strictObject({
+							model: z.string().nullable(),
+							instructionId: z.string(),
+							instructionVersion: z.number().int().min(1),
+						}),
+						/**
+						 * The entity's derived summary (p0.md #5), only when every mention it was made from is
+						 * current and inside the caller's namespaces; otherwise null.
+						 */
+						summary: z.string().nullable(),
 					}),
-					/**
-					 * The entity's derived summary (p0.md #5), only when every mention it was made from is
-					 * current and inside the caller's namespaces; otherwise null.
-					 */
-					summary: z.string().nullable(),
-				}),
-			),
+				)
+				.max(RELATED_LIMITS.sharedPerResult),
 		}),
 	),
 	complete: z.boolean(),
 	partialReasons: z.array(z.enum(relatedPartialReasons)),
 });
 export type RelatedResponse = z.infer<typeof relatedResponseSchema>;
+export type RelatedRoute = (typeof relatedRoutes)[number];
 
 // ---------------------------------------------------------------------------
 // Knowledge graph (kg.md §2)
@@ -355,6 +411,13 @@ export const GRAPH_LIMITS = {
 	maxMentions: 20_000,
 	/** Relation mentions read for one graph; more answers `relations_truncated`. */
 	maxRelations: 50_000,
+	/**
+	 * Characters of the JSON answer at most (the package's client reads 1 MiB): beyond it, fewer
+	 * nodes and edges are returned (`nodes_truncated`, `edges_truncated`).
+	 */
+	responseChars: 900_000,
+	/** Node types a request may name (`types`). */
+	types: 20,
 } as const;
 
 export const graphRequestSchema = z.strictObject({
@@ -372,6 +435,19 @@ export const graphRequestSchema = z.strictObject({
 		.default(GRAPH_LIMITS.defaultEdges),
 	/** Narrows the caller's namespaces; never widens them. */
 	namespaces: z.array(z.string().min(1).max(512)).max(100).optional(),
+	/** Only nodes whose mentions span at least this many documents (kg2.md §3.5). Default 1. */
+	minDocuments: z.number().int().min(1).max(10_000).default(1),
+	/** Only edges whose relation mentions span at least this many documents. Default 1. */
+	minEdgeDocuments: z.number().int().min(1).max(10_000).default(1),
+	/**
+	 * Only nodes with a mention of one of these types, as written at extraction (the model-free
+	 * extractor writes 固有名 or 名詞). Default: every type.
+	 */
+	types: z
+		.array(z.string().min(1).max(80))
+		.min(1)
+		.max(GRAPH_LIMITS.types)
+		.optional(),
 });
 export type GraphRequest = z.input<typeof graphRequestSchema>;
 export type ParsedGraphRequest = z.output<typeof graphRequestSchema>;

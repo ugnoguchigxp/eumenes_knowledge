@@ -752,6 +752,21 @@ describe("staging validation", () => {
 			});
 		}
 		expect(count(db, "knowledge_extractions")).toBe(0);
+		const rel = (id: string, source: string, target: string) => ({
+			id,
+			source,
+			target,
+			directed: false,
+			relation: "r",
+			description: "",
+			keywords: [],
+			qualifiers: {
+				negated: false,
+				condition: null,
+				certainty: "stated" as const,
+			},
+			evidence: [ev],
+		});
 		// The key is stored with the mention; a mention without one stores ''.
 		stageExtractionsInTransaction(db, id, [
 			{
@@ -760,8 +775,13 @@ describe("staging validation", () => {
 				entities: [
 					{ ...ent, key: "lantern" },
 					{ ...ent, id: "e2" },
+					{ ...ent, id: "e3", key: "mysql" },
 				],
-				relations: [],
+				relations: [
+					// One end without a key: indexed. Both ends keyed (同じ文): not indexed.
+					{ ...rel("r1", "e1", "e2"), relation: "uses" },
+					{ ...rel("r2", "e1", "e3"), relation: "同じ文" },
+				],
 				dropped: [],
 				model: "names:charclass@rules5",
 			},
@@ -775,7 +795,29 @@ describe("staging validation", () => {
 		).toEqual([
 			{ local_id: "e1", name_key: "lantern" },
 			{ local_id: "e2", name_key: "" },
+			{ local_id: "e3", name_key: "mysql" },
 		]);
+		// A keyed mention is indexed by its name alone; the other by name, type and description.
+		expect(
+			db
+				.query(
+					`SELECT m.local_id, f.search_text FROM knowledge_entity_fts f
+JOIN knowledge_entity_mentions m ON m.entity_id = f.rowid ORDER BY m.local_id`,
+				)
+				.all(),
+		).toEqual([
+			{ local_id: "e1", search_text: "n" },
+			{ local_id: "e2", search_text: "n\nt\nd" },
+			{ local_id: "e3", search_text: "n" },
+		]);
+		expect(
+			db
+				.query(
+					`SELECT m.local_id FROM knowledge_relation_fts f
+JOIN knowledge_relation_mentions m ON m.relation_id = f.rowid`,
+				)
+				.all(),
+		).toEqual([{ local_id: "r1" }]);
 	});
 
 	test("evidence must lie inside its fragment's byte range", () => {

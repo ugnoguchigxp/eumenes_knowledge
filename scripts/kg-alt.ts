@@ -18,6 +18,10 @@
 //   tfidf            cosine of character-bigram TF-IDF of the fragment text
 //   nodes:<run>      fragments sharing a node of that run's database (nodes as the graph read
 //                    makes them), scored by the shared nodes' IDF over fragments
+//   embedding+nodes:<run>  the two fused (reciprocal rank fusion, k = 60)
+//   related:<run>    the package's own ranking on that run's database (`readRelated`'s order,
+//                    kg2.md G5): it should equal embedding+nodes:<run> when --from is that run
+//   nodes>embedding:<run>  the nodes first, then the embedding for what the nodes do not rank
 //   <engine>:noun|proper  (--engine sudachi|kuromoji|lindera|charclass, repeatable; --nlp alone is
 //                    sudachi, named nlp:*): the same rules with other tokenizers (kg2.md G1;
 //                    scripts/kg-alt/candidates.ts; kuromoji and lindera from --js-modules <dir>)
@@ -46,6 +50,8 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
+import { rankRelatedFragmentsInSnapshot } from "../src/core/link/related.js";
+import { createVectorIndex } from "../src/core/search/index.js";
 import { normalizeForSearch } from "../src/core/text/normalize.js";
 import { decodeVector } from "../src/sqlite/index.js";
 import {
@@ -353,6 +359,41 @@ function nodeRanking(
 			if (nodesOf[j]?.has(n)) s += idf(n);
 		return s;
 	});
+}
+
+/**
+ * The package's ranking of related fragments (`rankRelatedFragmentsInSnapshot`, what
+ * `readRelated` orders documents by) for every fragment, on a run's database with its vectors,
+ * every namespace in scope.
+ */
+function packageRanking(fragments: readonly Fragment[], db: Database): Ranking {
+	const index = new Map(fragments.map((f, i) => [f.key, i]));
+	const namespaces = (
+		db
+			.query(
+				"SELECT DISTINCT namespace FROM knowledge_documents WHERE state = 'current'",
+			)
+			.all() as { namespace: string }[]
+	).map((r) => r.namespace);
+	const vectors = createVectorIndex();
+	const ranking: Ranking = fragments.map(() => []);
+	const versions = db
+		.query(
+			"SELECT published_version_id AS v, document_id AS d FROM knowledge_documents WHERE state = 'current' AND published_version_id IS NOT NULL",
+		)
+		.all() as { v: number; d: string }[];
+	for (const { v, d } of versions) {
+		const found = rankRelatedFragmentsInSnapshot(db, v, d, namespaces, vectors);
+		for (const [ordinal, list] of found) {
+			const i = index.get(`${v}:${ordinal}`);
+			if (i === undefined) continue;
+			ranking[i] = list.flatMap((r) => {
+				const j = index.get(`${r.versionId}:${r.ordinal}`);
+				return j === undefined ? [] : [j];
+			});
+		}
+	}
+	return ranking;
 }
 
 /** The mentions of a run's database, in the nodes the graph read makes. */
@@ -1079,6 +1120,14 @@ function jsEngineVersions(options: Options): Record<string, string> | null {
 // Scores
 // ---------------------------------------------------------------------------
 
+/** The first ranking, then what only the second ranks, in its order. */
+function cascade(first: Ranking, second: Ranking): Ranking {
+	return first.map((list, i) => {
+		const seen = new Set(list);
+		return [...list, ...(second[i] ?? []).filter((j) => !seen.has(j))];
+	});
+}
+
 /** Reciprocal rank fusion (k = 60) of rankings of the same fragments. */
 function fuse(rankings: readonly Ranking[]): Ranking {
 	const n = rankings[0]?.length ?? 0;
@@ -1180,6 +1229,25 @@ async function main() {
 			sameVersions(run, versions, basename(dir));
 			await timed(`nodes:${basename(dir)}`, () =>
 				nodeRanking(fragments, dbMentions(run)),
+			);
+			// The run's nodes with the embedding (as below for the engines), and the package's own
+			// ranking of related fragments on the run's database (kg2.md G5): the two should agree.
+			const byMethod = new Map(methods.map((m) => [m.name, m.ranking]));
+			await timed(`embedding+nodes:${basename(dir)}`, () =>
+				fuse([
+					byMethod.get("embedding") as Ranking,
+					byMethod.get(`nodes:${basename(dir)}`) as Ranking,
+				]),
+			);
+			await timed(`related:${basename(dir)}`, () =>
+				packageRanking(fragments, run),
+			);
+			// The nodes first, then the embedding for the fragments the nodes do not rank.
+			await timed(`nodes>embedding:${basename(dir)}`, () =>
+				cascade(
+					byMethod.get(`nodes:${basename(dir)}`) as Ranking,
+					byMethod.get("embedding") as Ranking,
+				),
 			);
 			relationEdges[`nodes:${basename(dir)}`] = relationEdgesOf(
 				run,
