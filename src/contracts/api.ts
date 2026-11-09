@@ -417,6 +417,11 @@ export const GRAPH_LIMITS = {
 	evidencePerItem: 3,
 	/** Distinct names and types listed per node. */
 	namesPerNode: 10,
+	/**
+	 * Documents listed per node and per edge (`documentIds`): those with the most mentions, ties by
+	 * id; `documentCount` counts them all (kg2.md §7.12: a frequent name is in every document).
+	 */
+	documentsPerItem: 20,
 	/** Current mentions read for one graph; a larger scope answers `mentions_truncated`. */
 	maxMentions: 20_000,
 	/** Relation mentions read for one graph; more answers `relations_truncated`. */
@@ -530,6 +535,9 @@ export const graphResponseSchema = z.strictObject({
 			/** Distinct types given at extraction, most frequent first. */
 			types: z.array(z.string()),
 			mentionCount: z.number().int().min(1),
+			/** Documents of the mentions, all of them. */
+			documentCount: z.number().int().min(1),
+			/** At most `GRAPH_LIMITS.documentsPerItem` of them (the most mentioned), in id order. */
 			documentIds: z.array(doclingDocumentIdSchema),
 			evidence: z.array(graphEvidencePoint),
 			/** Who joined the mentions (`same` links inside the node); empty for one mention. */
@@ -556,6 +564,9 @@ export const graphResponseSchema = z.strictObject({
 			certainty: z.enum(["stated", "uncertain", "hypothetical"]),
 			conditions: z.array(z.string()),
 			mentionCount: z.number().int().min(1),
+			/** Documents of the relation mentions, all of them. */
+			documentCount: z.number().int().min(1),
+			/** At most `GRAPH_LIMITS.documentsPerItem` of them (the most mentioned), in id order. */
 			documentIds: z.array(doclingDocumentIdSchema),
 			evidence: z.array(graphEvidencePoint),
 		}),

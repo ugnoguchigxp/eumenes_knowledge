@@ -20,6 +20,7 @@ import {
 	deleteLinkRowsInTransaction,
 	hasLinkRowsInTransaction,
 } from "./links.js";
+import { RELATION_PAIRS_OF } from "./schema.js";
 import { pruneScansInTransaction } from "./scans.js";
 
 /**
@@ -455,6 +456,9 @@ function checkExtraction(x: FragmentExtraction, expected: number): void {
  * extraction failed, `extraction_truncated` whether any lost a proper name at its limit of names
  * (`proper_over_limit`, kg2.md §7.10). ?1 the version, ?2 now.
  */
+/** The version's relation pairs (kg2.md §7.12), written when it is published. ?1 the version. */
+const WRITE_RELATION_PAIRS = RELATION_PAIRS_OF("?1");
+
 const PUBLISH_VERSION = `UPDATE knowledge_versions SET state = 'published', published_at = ?2,
  extraction_partial = EXISTS (SELECT 1 FROM knowledge_extractions WHERE version_id = ?1 AND status = 'failed'),
  extraction_truncated = EXISTS (SELECT 1 FROM knowledge_extractions e, json_each(e.dropped_json) d
@@ -634,7 +638,8 @@ export function stageExtractionsInTransaction(
  * vectors and extractions were all written in the expected number. Then, in this call: the
  * document becomes `current` with the version as `published_version_id` (the registry columns
  * are those of `applyIngestedVersionInTransaction`), the previous published version becomes
- * `retired`, and `extraction_partial` and `extraction_truncated` are recorded (`PUBLISH_VERSION`).
+ * `retired`, `extraction_partial` and `extraction_truncated` are recorded (`PUBLISH_VERSION`), and
+ * the version's relation pairs are written (`knowledge_relation_pairs`, kg2.md §7.12).
  */
 export function publishVersionInTransaction(
 	db: Tx,
@@ -675,6 +680,7 @@ export function publishVersionInTransaction(
 		).run(now, previous);
 	}
 	db.query(PUBLISH_VERSION).run(versionId, now);
+	db.query(WRITE_RELATION_PAIRS).run(versionId);
 	return true;
 }
 
@@ -876,6 +882,7 @@ WHERE source_namespace = ?3 AND document_id = ?4 AND state = 'current' AND publi
 		"UPDATE knowledge_versions SET state = 'retired', retired_at = ? WHERE version_id = ? AND state = 'published'",
 	).run(now, previous);
 	db.query(PUBLISH_VERSION).run(versionId, now);
+	db.query(WRITE_RELATION_PAIRS).run(versionId);
 	bumpLinkGenerationInTransaction(db);
 	return true;
 }
@@ -936,6 +943,7 @@ const DERIVED_STEPS: readonly {
 	table: string;
 	index?: { idColumn: string; fts: string };
 }[] = [
+	{ table: "knowledge_relation_pairs" },
 	{ table: "knowledge_evidence" },
 	{
 		table: "knowledge_relation_mentions",

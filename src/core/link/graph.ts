@@ -10,8 +10,15 @@ import {
 	type Tx,
 } from "../../contracts/index.js";
 import {
+	canReadGraphByKeysInSnapshot,
 	readGraphDocumentsInSnapshot,
 	readGraphEvidenceInSnapshot,
+	readGraphKeyFirstMentionsInSnapshot,
+	readGraphKeyGroupsInSnapshot,
+	readGraphKeyMentionStatsInSnapshot,
+	readGraphKeyPairsInSnapshot,
+	type GraphEvidence,
+	type KeyGroupCount,
 	readGraphMentionsInSnapshot,
 	readGraphLinksInSnapshot,
 	readGraphRelationsAmongInSnapshot,
@@ -56,39 +63,48 @@ type Provenance = Node["decidedBy"][number];
  * (`name_key`), each named in `decidedBy`; this code joins by connectivity and counts only.
  * Node and edge ids are ordinals of the returned order.
  */
-export const readGraph: ReadGraph = (deps, access, request) => {
-	const parsed = graphRequestSchema.safeParse(request);
-	if (!parsed.success) throw new KnowledgeError("invalid_input");
-	const req = parsed.data;
-	const verifiedWithinMs = deps.options.verifiedWithinMs;
-	if (
-		typeof verifiedWithinMs !== "number" ||
-		!Number.isFinite(verifiedWithinMs) ||
-		verifiedWithinMs < 0 ||
-		!Array.isArray(access?.namespaces)
-	) {
-		throw new KnowledgeError("invalid_input");
-	}
-	const scope = req.namespaces
-		? access.namespaces.filter((n) => req.namespaces?.includes(n))
-		: [...access.namespaces];
-	const response = deps.read((db) =>
-		compute(db, {
-			maxNodes: req.maxNodes,
-			maxEdges: req.maxEdges,
-			minDocuments: req.minDocuments,
-			minEdgeDocuments: req.minEdgeDocuments,
-			types: req.types ? new Set(req.types) : null,
-			scope: [...new Set(scope)],
-			now: deps.clock.now(),
-			verifiedWithinMs,
-			maxUnappliedAttempts: deps.options.maxUnappliedAttempts,
-		}),
-	);
-	const checked = graphResponseSchema.safeParse(response);
-	if (!checked.success) throw new KnowledgeError("contract_mismatch");
-	return checked.data;
-};
+export const readGraph: ReadGraph = (deps, access, request) =>
+	readGraphIn("auto")(deps, access, request);
+
+/**
+ * `readGraph` that reads by keys or mention by mention whatever the scope (`auto`: by keys when it
+ * can, kg2.md §7.12). For tests that compare the two ways, and for the scale check.
+ */
+export const readGraphIn =
+	(mode: "auto" | "keys" | "mentions"): ReadGraph =>
+	(deps, access, request) => {
+		const parsed = graphRequestSchema.safeParse(request);
+		if (!parsed.success) throw new KnowledgeError("invalid_input");
+		const req = parsed.data;
+		const verifiedWithinMs = deps.options.verifiedWithinMs;
+		if (
+			typeof verifiedWithinMs !== "number" ||
+			!Number.isFinite(verifiedWithinMs) ||
+			verifiedWithinMs < 0 ||
+			!Array.isArray(access?.namespaces)
+		) {
+			throw new KnowledgeError("invalid_input");
+		}
+		const scope = req.namespaces
+			? access.namespaces.filter((n) => req.namespaces?.includes(n))
+			: [...access.namespaces];
+		const response = deps.read((db) =>
+			compute(db, mode, {
+				maxNodes: req.maxNodes,
+				maxEdges: req.maxEdges,
+				minDocuments: req.minDocuments,
+				minEdgeDocuments: req.minEdgeDocuments,
+				types: req.types ? new Set(req.types) : null,
+				scope: [...new Set(scope)],
+				now: deps.clock.now(),
+				verifiedWithinMs,
+				maxUnappliedAttempts: deps.options.maxUnappliedAttempts,
+			}),
+		);
+		const checked = graphResponseSchema.safeParse(response);
+		if (!checked.success) throw new KnowledgeError("contract_mismatch");
+		return checked.data;
+	};
 
 type Params = {
 	maxNodes: number;
@@ -116,6 +132,28 @@ function byFrequency(values: Iterable<string>): string[] {
 	const counts = new Map<string, number>();
 	for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
 	return [...counts.entries()].sort((x, y) => y[1] - x[1]).map(([v]) => v);
+}
+
+/**
+ * The documents listed for a node or an edge: at most `GRAPH_LIMITS.documentsPerItem`, those
+ * with the most mentions (ties by id), in id order.
+ */
+function listedDocuments(
+	mentionsByDocument: ReadonlyMap<string, number>,
+): string[] {
+	return sorted(
+		[...mentionsByDocument.entries()]
+			.sort((x, y) => y[1] - x[1] || cmp(x[0], y[0]))
+			.slice(0, GRAPH_LIMITS.documentsPerItem)
+			.map(([id]) => id),
+	);
+}
+
+/** How many of `values` per value. */
+function counted(values: Iterable<string>): Map<string, number> {
+	const counts = new Map<string, number>();
+	for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+	return counts;
 }
 
 const sorted = (values: Iterable<string>): string[] =>
@@ -251,8 +289,56 @@ function components(
 
 const cmp = (x: string, y: string): number => (x < y ? -1 : x > y ? 1 : 0);
 
-function compute(db: Tx, p: Params): GraphResponse {
+/** Evidence rows as points of the answer, by subject, in the order read (subject id, position). */
+function evidencePoints(
+	rows: readonly GraphEvidence[],
+	documents: ReadonlyMap<number, GraphDocument>,
+): Map<number, Point[]> {
+	const bySubject = new Map<number, Point[]>();
+	for (const e of rows) {
+		const doc = documents.get(e.versionId);
+		if (!doc) continue;
+		const list = bySubject.get(e.subjectId) ?? [];
+		list.push({
+			subjectId: e.subjectId,
+			documentId: doc.documentId,
+			markdownSha256: doc.markdownSha256,
+			fragmentOrdinal: e.fragmentOrdinal,
+			byteStart: e.byteStart,
+			byteEnd: e.byteEnd,
+			quoteSha256: e.quoteSha256,
+		});
+		bySubject.set(e.subjectId, list);
+	}
+	return bySubject;
+}
+
+/** Nodes and edges in answer order, with the documents they may name. */
+type Drawn = {
+	nodes: Node[];
+	edges: Edge[];
+	documents: Map<number, GraphDocument>;
+};
+
+function compute(
+	db: Tx,
+	mode: "auto" | "keys" | "mentions",
+	p: Params,
+): GraphResponse {
 	const reasons = new Set<Reason>();
+	const keys =
+		mode === "keys" ||
+		(mode === "auto" && canReadGraphByKeysInSnapshot(db, p.scope));
+	const drawn = keys ? byKeys(db, p, reasons) : byMentions(db, p, reasons);
+	return finish(db, p, drawn, reasons);
+}
+
+/**
+ * The graph mention by mention: needed when a `same` or `different` judgment joins or splits
+ * mentions, or a model extracted some of them (no key). At most `GRAPH_LIMITS.maxMentions`
+ * mentions are read (`mentions_truncated`).
+ */
+function byMentions(db: Tx, p: Params, reasons: Set<Reason>): Drawn {
 	const read = readGraphMentionsInSnapshot(
 		db,
 		p.scope,
@@ -307,27 +393,7 @@ function compute(db: Tx, p: Params): GraphResponse {
 		kept.map((c, i) => [c, i + 1] as const),
 	);
 
-	const evidenceOf = (
-		rows: ReturnType<typeof readGraphEvidenceInSnapshot>,
-	): Map<number, Point[]> => {
-		const bySubject = new Map<number, Point[]>();
-		for (const e of rows) {
-			const doc = documents.get(e.versionId);
-			if (!doc) continue;
-			const list = bySubject.get(e.subjectId) ?? [];
-			list.push({
-				subjectId: e.subjectId,
-				documentId: doc.documentId,
-				markdownSha256: doc.markdownSha256,
-				fragmentOrdinal: e.fragmentOrdinal,
-				byteStart: e.byteStart,
-				byteEnd: e.byteEnd,
-				quoteSha256: e.quoteSha256,
-			});
-			bySubject.set(e.subjectId, list);
-		}
-		return bySubject;
-	};
+	const evidenceOf = (rows: GraphEvidence[]) => evidencePoints(rows, documents);
 
 	const keptMentions = kept.flatMap((c) => c.members);
 	const mentionEvidence = evidenceOf(
@@ -351,7 +417,10 @@ function compute(db: Tx, p: Params): GraphResponse {
 				GRAPH_LIMITS.namesPerNode,
 			),
 			mentionCount: c.members.length,
-			documentIds: sorted(c.documentIds),
+			documentCount: c.documentIds.size,
+			documentIds: listedDocuments(
+				counted(c.members.map((m) => documentOf(m.versionId))),
+			),
 			evidence: pickEvidence(
 				ids.flatMap((id) => mentionEvidence.get(id) ?? []),
 			),
@@ -467,8 +536,10 @@ function compute(db: Tx, p: Params): GraphResponse {
 			certainty: g.certainty,
 			conditions: [...conditions],
 			mentionCount: g.relations.length,
-			documentIds: sorted(
-				new Set(g.relations.map((r) => documentOf(r.versionId))),
+			documentCount: new Set(g.relations.map((r) => documentOf(r.versionId)))
+				.size,
+			documentIds: listedDocuments(
+				counted(g.relations.map((r) => documentOf(r.versionId))),
 			),
 			evidence: pickEvidence(
 				g.relations.flatMap((r) => relationEvidence.get(r.relationId) ?? []),
@@ -476,6 +547,278 @@ function compute(db: Tx, p: Params): GraphResponse {
 		};
 	});
 
+	return { nodes, edges, documents };
+}
+
+/** Groups tied with the cut whose labels are read to choose among them (kg2.md §7.12). */
+const MAX_TIED_LABELS = 10_000;
+
+/** Counts by value with the first mention of each; most first, then the earliest first. */
+type Tally = Map<string, { count: number; first: number }>;
+const tally = (t: Tally, value: string, count: number, first: number) => {
+	const x = t.get(value);
+	if (x) {
+		x.count += count;
+		x.first = Math.min(x.first, first);
+	} else t.set(value, { count, first });
+};
+const ranked = (t: Tally): string[] =>
+	[...t.entries()]
+		.sort((x, y) => y[1].count - x[1].count || x[1].first - y[1].first)
+		.map(([v]) => v);
+
+/**
+ * At most `n` ids for evidence: the first id of each of the first `n` documents (by that id),
+ * and the first `n` ids at all. `pickEvidence` over their points (in id order) then picks what it
+ * would pick over every id's points: one point per document first, then the earliest others.
+ */
+function evidenceIds(
+	firstOfDocument: ReadonlyMap<number, number>,
+	firstIds: readonly number[],
+	n: number,
+): number[] {
+	const perDocument = [...firstOfDocument.values()]
+		.sort((x, y) => x - y)
+		.slice(0, n);
+	return [...new Set([...perDocument, ...firstIds.slice(0, n)])].sort(
+		(x, y) => x - y,
+	);
+}
+
+/**
+ * The graph by identity keys (kg2.md §7.12), when every current mention of the scope was
+ * extracted by the model-free extractor and no judgment joins or splits them: a node is one
+ * key of one namespace, so nodes are counted in SQL over the whole scope and only the returned
+ * ones are read further; edges are read from the relation pairs of the returned keys. The
+ * answer is the one `byMentions` would give over every mention, except that quotations are
+ * picked in relation id order (the order they were written) rather than by local id.
+ */
+function byKeys(db: Tx, p: Params, reasons: Set<Reason>): Drawn {
+	const max = GRAPH_LIMITS.evidencePerItem;
+	const wanted = readGraphKeyGroupsInSnapshot(
+		db,
+		p.scope,
+		p.types === null ? null : [...p.types],
+	)
+		.filter((g) => g.documents >= p.minDocuments && g.typed)
+		.sort((x, y) => y.mentions - x.mentions || y.documents - x.documents);
+	// Labels order equal nodes: they are read for the nodes above the cut and those tied with it.
+	// When very many tie with the cut (the tail of names written once), the earliest written of
+	// them (smallest id) are kept instead of reading every label; those kept are still ordered by
+	// label.
+	let candidates: KeyGroupCount[] = wanted;
+	if (wanted.length > p.maxNodes) {
+		reasons.add("nodes_truncated");
+		const cut = wanted[p.maxNodes - 1] as KeyGroupCount;
+		const above = wanted.filter(
+			(g) =>
+				g.mentions > cut.mentions ||
+				(g.mentions === cut.mentions && g.documents > cut.documents),
+		);
+		let tied = wanted.filter(
+			(g) => g.mentions === cut.mentions && g.documents === cut.documents,
+		);
+		if (tied.length > MAX_TIED_LABELS)
+			tied = tied
+				.sort((x, y) => x.anchor - y.anchor)
+				.slice(0, p.maxNodes - above.length);
+		candidates = [...above, ...tied];
+	}
+	const names = candidates.map((): Tally => new Map());
+	const types = candidates.map((): Tally => new Map());
+	// Per version: the first mention, and how many.
+	const versions = candidates.map(() => new Map<number, number>());
+	const perVersion = candidates.map(() => new Map<number, number>());
+	for (const r of readGraphKeyMentionStatsInSnapshot(db, candidates)) {
+		tally(names[r.group] as Tally, r.name, r.count, r.first);
+		tally(types[r.group] as Tally, r.type, r.count, r.first);
+		const v = versions[r.group] as Map<number, number>;
+		v.set(r.versionId, Math.min(v.get(r.versionId) ?? r.first, r.first));
+		const c = perVersion[r.group] as Map<number, number>;
+		c.set(r.versionId, (c.get(r.versionId) ?? 0) + r.count);
+	}
+	const byDocument = (counts: ReadonlyMap<number, number>) =>
+		new Map([...counts].map(([v, n]) => [documentOf(v), n] as const));
+	const labelOf = candidates.map((_, i) => ranked(names[i] as Tally)[0] ?? "");
+	const order = candidates
+		.map((g, i) => ({ g, i }))
+		.sort(
+			(x, y) =>
+				y.g.mentions - x.g.mentions ||
+				y.g.documents - x.g.documents ||
+				cmp(labelOf[x.i] as string, labelOf[y.i] as string) ||
+				x.g.anchor - y.g.anchor,
+		)
+		.slice(0, p.maxNodes);
+
+	const documents = new Map<number, GraphDocument>(
+		readGraphDocumentsInSnapshot(db, [
+			...new Set(
+				order.flatMap(({ i }) => [
+					...(versions[i] as Map<number, number>).keys(),
+				]),
+			),
+		]).map((d) => [d.versionId, d] as const),
+	);
+	const documentOf = (versionId: number): string =>
+		(documents.get(versionId) as GraphDocument).documentId;
+
+	const quoted = order.map(({ g, i }) =>
+		evidenceIds(
+			versions[i] as Map<number, number>,
+			readGraphKeyFirstMentionsInSnapshot(db, g, max),
+			max,
+		),
+	);
+	const mentionEvidence = evidencePoints(
+		readGraphEvidenceInSnapshot(db, "entity", quoted.flat(), max),
+		documents,
+	);
+	const nodes: Node[] = order.map(({ g, i }, n) => {
+		const nameList = ranked(names[i] as Tally);
+		return {
+			nodeId: `n${n + 1}`,
+			label: nameList[0] as string,
+			names: nameList.slice(0, GRAPH_LIMITS.namesPerNode),
+			types: ranked(types[i] as Tally).slice(0, GRAPH_LIMITS.namesPerNode),
+			mentionCount: g.mentions,
+			documentCount: g.documents,
+			documentIds: listedDocuments(
+				byDocument(perVersion[i] as Map<number, number>),
+			),
+			evidence: pickEvidence(
+				(quoted[n] as number[]).flatMap((id) => mentionEvidence.get(id) ?? []),
+			),
+			// A key joined two mentions or more: that join is what made the node.
+			decidedBy:
+				g.solo === 0 && g.mentions >= 2
+					? [
+							{
+								model: NAME_KEY_PROVENANCE.model,
+								instructionId: NAME_KEY_PROVENANCE.instructionId,
+								instructionVersion: NAME_KEY_PROVENANCE.instructionVersion,
+							},
+						]
+					: [],
+			// Summaries are made for clusters of stored links; a node of a key has none.
+			summary: null,
+		};
+	});
+
+	// Edges: the relation pairs of the returned keys, grouped as `byMentions` groups relations.
+	const ordinalOf = new Map<string, number>();
+	order.forEach(({ g }, n) => {
+		if (g.solo === 0) ordinalOf.set(`${g.namespace}\u0000${g.key}`, n + 1);
+	});
+	type KeyEdge = {
+		tie: string;
+		source: number;
+		target: number;
+		directed: boolean;
+		negated: boolean;
+		certainty: Edge["certainty"];
+		mentions: number;
+		relations: Tally;
+		/** Per version: the first relation, and how many. */
+		versions: Map<number, number>;
+		perVersion: Map<number, number>;
+		firstIds: number[];
+	};
+	const groups = new Map<string, KeyEdge>();
+	const keys = order.filter(({ g }) => g.solo === 0).map(({ g }) => g.key);
+	for (const r of readGraphKeyPairsInSnapshot(db, p.scope, keys)) {
+		let source = ordinalOf.get(`${r.namespace}\u0000${r.sourceKey}`);
+		let target = ordinalOf.get(`${r.namespace}\u0000${r.targetKey}`);
+		if (source === undefined || target === undefined || source === target)
+			continue;
+		if (!r.directed && source > target) [source, target] = [target, source];
+		const tie = [
+			r.directed ? 1 : 0,
+			r.negated ? 1 : 0,
+			r.certainty,
+			normalizeForSearch(r.relation).trim(),
+		].join("|");
+		const key = `${source}|${target}|${tie}`;
+		let e = groups.get(key);
+		if (!e) {
+			e = {
+				tie,
+				source,
+				target,
+				directed: r.directed,
+				negated: r.negated,
+				certainty: r.certainty,
+				mentions: 0,
+				relations: new Map(),
+				versions: new Map(),
+				perVersion: new Map(),
+				firstIds: [],
+			};
+			groups.set(key, e);
+		}
+		const first = r.firstIds[0] as number;
+		e.mentions += r.mentions;
+		tally(e.relations, r.relation, r.mentions, first);
+		e.versions.set(
+			r.versionId,
+			Math.min(e.versions.get(r.versionId) ?? first, first),
+		);
+		e.perVersion.set(
+			r.versionId,
+			(e.perVersion.get(r.versionId) ?? 0) + r.mentions,
+		);
+		e.firstIds = [...e.firstIds, ...r.firstIds]
+			.sort((x, y) => x - y)
+			.slice(0, max);
+	}
+	const orderedEdges = [...groups.values()]
+		.filter((e) => e.versions.size >= p.minEdgeDocuments)
+		.sort(
+			(x, y) =>
+				y.mentions - x.mentions ||
+				x.source - y.source ||
+				x.target - y.target ||
+				cmp(x.tie, y.tie),
+		);
+	if (orderedEdges.length > p.maxEdges) reasons.add("edges_truncated");
+	const keptEdges = orderedEdges.slice(0, p.maxEdges);
+	const edgeQuoted = keptEdges.map((e) =>
+		evidenceIds(e.versions, e.firstIds, max),
+	);
+	const relationEvidence = evidencePoints(
+		readGraphEvidenceInSnapshot(db, "relation", edgeQuoted.flat(), max),
+		documents,
+	);
+	const edges: Edge[] = keptEdges.map((e, i) => ({
+		edgeId: `e${i + 1}`,
+		source: `n${e.source}`,
+		target: `n${e.target}`,
+		directed: e.directed,
+		relation: ranked(e.relations)[0] as string,
+		// The model-free extractor writes no keywords and no condition.
+		keywords: [],
+		negated: e.negated,
+		certainty: e.certainty,
+		conditions: [],
+		mentionCount: e.mentions,
+		documentCount: e.versions.size,
+		documentIds: listedDocuments(byDocument(e.perVersion)),
+		evidence: pickEvidence(
+			(edgeQuoted[i] as number[]).flatMap(
+				(id) => relationEvidence.get(id) ?? [],
+			),
+		),
+	}));
+	return { nodes, edges, documents };
+}
+
+/** The answer: what fits in its size, the documents it names, and every partial reason. */
+function finish(
+	db: Tx,
+	p: Params,
+	{ nodes, edges, documents }: Drawn,
+	reasons: Set<Reason>,
+): GraphResponse {
 	// The answer's size (GRAPH_LIMITS.responseChars, less room for the envelope).
 	const docSize = new Map<string, number>();
 	for (const d of documents.values())
@@ -501,10 +844,11 @@ function compute(db: Tx, p: Params): GraphResponse {
 	nodes.splice(0, nodes.length, ...fitted.nodes);
 	edges.splice(0, edges.length, ...fitted.edges);
 
-	// The documents the returned nodes and edges come from.
+	// The documents the returned nodes and edges name: listed, or quoted by their evidence (a
+	// quotation may come from a document beyond the listed ones).
 	const used = new Set<string>();
-	for (const n of nodes) for (const id of n.documentIds) used.add(id);
-	for (const e of edges) for (const id of e.documentIds) used.add(id);
+	for (const x of [...nodes, ...edges])
+		for (const id of namedDocuments(x)) used.add(id);
 	const byId = new Map<string, GraphDocument>();
 	for (const d of documents.values()) {
 		if (used.has(d.documentId) && !byId.has(d.documentId)) {
@@ -552,9 +896,15 @@ function compute(db: Tx, p: Params): GraphResponse {
 	};
 }
 
+/** The documents a node or an edge names: those it lists, and those its evidence quotes. */
+const namedDocuments = (x: Node | Edge): string[] => [
+	...x.documentIds,
+	...x.evidence.map((e) => e.documentId),
+];
+
 /**
- * Nodes and edges that fit in `room` characters of JSON with the documents they name (each
- * document counted once, `docSize` its size in the answer). When everything does not fit, the
+ * Nodes and edges that fit in `room` characters of JSON with the documents they name (listed or
+ * quoted; each document counted once, `docSize` its size in the answer). When everything does not fit, the
  * first nodes in order take at most half of the room, then the edges between those nodes, in
  * order, the rest; edge ids are numbered again (node ids stay: the kept nodes are a prefix).
  * Exported for tests.
@@ -579,12 +929,12 @@ export function fitGraphAnswer(
 	const edgeSizes = edges.map(sizeOf);
 	let whole = 0;
 	for (const n of nodes) {
-		whole += newDocs(n.documentIds);
-		take(n.documentIds);
+		whole += newDocs(namedDocuments(n));
+		take(namedDocuments(n));
 	}
 	for (const e of edges) {
-		whole += newDocs(e.documentIds);
-		take(e.documentIds);
+		whole += newDocs(namedDocuments(e));
+		take(namedDocuments(e));
 	}
 	for (const x of nodeSizes) whole += x;
 	for (const x of edgeSizes) whole += x;
@@ -595,20 +945,20 @@ export function fitGraphAnswer(
 	const keptNodes: Node[] = [];
 	for (let i = 0; i < nodes.length; i++) {
 		const n = nodes[i] as Node;
-		const cost = (nodeSizes[i] as number) + newDocs(n.documentIds);
+		const cost = (nodeSizes[i] as number) + newDocs(namedDocuments(n));
 		if (used + cost > room / 2) break;
 		used += cost;
-		take(n.documentIds);
+		take(namedDocuments(n));
 		keptNodes.push(n);
 	}
 	const keptIds = new Set(keptNodes.map((n) => n.nodeId));
 	const keptEdges: Edge[] = [];
 	for (const e of edges) {
 		if (!keptIds.has(e.source) || !keptIds.has(e.target)) continue;
-		const cost = sizeOf(e) + newDocs(e.documentIds);
+		const cost = sizeOf(e) + newDocs(namedDocuments(e));
 		if (used + cost > room) break;
 		used += cost;
-		take(e.documentIds);
+		take(namedDocuments(e));
 		keptEdges.push({ ...e, edgeId: `e${keptEdges.length + 1}` });
 	}
 	return { nodes: keptNodes, edges: keptEdges };

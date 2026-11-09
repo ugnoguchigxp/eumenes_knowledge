@@ -168,7 +168,11 @@ export type Expected = {
 
 export type Node = GraphResponse["nodes"][number];
 
-/** What `evaluate` reads of a graph: the API answer, or `fullGraph` of a database. */
+/**
+ * What `evaluate` reads of a graph: the API answer, or `fullGraph` of a database. The API lists
+ * at most `GRAPH_LIMITS.documentsPerItem` documents per node (kg2.md §7.12): over a corpus of
+ * more documents, only `fullGraph` (`evaluationAllNames`) counts coverage exactly.
+ */
 export type EvaluatedGraph = {
 	nodes: Pick<
 		Node,
@@ -286,7 +290,7 @@ export function evaluate(
 }
 
 export function graphStats(graph: GraphResponse) {
-	const multiDoc = graph.nodes.filter((n) => n.documentIds.length >= 2);
+	const multiDoc = graph.nodes.filter((n) => n.documentCount >= 2);
 	return {
 		nodes: graph.nodes.length,
 		edges: graph.edges.length,
@@ -294,15 +298,14 @@ export function graphStats(graph: GraphResponse) {
 		multiDocumentNodes: multiDoc.length,
 		nodesWithSummary: graph.nodes.filter((n) => n.summary !== null).length,
 		multiMentionEdges: graph.edges.filter((e) => e.mentionCount >= 2).length,
-		crossDocumentEdges: graph.edges.filter((e) => e.documentIds.length >= 2)
-			.length,
+		crossDocumentEdges: graph.edges.filter((e) => e.documentCount >= 2).length,
 		maxNamesPerNode: largest(graph.nodes.map((n) => n.names.length)),
 		nodesWithFiveNamesOrMore: graph.nodes.filter((n) => n.names.length >= 5)
 			.length,
 		topNodes: graph.nodes.slice(0, 25).map((n) => ({
 			label: n.label,
 			mentions: n.mentionCount,
-			documents: n.documentIds.length,
+			documents: n.documentCount,
 			types: n.types.slice(0, 3),
 		})),
 	};

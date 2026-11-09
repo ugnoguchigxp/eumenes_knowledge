@@ -119,6 +119,35 @@ describe("text route", () => {
 		}
 	});
 
+	test("names and relations have their own, lower scan bound for a short query (kg2.md §7.12)", async () => {
+		const env = await ready();
+		const r = await env.run(
+			{ query: "東京", routes: ["text", "entity", "relation"] },
+			{ substringScanMaxNameFragments: 3 },
+		);
+		// The text is still scanned; names and relations are not.
+		expect(r.lexicalMode).toBe("substring_scan");
+		expect(ids(r)).toEqual([docId(1)]);
+		expect(route(r, "text").status).toBe("ok");
+		for (const name of ["entity", "relation"])
+			expect(route(r, name)).toMatchObject({
+				status: "skipped",
+				reason: "query_too_short",
+			});
+		expect(r.partialReasons).toContain("route_skipped");
+		const at = await env.run(
+			{ query: "東京", routes: ["entity"] },
+			{ substringScanMaxNameFragments: 4 },
+		);
+		expect(route(at, "entity").status).toBe("ok");
+		// A query of 3 characters or more is searched by the index whatever the bound.
+		const long = await env.run(
+			{ query: "Lantern", routes: ["entity"] },
+			{ substringScanMaxNameFragments: 0 },
+		);
+		expect(route(long, "entity").status).toBe("ok");
+	});
+
 	test("candidates stop at the route budget and the answer says so", async () => {
 		const env = makeSearchEnv();
 		await ingestAll(

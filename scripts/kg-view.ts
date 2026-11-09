@@ -57,7 +57,9 @@ const data = {
 		names: n.names,
 		types: n.types,
 		m: n.mentionCount,
+		// The listed documents (at most 20) and how many there are in all.
 		docs: docs(n.documentIds),
+		docCount: n.documentCount,
 		summary: n.summary,
 	})),
 	edges: graph.edges.map((e) => ({
@@ -70,6 +72,7 @@ const data = {
 		cert: e.certainty,
 		m: e.mentionCount,
 		docs: docs(e.documentIds),
+		docCount: e.documentCount,
 	})),
 	evaluation: report.evaluation,
 };

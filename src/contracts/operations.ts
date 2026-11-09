@@ -179,6 +179,12 @@ export type SearchOptions = {
 	maxResponseBytes?: number;
 	/** Above this many searchable fragments a query under 3 characters is not scanned. Default 50,000. */
 	substringScanMaxFragments?: number;
+	/**
+	 * Above this many searchable fragments the routes of names and relations do not scan for a
+	 * query under 3 characters (`route_skipped`): their tables hold some 50 and 100 rows per
+	 * fragment (kg2.md §7.12). Default 5,000.
+	 */
+	substringScanMaxNameFragments?: number;
 	/** Same meaning as in `StatusOptions`. */
 	verifiedWithinMs: number;
 	maxUnappliedAttempts?: number;

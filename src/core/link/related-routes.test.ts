@@ -327,6 +327,7 @@ describe("fitting the graph answer", () => {
 			names: [`L${i}`],
 			types: ["名詞"],
 			mentionCount: 1,
+			documentCount: 1,
 			documentIds: [`d${i}`],
 			evidence: [],
 			decidedBy: [],
@@ -344,6 +345,7 @@ describe("fitting the graph answer", () => {
 			certainty: "stated" as const,
 			conditions: [],
 			mentionCount: 1,
+			documentCount: 1,
 			documentIds: [`d${i}`],
 			evidence: [],
 		}));

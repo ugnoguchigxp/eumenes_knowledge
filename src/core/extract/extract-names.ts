@@ -251,6 +251,10 @@ export function extractNames(
 		{ order: number; proper: boolean; key: string; occurrences: Span[] }
 	>();
 	for (const n of names) {
+		// A name with no key (nothing left after NFKC, lower case and white space) is no name:
+		// every mention of this extractor has a key, which the graph by keys relies on (§7.12).
+		const key = nameKey(n.key) || nameKey(n.surface);
+		if (key === "") continue;
 		const entry = byName.get(n.surface);
 		if (entry) {
 			entry.occurrences.push(n);
@@ -260,7 +264,7 @@ export function extractNames(
 				order: byName.size,
 				proper: n.proper,
 				// The first occurrence's key (a tokenizer may normalize one surface two ways).
-				key: nameKey(n.key) || nameKey(n.surface),
+				key,
 				occurrences: [n],
 			});
 	}

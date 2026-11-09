@@ -63,6 +63,7 @@ type ResolvedOptions = {
 	embeddingTimeoutMs: number;
 	maxResponseBytes: number;
 	substringScanMaxFragments: number;
+	substringScanMaxNameFragments: number;
 	verifiedWithinMs: number;
 	maxUnappliedAttempts: number | undefined;
 };
@@ -77,6 +78,7 @@ function resolveOptions(o: SearchOptions): ResolvedOptions {
 			o.queryEmbeddingTimeoutMs ?? DEFAULT_QUERY_EMBEDDING_TIMEOUT_MS,
 		maxResponseBytes: o.maxResponseBytes ?? SEARCH_LIMITS.responseBytes,
 		substringScanMaxFragments: o.substringScanMaxFragments ?? 50_000,
+		substringScanMaxNameFragments: o.substringScanMaxNameFragments ?? 5_000,
 		verifiedWithinMs: o.verifiedWithinMs,
 		maxUnappliedAttempts: o.maxUnappliedAttempts,
 	};
@@ -86,6 +88,7 @@ function resolveOptions(o: SearchOptions): ResolvedOptions {
 		!isInt(r.embeddingTimeoutMs, 1) ||
 		!isInt(r.maxResponseBytes, 0) ||
 		!isInt(r.substringScanMaxFragments, 0) ||
+		!isInt(r.substringScanMaxNameFragments, 0) ||
 		typeof r.verifiedWithinMs !== "number" ||
 		!Number.isFinite(r.verifiedWithinMs) ||
 		r.verifiedWithinMs < 0 ||
@@ -392,6 +395,9 @@ function searchInSnapshot(
 			? countSearchableFragmentsInSnapshot(db, namespaces)
 			: 0;
 	const scanAllowed = searchableFragments <= opts.substringScanMaxFragments;
+	// The tables of names and relations are tens of times larger than the fragments.
+	const nameScanAllowed =
+		scanAllowed && searchableFragments <= opts.substringScanMaxNameFragments;
 
 	let lexicalMode: SearchResponse["lexicalMode"] = "none";
 	const runs: RouteRun[] = [];
@@ -434,7 +440,7 @@ function searchInSnapshot(
 					route,
 					req.query,
 					short,
-					scanAllowed,
+					nameScanAllowed,
 					K,
 					namespaces,
 				),

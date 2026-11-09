@@ -108,7 +108,7 @@ export function readGraphLinksInSnapshot(
 FROM knowledge_entity_links l
 WHERE l.decision IN ('same', 'different')
  AND l.entity_a IN (SELECT value FROM json_each(?1))
- AND l.entity_b IN (SELECT value FROM json_each(?1))
+ AND +l.entity_b IN (SELECT value FROM json_each(?1))
 ORDER BY l.entity_a, l.entity_b`,
 		)
 		.all(ids(entityIds))
@@ -231,7 +231,7 @@ JOIN knowledge_relation_mentions r ON r.version_id = s.version_id
  AND r.fragment_ordinal = s.fragment_ordinal AND r.source_local_id = s.local_id
 JOIN knowledge_entity_mentions t ON t.version_id = r.version_id
  AND t.fragment_ordinal = r.fragment_ordinal AND t.local_id = r.target_local_id
-WHERE t.entity_id IN (SELECT value FROM json_each(?1))
+WHERE +t.entity_id IN (SELECT value FROM json_each(?1))
  AND NOT (s.name_key <> '' AND s.name_key = t.name_key)
 ORDER BY r.version_id, r.fragment_ordinal, r.local_id LIMIT ?2`,
 		)
@@ -303,5 +303,274 @@ ORDER BY e.subject_id, e.position`,
 			byteStart: r.byte_start,
 			byteEnd: r.byte_end,
 			quoteSha256: r.quote_sha256,
+		}));
+}
+
+// ---------------------------------------------------------------------------
+// The graph by identity keys (kg2.md §7.12): nodes and edges counted in SQL, so a scope of any
+// size is read whole, without reading every mention.
+// ---------------------------------------------------------------------------
+
+/**
+ * A group of current mentions: one identity key of one namespace, or one mention without a key
+ * (`solo` its entity id; 0 for a key).
+ */
+export type KeyGroup = { namespace: string; key: string; solo: number };
+
+export type KeyGroupCount = KeyGroup & {
+	mentions: number;
+	/** Documents (one published version each). */
+	documents: number;
+	/** The smallest entity id. */
+	anchor: number;
+	/** Whether a mention has one of the types asked for (always true when none is asked). */
+	typed: boolean;
+};
+
+/**
+ * Whether the graph of `namespaces` can be read by keys: every current document's published
+ * version was extracted by the model-free extractor (its mentions are joined by key alone), and
+ * no `same` or `different` judgment names a current mention of the scope (a judgment joins or
+ * splits mentions one by one: the graph is then read mention by mention).
+ */
+export function canReadGraphByKeysInSnapshot(
+	db: Tx,
+	namespaces: readonly string[],
+): boolean {
+	if (!Array.isArray(namespaces)) return invalid();
+	const scope = JSON.stringify(namespaces);
+	const other = db
+		.query(
+			`SELECT 1 AS x FROM knowledge_documents d
+JOIN knowledge_versions v ON v.version_id = d.published_version_id
+WHERE d.state = 'current' AND d.namespace IN (SELECT value FROM json_each(?1))
+ AND v.extractor NOT LIKE 'names:%' LIMIT 1`,
+		)
+		.get(scope);
+	if (other !== null) return false;
+	const judged = db
+		.query(
+			// From the judgments (few) to their mentions, never from every mention to the judgments.
+			`SELECT 1 AS x FROM knowledge_entity_links l
+CROSS JOIN knowledge_entity_mentions m CROSS JOIN knowledge_documents d
+WHERE l.decision IN ('same', 'different') AND (m.entity_id = l.entity_a OR m.entity_id = l.entity_b)
+ AND d.published_version_id = m.version_id AND d.state = 'current'
+ AND d.namespace IN (SELECT value FROM json_each(?1))
+LIMIT 1`,
+		)
+		.get(scope);
+	return judged === null;
+}
+
+/**
+ * Every group of the current mentions of `namespaces` with its counts. `types` (null: any)
+ * decides `typed`.
+ */
+export function readGraphKeyGroupsInSnapshot(
+	db: Tx,
+	namespaces: readonly string[],
+	types: readonly string[] | null,
+): KeyGroupCount[] {
+	if (!Array.isArray(namespaces) || (types !== null && !Array.isArray(types)))
+		return invalid();
+	if (namespaces.length === 0) return [];
+	return db
+		.query<{
+			namespace: string;
+			name_key: string;
+			solo: number;
+			mentions: number;
+			documents: number;
+			anchor: number;
+			typed: number;
+		}>(
+			`SELECT d.namespace, m.name_key, CASE WHEN m.name_key = '' THEN m.entity_id ELSE 0 END AS solo,
+ COUNT(*) AS mentions, COUNT(DISTINCT m.version_id) AS documents, MIN(m.entity_id) AS anchor,
+ MAX(?2 IS NULL OR m.type IN (SELECT value FROM json_each(?2))) AS typed
+FROM knowledge_documents d
+JOIN knowledge_entity_mentions m ON m.version_id = d.published_version_id
+WHERE d.state = 'current' AND d.namespace IN (SELECT value FROM json_each(?1))
+GROUP BY d.namespace, m.name_key, solo`,
+		)
+		.all(
+			JSON.stringify(namespaces),
+			types === null ? null : JSON.stringify(types),
+		)
+		.map((r) => ({
+			namespace: r.namespace,
+			key: r.name_key,
+			solo: r.solo,
+			mentions: r.mentions,
+			documents: r.documents,
+			anchor: r.anchor,
+			typed: r.typed === 1,
+		}));
+}
+
+/**
+ * Rows over the current mentions of the given groups: `select` and `tail` (a GROUP BY, an ORDER
+ * BY) see the mention as `m`, its document as `d`, and `g`, the group's index in `groups`. Keyed
+ * groups are found through the key index, groups of one mention by its id.
+ */
+function groupRows<T>(
+	db: Tx,
+	groups: readonly KeyGroup[],
+	select: string,
+	tail = "",
+): (T & { g: number })[] {
+	const keyed: [number, string, string][] = [];
+	const solos: [number, string, number][] = [];
+	groups.forEach((g, i) => {
+		if (g.solo === 0) keyed.push([i, g.namespace, g.key]);
+		else solos.push([i, g.namespace, g.solo]);
+	});
+	// CROSS JOIN keeps the order: each group's mentions through the index, then their documents
+	// (the planner would otherwise walk every document of the namespace for each group).
+	const run = (match: string, list: unknown[]) =>
+		list.length === 0
+			? []
+			: db
+					.query<T & { g: number }>(
+						`SELECT json_extract(c.value, '$[0]') AS g, ${select}
+FROM json_each(?1) c
+CROSS JOIN knowledge_entity_mentions m
+CROSS JOIN knowledge_documents d
+WHERE ${match} AND d.published_version_id = m.version_id AND d.state = 'current'
+ AND d.namespace = json_extract(c.value, '$[1]')
+${tail}`,
+					)
+					.all(JSON.stringify(list));
+	return [
+		...run(
+			"m.name_key = json_extract(c.value, '$[2]') AND m.name_key <> ''",
+			keyed,
+		),
+		...run("m.entity_id = json_extract(c.value, '$[2]')", solos),
+	];
+}
+
+/**
+ * What the groups' current mentions are, in one read: per group, document (published version),
+ * name and type, how many mentions and the first one. Names, types and documents of a node are
+ * all summed from these rows.
+ */
+export function readGraphKeyMentionStatsInSnapshot(
+	db: Tx,
+	groups: readonly KeyGroup[],
+): {
+	group: number;
+	versionId: number;
+	name: string;
+	type: string;
+	count: number;
+	first: number;
+}[] {
+	if (!Array.isArray(groups)) return invalid();
+	return groupRows<{
+		version_id: number;
+		name: string;
+		type: string;
+		count: number;
+		first: number;
+	}>(
+		db,
+		groups,
+		"m.version_id, m.name, m.type, COUNT(*) AS count, MIN(m.entity_id) AS first",
+		"GROUP BY g, m.version_id, m.name, m.type",
+	).map((r) => ({
+		group: r.g,
+		versionId: r.version_id,
+		name: r.name,
+		type: r.type,
+		count: r.count,
+		first: r.first,
+	}));
+}
+
+/** The first `n` current mentions (entity id order) of one group. */
+export function readGraphKeyFirstMentionsInSnapshot(
+	db: Tx,
+	group: KeyGroup,
+	n: number,
+): number[] {
+	if (!Number.isSafeInteger(n) || n < 1) return invalid();
+	const rows =
+		group.solo !== 0
+			? db
+					.query<{ entity_id: number }>(
+						`SELECT m.entity_id FROM knowledge_entity_mentions m ${CURRENT_MENTION_JOIN}
+WHERE m.entity_id = ?1 AND d.namespace = ?2`,
+					)
+					.all(group.solo, group.namespace)
+			: db
+					.query<{ entity_id: number }>(
+						`SELECT m.entity_id FROM knowledge_entity_mentions m CROSS JOIN knowledge_documents d
+WHERE m.name_key = ?1 AND m.name_key <> '' AND d.published_version_id = m.version_id
+ AND d.state = 'current' AND d.namespace = ?2
+ORDER BY m.entity_id LIMIT ?3`,
+					)
+					.all(group.key, group.namespace, n);
+	return rows.map((r) => r.entity_id);
+}
+
+export type KeyPair = {
+	namespace: string;
+	sourceKey: string;
+	targetKey: string;
+	directed: boolean;
+	negated: boolean;
+	certainty: GraphRelation["certainty"];
+	relation: string;
+	versionId: number;
+	mentions: number;
+	/** The pair's smallest relation ids in the version (at most 3), ascending. */
+	firstIds: number[];
+};
+
+/**
+ * The relation pairs (kg2.md §7.12) of current documents in `namespaces` whose two keys are both
+ * among `keys`, read by (source, target) through the pairs' index: a pair with any other key is
+ * never read. The caller drops a pair whose key is kept in another namespace only.
+ */
+export function readGraphKeyPairsInSnapshot(
+	db: Tx,
+	namespaces: readonly string[],
+	keys: readonly string[],
+): KeyPair[] {
+	if (!Array.isArray(namespaces) || !Array.isArray(keys)) return invalid();
+	if (namespaces.length === 0 || keys.length < 2) return [];
+	return db
+		.query<{
+			namespace: string;
+			source_key: string;
+			target_key: string;
+			directed: number;
+			negated: number;
+			certainty: GraphRelation["certainty"];
+			relation: string;
+			version_id: number;
+			mentions: number;
+			first_ids: string;
+		}>(
+			`SELECT d.namespace, p.source_key, p.target_key, p.directed, p.negated, p.certainty, p.relation,
+ p.version_id, p.mentions, p.first_ids
+FROM json_each(?1) a CROSS JOIN json_each(?1) b
+CROSS JOIN knowledge_relation_pairs p CROSS JOIN knowledge_documents d
+WHERE a.value <> b.value AND p.source_key = a.value AND p.target_key = b.value
+ AND d.published_version_id = p.version_id AND d.state = 'current'
+ AND d.namespace IN (SELECT value FROM json_each(?2))`,
+		)
+		.all(JSON.stringify([...new Set(keys)]), JSON.stringify(namespaces))
+		.map((r) => ({
+			namespace: r.namespace,
+			sourceKey: r.source_key,
+			targetKey: r.target_key,
+			directed: r.directed === 1,
+			negated: r.negated === 1,
+			certainty: r.certainty,
+			relation: r.relation,
+			versionId: r.version_id,
+			mentions: r.mentions,
+			firstIds: (JSON.parse(r.first_ids) as number[]).sort((x, y) => x - y),
 		}));
 }

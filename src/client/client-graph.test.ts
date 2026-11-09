@@ -50,6 +50,7 @@ const okAnswer = {
 			names: ["Acme"],
 			types: ["company"],
 			mentionCount: 1,
+			documentCount: 1,
 			documentIds: [DOC],
 			evidence: [point],
 			decidedBy: [],
