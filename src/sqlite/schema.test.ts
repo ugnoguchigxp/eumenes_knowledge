@@ -25,3 +25,33 @@ VALUES (1, 0, 'e1', 'Lantern', 'product', 'd')`,
 	).toHaveLength(1);
 	db.close();
 });
+
+test("the extractor migration keeps the versions written before it, recorded as '' (kg2.md G7)", () => {
+	const db = new Database(":memory:");
+	for (const m of migrations.slice(0, 3)) db.exec(m);
+	db.exec("PRAGMA foreign_keys = OFF");
+	db.run(
+		`INSERT INTO knowledge_versions (source_namespace, document_id, markdown_sha256, generation,
+ ingest_retry, namespace, byte_length, state, expected_fragments, instruction_digest, created_at)
+VALUES ('docling', 'd1', ?, 0, 0, 'wiki', 3, 'published', 1, 'x', 0)`,
+		["a".repeat(64)],
+	);
+	db.exec(migrations[3] as string);
+	expect(
+		db
+			.query(
+				"SELECT extractor, reextract_not_before, reextract_failures FROM knowledge_versions",
+			)
+			.all(),
+	).toEqual([
+		{ extractor: "", reextract_not_before: 0, reextract_failures: 0 },
+	]);
+	expect(
+		db
+			.query(
+				"SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'knowledge_versions_reextract'",
+			)
+			.all(),
+	).toHaveLength(1);
+	db.close();
+});

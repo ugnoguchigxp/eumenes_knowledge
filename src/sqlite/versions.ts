@@ -15,6 +15,7 @@ import {
 	type IngestExpectation,
 } from "./documents.js";
 import { DEFAULT_ORPHAN_STAGING_AFTER_MS } from "./defaults.js";
+import { bumpLinkGenerationInTransaction } from "./link-chain.js";
 import {
 	deleteLinkRowsInTransaction,
 	hasLinkRowsInTransaction,
@@ -49,6 +50,8 @@ export type VersionRow = DocumentKey & {
 	/** The vector space of the version, null until vectors were staged. */
 	spaceKey: string | null;
 	instructionDigest: string;
+	/** What extracted the version (`names:charclass@rules5`, ...); '' when not recorded. */
+	extractor: string;
 	/** At least one fragment's extraction failed. Set when the version is published. */
 	extractionPartial: boolean;
 	createdAt: number;
@@ -73,6 +76,7 @@ type RawVersion = {
 	extractions_written: number;
 	space_key: string | null;
 	instruction_digest: string;
+	extractor?: string;
 	extraction_partial: number;
 	created_at: number;
 	published_at: number | null;
@@ -96,6 +100,7 @@ export function toVersionRow(r: RawVersion): VersionRow {
 		extractionsWritten: r.extractions_written,
 		spaceKey: r.space_key,
 		instructionDigest: r.instruction_digest,
+		extractor: r.extractor ?? "",
 		extractionPartial: r.extraction_partial === 1,
 		createdAt: r.created_at,
 		publishedAt: r.published_at,
@@ -147,6 +152,8 @@ export type StagingTicket = IngestExpectation & {
 	expectedFragments: number;
 	/** Digest of the instruction set used for the extraction. */
 	instructionDigest: string;
+	/** What extracts the version (kg2.md G7); '' when not given. */
+	extractor?: string;
 };
 
 /**
@@ -169,6 +176,7 @@ export function createStagingVersionInTransaction(
 		!isCount(ticket.byteLength) ||
 		!isCount(ticket.expectedFragments) ||
 		!isText(ticket.instructionDigest) ||
+		(ticket.extractor !== undefined && typeof ticket.extractor !== "string") ||
 		!Number.isFinite(now)
 	) {
 		return invalid();
@@ -184,8 +192,8 @@ export function createStagingVersionInTransaction(
 		.query(
 			`INSERT INTO knowledge_versions (
  source_namespace, document_id, markdown_sha256, generation, ingest_retry, namespace,
- byte_length, state, expected_fragments, instruction_digest, created_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, 'staging', ?, ?, ?)`,
+ byte_length, state, expected_fragments, instruction_digest, created_at, extractor
+) VALUES (?, ?, ?, ?, ?, ?, ?, 'staging', ?, ?, ?, ?)`,
 		)
 		.run(
 			ticket.sourceNamespace,
@@ -198,6 +206,7 @@ export function createStagingVersionInTransaction(
 			ticket.expectedFragments,
 			ticket.instructionDigest,
 			now,
+			ticket.extractor ?? "",
 		);
 	return Number(r.lastInsertRowid);
 }
@@ -658,6 +667,212 @@ export function publishVersionInTransaction(
  extraction_partial = EXISTS (SELECT 1 FROM knowledge_extractions WHERE version_id = ?1 AND status = 'failed')
 WHERE version_id = ?1`,
 	).run(versionId, now);
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// Re-extraction (kg2.md G7): a published version extracted by another extractor
+// ---------------------------------------------------------------------------
+
+/** A published version of a `current` document whose extractor is not `extractor`. */
+export type ReextractTarget = IngestExpectation & { versionId: number };
+
+/**
+ * The oldest published version of a `current` document that `extractor` did not extract and
+ * that is not waiting after a failed re-extraction. A version whose extractor was not recorded
+ * ('') is never chosen, nor one without fragments (it has nothing to extract). The partial index
+ * `knowledge_versions_reextract` is read in two ranges (below and above `extractor`), so a
+ * database whose versions all have `extractor` reads nothing more.
+ */
+export function pickVersionToReextractInTransaction(
+	db: Tx,
+	extractor: string,
+	now: number,
+): ReextractTarget | null {
+	if (!isText(extractor) || !Number.isFinite(now)) return invalid();
+	const r = db
+		.query<{
+			version_id: number;
+			source_namespace: string;
+			document_id: string;
+			applied_markdown_sha256: string;
+			generation: number;
+			ingest_retry: number;
+			namespace: string;
+		}>(
+			`SELECT v.version_id, d.source_namespace, d.document_id, d.applied_markdown_sha256,
+ d.generation, d.ingest_retry, d.namespace
+FROM knowledge_versions v
+CROSS JOIN knowledge_documents d
+WHERE v.version_id IN (
+  SELECT version_id FROM knowledge_versions INDEXED BY knowledge_versions_reextract
+  WHERE state = 'published' AND extractor <> '' AND extractor < ?1
+  UNION ALL
+  SELECT version_id FROM knowledge_versions INDEXED BY knowledge_versions_reextract
+  WHERE state = 'published' AND extractor <> '' AND extractor > ?1)
+ AND d.published_version_id = v.version_id AND d.state = 'current'
+ AND v.reextract_not_before <= ?2 AND v.expected_fragments > 0
+ AND v.markdown_sha256 = d.applied_markdown_sha256
+ORDER BY v.version_id LIMIT 1`,
+		)
+		.get(extractor, now);
+	if (!r) return null;
+	return {
+		versionId: r.version_id,
+		sourceNamespace: r.source_namespace,
+		documentId: r.document_id,
+		markdownSha256: r.applied_markdown_sha256,
+		generation: r.generation,
+		retry: r.ingest_retry,
+		namespace: r.namespace,
+	};
+}
+
+/**
+ * After a re-extraction that did not publish (failed, cancelled, or the copy could not be made or
+ * published): the version is not chosen again before `now + baseDelayMs × 2^failures` (at most
+ * 64 times the base), so a version that keeps failing never keeps the chain busy.
+ */
+export function delayReextractInTransaction(
+	db: Tx,
+	versionId: number,
+	now: number,
+	baseDelayMs: number,
+): void {
+	if (
+		!Number.isSafeInteger(versionId) ||
+		!Number.isFinite(now) ||
+		!Number.isFinite(baseDelayMs) ||
+		baseDelayMs < 0
+	)
+		return invalid();
+	db.query(
+		`UPDATE knowledge_versions SET
+ reextract_not_before = ?2 + ?3 * (1 << MIN(reextract_failures, 6)),
+ reextract_failures = reextract_failures + 1
+WHERE version_id = ?1 AND state = 'published'`,
+	).run(versionId, Math.floor(now), Math.floor(baseDelayMs));
+}
+
+/** What a re-extraction copies from the published version: fragments, vectors and their space. */
+export type VersionToCopy = {
+	byteLength: number;
+	fragments: Fragment[];
+	vectors: { ordinal: number; vector: Float32Array }[];
+	space: EmbeddingSpace;
+};
+
+/** The fragments and vectors of a published version, or null when it is no longer published. */
+export function readVersionToCopyInTransaction(
+	db: Tx,
+	versionId: number,
+): VersionToCopy | null {
+	const v = getVersionInTransaction(db, versionId);
+	if (!v || v.state !== "published" || v.spaceKey === null) return null;
+	const space = db
+		.query<{
+			model_id: string;
+			revision: string;
+			artifact_digest: string;
+			dimension: number;
+			query_prefix: string;
+			passage_prefix: string;
+		}>("SELECT * FROM knowledge_embedding_spaces WHERE space_key = ?")
+		.get(v.spaceKey);
+	if (!space) return null;
+	const fragments = db
+		.query<{
+			ordinal: number;
+			byte_start: number;
+			byte_end: number;
+			heading_path: string;
+			text: string;
+		}>(
+			"SELECT ordinal, byte_start, byte_end, heading_path, text FROM knowledge_fragments WHERE version_id = ? ORDER BY ordinal",
+		)
+		.all(versionId)
+		.map((r) => ({
+			ordinal: r.ordinal,
+			byteStart: r.byte_start,
+			byteEnd: r.byte_end,
+			headingPath: JSON.parse(r.heading_path) as string[],
+			text: r.text,
+		}));
+	const vectors = db
+		.query<{ ordinal: number; vector: Uint8Array }>(
+			"SELECT ordinal, vector FROM knowledge_vectors WHERE version_id = ? AND space_key = ? ORDER BY ordinal",
+		)
+		.all(versionId, v.spaceKey)
+		.map((r) => ({ ordinal: r.ordinal, vector: decodeVector(r.vector) }));
+	return {
+		byteLength: v.byteLength,
+		fragments,
+		vectors,
+		space: {
+			modelId: space.model_id,
+			revision: space.revision,
+			artifactDigest: space.artifact_digest,
+			dimension: space.dimension,
+			queryPrefix: space.query_prefix,
+			passagePrefix: space.passage_prefix,
+		},
+	};
+}
+
+/**
+ * Publish a re-extracted version in place of the one it was copied from. Writes nothing and
+ * returns false unless all hold: the document is `current`, still publishes `previous`, and
+ * matches `expectation` (generation, applied sha, namespace); the new version is `staging`, of
+ * the same document and body, with every fragment, vector and extraction written. Then the new
+ * version is published and the previous one retired; the registry row is otherwise unchanged.
+ */
+export function republishVersionInTransaction(
+	db: Tx,
+	versionId: number,
+	previous: number,
+	expectation: IngestExpectation,
+	now: number,
+): boolean {
+	const v = getVersionInTransaction(db, versionId);
+	if (
+		!v ||
+		v.state !== "staging" ||
+		v.sourceNamespace !== expectation.sourceNamespace ||
+		v.documentId !== expectation.documentId ||
+		v.markdownSha256 !== expectation.markdownSha256 ||
+		v.namespace !== expectation.namespace ||
+		v.fragmentsWritten !== v.expectedFragments ||
+		v.vectorsWritten !== v.expectedFragments ||
+		v.extractionsWritten !== v.expectedFragments
+	) {
+		return false;
+	}
+	const r = db
+		.query(
+			`UPDATE knowledge_documents SET published_version_id = ?1, updated_at = ?2
+WHERE source_namespace = ?3 AND document_id = ?4 AND state = 'current' AND published_version_id = ?5
+ AND generation = ?6 AND applied_markdown_sha256 = ?7 AND namespace = ?8`,
+		)
+		.run(
+			versionId,
+			now,
+			expectation.sourceNamespace,
+			expectation.documentId,
+			previous,
+			expectation.generation,
+			expectation.markdownSha256,
+			expectation.namespace,
+		);
+	if (r.changes !== 1) return false;
+	db.query(
+		"UPDATE knowledge_versions SET state = 'retired', retired_at = ? WHERE version_id = ? AND state = 'published'",
+	).run(now, previous);
+	db.query(
+		`UPDATE knowledge_versions SET state = 'published', published_at = ?2,
+ extraction_partial = EXISTS (SELECT 1 FROM knowledge_extractions WHERE version_id = ?1 AND status = 'failed')
+WHERE version_id = ?1`,
+	).run(versionId, now);
+	bumpLinkGenerationInTransaction(db);
 	return true;
 }
 

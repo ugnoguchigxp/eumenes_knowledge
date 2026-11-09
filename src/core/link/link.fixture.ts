@@ -109,6 +109,9 @@ export function makeLinkEnv(
 		embedding,
 		writer,
 	};
+	// One value for every job (the sync-page job must see what the others do).
+	const extractor = ingestOptions.extractor ?? "model";
+	const summaries = linkOptions.summaries ?? true;
 	const env = {
 		db,
 		source,
@@ -118,11 +121,21 @@ export function makeLinkEnv(
 		embedding,
 		writer,
 		events,
+		// The model's extraction, identity and summaries (frozen since kg2.md G7, kept on request)
+		// unless a scenario asks for `extractor: "names"` or `summaries: false`.
 		sync: createSyncPageHandler(deps, {
 			summaryMinMentions: linkOptions.summaryMinMentions,
+			summaries,
+			extractor,
 		}),
-		ingest: createIngestNextHandler(deps, ingestOptions) as IngestNextHandler,
-		link: createLinkNextHandler(deps, linkOptions) as LinkNextHandler,
+		ingest: createIngestNextHandler(deps, {
+			...ingestOptions,
+			extractor,
+		}) as IngestNextHandler,
+		link: createLinkNextHandler(deps, {
+			...linkOptions,
+			summaries,
+		}) as LinkNextHandler,
 		decide: (m: MentionJson, c: MentionJson) =>
 			m.name === c.name ? "same" : "different",
 		linkAnswer: null,

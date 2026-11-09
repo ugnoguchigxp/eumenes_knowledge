@@ -79,6 +79,12 @@ export type HandlerDeps = {
 	jobs: JobSink;
 	clock: Clock;
 	events?: EventSink;
+	/**
+	 * The tokenizer of the model-free extractor (`extractor: "names"`, kg2.md §3.2). Default: the
+	 * package's `createCharclassTokenizer()` (no dictionary). The sync-page job reads its id too
+	 * (what extracted a version, kg2.md G7), so the same deps go to every job.
+	 */
+	tokenizer?: TokenizerPort;
 };
 
 /** Result of reading one listing page (opaque to the host apart from being serialisable). */
@@ -100,11 +106,6 @@ export type IngestDeps = HandlerDeps & {
 	inference: InferencePort;
 	embedding: EmbeddingPort;
 	writer: HostWriter;
-	/**
-	 * The tokenizer of the model-free extractor (`extractor: "names"`, kg2.md §3.2). Default: the
-	 * package's `createCharclassTokenizer()` (no dictionary).
-	 */
-	tokenizer?: TokenizerPort;
 };
 
 export type IngestOptions = {
@@ -116,7 +117,11 @@ export type IngestOptions = {
 	 * How fragments are extracted (kg2.md §3.1). `model`: the model's answer for each fragment
 	 * (instruction `extract`, checked by `verifyExtraction`). `names`: no model; names from the
 	 * tokenizer by the package's rules, and two names in one sentence as the relation `同じ文`
-	 * (`extractNames`). Default `model` (KG2 G7 makes `names` the default).
+	 * (`extractNames`). Default `names` (KG2 G7: the model's extraction is frozen, kept for a host
+	 * that asks for it). With `names`, a published version extracted by another extractor,
+	 * tokenizer or rules version is extracted again from its stored fragments (no source read, no
+	 * embedding), while the old version is still read. Hosts must pass the same value to the
+	 * sync-page job.
 	 */
 	extractor?: "model" | "names";
 	/** Additional extraction passes per fragment (p0.md #4). Default 0; only for `model`. */
@@ -218,6 +223,11 @@ export type LinkOptions = {
 	candidateMatch?: "name" | "text";
 	/** Mentions of one version compared per link of the chain. Default 200. */
 	maxMentionsPerVersion?: number;
+	/**
+	 * Whether entities are summarized by the model (instruction `summarize`). Default false (KG2
+	 * G7: frozen). Hosts must pass the same value to the sync-page job.
+	 */
+	summaries?: boolean;
 	/** An entity is summarized once this many current mentions from at least two documents are linked. Default 3. */
 	summaryMinMentions?: number;
 	/** Limit of one inference call, in milliseconds. Default 120,000. */

@@ -338,11 +338,17 @@ export function makeEnv(
 		inference,
 		embedding,
 		writer,
+		// These scenarios test the model's extraction (frozen since kg2.md G7, kept on request)
+		// unless they ask for `extractor: "names"`.
 		sync: createSyncPageHandler(deps, {
 			maxUnappliedAttempts: options.maxUnappliedAttempts,
+			extractor: options.extractor ?? "model",
 		}),
 		// The contract types the handler's input and output as `unknown`; the tests look inside.
-		ingest: createIngestNextHandler(deps, options) as IngestNextHandler,
+		ingest: createIngestNextHandler(deps, {
+			...options,
+			extractor: options.extractor ?? "model",
+		}) as IngestNextHandler,
 		events,
 	};
 }

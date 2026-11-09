@@ -22,6 +22,7 @@ import {
 	observeDocumentInTransaction,
 	openChainInTransaction,
 	pickNextDocumentInTransaction,
+	pickVersionToReextractInTransaction,
 	pruneScansInTransaction,
 	settleScanPageInTransaction,
 	supersedeRunningScansInTransaction,
@@ -30,6 +31,7 @@ import {
 	DEFAULT_SUMMARY_MIN_MENTIONS,
 	startLinkChainIfWorkInTransaction,
 } from "./link-start.js";
+import { DEFAULT_EXTRACTOR, extractorFingerprint } from "./extractor.js";
 import {
 	CHAIN_STALE_AFTER_MS,
 	DEFAULT_MAX_UNAPPLIED_ATTEMPTS,
@@ -47,6 +49,14 @@ export type SyncPageOptions = {
 	maxUnappliedAttempts?: number;
 	/** Must equal `LinkOptions.summaryMinMentions`. Default 3. */
 	summaryMinMentions?: number;
+	/** Must equal `LinkOptions.summaries`. Default false (kg2.md G7). */
+	summaries?: boolean;
+	/**
+	 * Must equal `IngestOptions.extractor` (the same deps' tokenizer too): published versions
+	 * another extractor extracted also start the ingest chain (they are extracted again). Default
+	 * `names`.
+	 */
+	extractor?: "model" | "names";
 };
 
 /**
@@ -62,6 +72,11 @@ export function createSyncPageHandler(
 		options.maxUnappliedAttempts ?? DEFAULT_MAX_UNAPPLIED_ATTEMPTS;
 	const summaryMinMentions =
 		options.summaryMinMentions ?? DEFAULT_SUMMARY_MIN_MENTIONS;
+	const summaries = options.summaries ?? false;
+	const extractor = options.extractor ?? DEFAULT_EXTRACTOR;
+	if (extractor !== "model" && extractor !== "names")
+		throw new KnowledgeError("invalid_input");
+	const fingerprint = extractorFingerprint(extractor, deps.tokenizer);
 	return {
 		kind: KNOWLEDGE_JOB_KINDS.syncPage,
 		payloadVersions: [1],
@@ -183,6 +198,8 @@ export function createSyncPageHandler(
 			if (
 				pickNextDocumentInTransaction(tx, { maxUnappliedAttempts, now }) !==
 					null ||
+				(extractor === "names" &&
+					pickVersionToReextractInTransaction(tx, fingerprint, now) !== null) ||
 				hasCleanupInTransaction(tx)
 			) {
 				const sweep = openChainInTransaction(tx, now, CHAIN_STALE_AFTER_MS);
@@ -200,7 +217,7 @@ export function createSyncPageHandler(
 			// Published versions nobody compared yet (or entities without a summary, checked once per
 			// scan) start the identity chain, unless a live link is open (p3.md 8).
 			startLinkChainIfWorkInTransaction(tx, deps.jobs, now, {
-				checkSummaries: listing.nextCursor === null,
+				checkSummaries: summaries && listing.nextCursor === null,
 				summaryMinMentions,
 			});
 			if (listing.nextCursor !== null) {

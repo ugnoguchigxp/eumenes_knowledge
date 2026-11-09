@@ -37,8 +37,12 @@ import {
 	hasCleanupInTransaction,
 	markDocumentUnavailableInTransaction,
 	markIngestSupersededInTransaction,
+	delayReextractInTransaction,
 	pickNextDocumentInTransaction,
+	pickVersionToReextractInTransaction,
 	publishVersionInTransaction,
+	readVersionToCopyInTransaction,
+	republishVersionInTransaction,
 	recordIngestFailureInTransaction,
 	recordTransientIngestFailureInTransaction,
 	setActiveIngestInTransaction,
@@ -70,6 +74,7 @@ import {
 	safeEmit,
 } from "../support.js";
 import { chunkMarkdown, normalizeForSearch } from "../text/index.js";
+import { DEFAULT_EXTRACTOR, extractorFingerprint } from "./extractor.js";
 import { startLinkChainInTransaction } from "./link-start.js";
 
 export const DEFAULT_MAX_DOCUMENT_BYTES = 8 * 1024 * 1024;
@@ -94,6 +99,18 @@ export type IngestNextInput =
 			binding: string;
 			target: IngestTarget;
 			/** The job's deadline (epoch ms), or null without one. */
+			deadlineAtMs: number | null;
+	  }
+	/**
+	 * A published version extracted by another extractor (kg2.md G7): extract its stored
+	 * fragments again and publish the result in its place.
+	 */
+	| {
+			mode: "reextract";
+			sweep: number;
+			/** The published version that is copied. */
+			versionId: number;
+			target: IngestTarget;
 			deadlineAtMs: number | null;
 	  }
 	/** No document to ingest, only retired or abandoned rows to delete. */
@@ -136,6 +153,24 @@ export const ingestNextOutputSchema = z.discriminatedUnion("kind", [
 		kind: z.literal("superseded"),
 		binding: z.string(),
 		target: targetSchema,
+	}),
+	/** A re-extracted copy of `previousVersionId`, staged as `versionId` (kg2.md G7). */
+	z.strictObject({
+		kind: z.literal("reextracted"),
+		versionId: z.number().int().min(1),
+		previousVersionId: z.number().int().min(1),
+		target: targetSchema,
+		stats: z.strictObject({
+			fragments: count,
+			extractionsOk: count,
+			extractionsFailed: count,
+			dropped: count,
+		}),
+	}),
+	/** The version to re-extract is no longer published: nothing was done. */
+	z.strictObject({
+		kind: z.literal("reextract_gone"),
+		previousVersionId: z.number().int().min(1),
 	}),
 	z.strictObject({ kind: z.literal("cleanup_only") }),
 ]);
@@ -181,10 +216,16 @@ function buildHandler(
 	const inferenceTimeoutMs =
 		options.inferenceTimeoutMs ?? DEFAULT_INFERENCE_TIMEOUT_MS;
 	const extractInstruction = instruction(EXTRACT_INSTRUCTION_ID);
-	const extractor = options.extractor ?? "model";
+	const extractor = options.extractor ?? DEFAULT_EXTRACTOR;
 	if (extractor !== "model" && extractor !== "names")
 		throw new KnowledgeError("invalid_input");
 	const tokenizer = deps.tokenizer ?? createCharclassTokenizer();
+	const fingerprint = extractorFingerprint(extractor, tokenizer);
+	/** Only the model-free extractor extracts published versions again (the model's is frozen). */
+	const pickReextract = (tx: Tx, now: number) =>
+		extractor === "names"
+			? pickVersionToReextractInTransaction(tx, fingerprint, now)
+			: null;
 
 	/**
 	 * An ingest ended without applying anything because of the content (digest, size, contract).
@@ -300,6 +341,7 @@ function buildHandler(
 
 	const hasWork = (tx: Tx, now: number) =>
 		pickNextDocumentInTransaction(tx, { maxUnappliedAttempts, now }) !== null ||
+		pickReextract(tx, now) !== null ||
 		hasCleanupInTransaction(tx);
 
 	return {
@@ -351,6 +393,22 @@ function buildHandler(
 					},
 				};
 			}
+			// Every waiting document first; then the versions another extractor extracted.
+			const reextract = pickReextract(tx, now);
+			if (reextract) {
+				const { versionId, ...target } = reextract;
+				setActiveIngestInTransaction(tx, sweep, target);
+				return {
+					status: "ready",
+					input: {
+						mode: "reextract",
+						sweep,
+						versionId,
+						target,
+						deadlineAtMs: claim.deadlineAtMs,
+					},
+				};
+			}
 			setActiveIngestInTransaction(tx, sweep, null);
 			if (hasCleanupInTransaction(tx)) {
 				return { status: "ready", input: { mode: "cleanup", sweep } };
@@ -361,6 +419,8 @@ function buildHandler(
 
 		async execute(input, context) {
 			if (input.mode === "cleanup") return { kind: "cleanup_only" };
+			if (input.mode === "reextract")
+				return reextractVersion(input, context.signal);
 			const { signal } = context;
 			const { target, sweep, binding } = input;
 			const assertBinding = () => {
@@ -458,6 +518,7 @@ function buildHandler(
 						byteLength: bytes.byteLength,
 						expectedFragments: fragments.length,
 						instructionDigest: INSTRUCTION_SET_DIGEST,
+						extractor: fingerprint,
 					},
 					deps.clock.now(),
 				);
@@ -474,41 +535,13 @@ function buildHandler(
 			}
 
 			// 3. Extract fragment by fragment; write the checked results in bundles.
-			const stats = { extractionsOk: 0, extractionsFailed: 0, dropped: 0 };
-			let pending: FragmentExtraction[] = [];
-			let pendingRows = 0;
-			const flush = async () => {
-				const items = pending;
-				pending = [];
-				pendingRows = 0;
-				if (items.length === 0) return;
-				await write((tx) =>
-					stageExtractionsInTransaction(tx, versionId, items),
-				);
-			};
-			for (const fragment of fragments) {
-				signal.throwIfAborted();
-				const extraction = await extractFragment(
-					fragment,
-					signal,
-					input.deadlineAtMs,
-				);
-				if (extraction.status === "ok") {
-					stats.extractionsOk += 1;
-					for (const d of extraction.dropped) stats.dropped += d.count;
-				} else {
-					stats.extractionsFailed += 1;
-				}
-				// A bundle is bounded by rows (the extraction, its mentions and evidence), not by fragments.
-				const rows = extractionRows(extraction);
-				if (pending.length > 0 && pendingRows + rows > STAGE_EXTRACTION_ROWS) {
-					await flush();
-				}
-				pending.push(extraction);
-				pendingRows += rows;
-				if (pendingRows >= STAGE_EXTRACTION_ROWS) await flush();
-			}
-			await flush();
+			const stats = await extractAndStage(
+				fragments,
+				versionId,
+				signal,
+				input.deadlineAtMs,
+				write,
+			);
 
 			// 4. Embed 64 passages at a time; the space must not change within one ingest.
 			let firstSpace: { key: string; space: EmbeddingSpace } | null = null;
@@ -566,10 +599,19 @@ function buildHandler(
 				// caused counts against the version; the rest (an interruption, an expiry, a failure
 				// of any other code) only delays the next pick.
 				const target =
-					input?.mode === "ingest"
+					input?.mode === "ingest" || input?.mode === "reextract"
 						? input.target
 						: getActiveIngestInTransaction(tx, sweep);
-				if (target) {
+				if (input?.mode === "reextract") {
+					// A failed re-extraction waits; the document keeps its version meanwhile.
+					discardStagingInTransaction(tx, input.target, now);
+					delayReextractInTransaction(
+						tx,
+						input.versionId,
+						now,
+						transientRetryDelayMs,
+					);
+				} else if (target) {
 					discardStagingInTransaction(tx, target, now);
 					if (
 						outcome.type === "failed" &&
@@ -624,8 +666,18 @@ function buildHandler(
 			// The cancel carries the sweep only; the tuple was recorded by prepare.
 			const target = getActiveIngestInTransaction(tx, sweep);
 			if (target) {
-				discardStagingInTransaction(tx, target, deps.clock.now());
-				delayRetry(tx, target, "cancelled");
+				const now = deps.clock.now();
+				discardStagingInTransaction(tx, target, now);
+				// A re-extraction's document is `current`: its published version waits instead.
+				const row = getDocumentInTransaction(tx, target);
+				if (row?.state === "current" && row.publishedVersionId !== null)
+					delayReextractInTransaction(
+						tx,
+						row.publishedVersionId,
+						now,
+						transientRetryDelayMs,
+					);
+				else delayRetry(tx, target, "cancelled");
 			}
 			if (closeChainInTransaction(tx, sweep)) {
 				safeEmit(deps.events, {
@@ -636,6 +688,130 @@ function buildHandler(
 			}
 		},
 	};
+
+	/** Extract the fragments one by one and write the checked results in bundles. */
+	async function extractAndStage(
+		fragments: readonly Fragment[],
+		versionId: number,
+		signal: AbortSignal,
+		deadlineAtMs: number | null,
+		write: <T>(operation: (tx: Tx) => T) => Promise<T>,
+	): Promise<{
+		extractionsOk: number;
+		extractionsFailed: number;
+		dropped: number;
+	}> {
+		const stats = { extractionsOk: 0, extractionsFailed: 0, dropped: 0 };
+		let pending: FragmentExtraction[] = [];
+		let pendingRows = 0;
+		const flush = async () => {
+			const items = pending;
+			pending = [];
+			pendingRows = 0;
+			if (items.length === 0) return;
+			await write((tx) => stageExtractionsInTransaction(tx, versionId, items));
+		};
+		for (const fragment of fragments) {
+			signal.throwIfAborted();
+			const extraction = await extractFragment(fragment, signal, deadlineAtMs);
+			if (extraction.status === "ok") {
+				stats.extractionsOk += 1;
+				for (const d of extraction.dropped) stats.dropped += d.count;
+			} else {
+				stats.extractionsFailed += 1;
+			}
+			// A bundle is bounded by rows (the extraction, its mentions and evidence), not by fragments.
+			const rows = extractionRows(extraction);
+			if (pending.length > 0 && pendingRows + rows > STAGE_EXTRACTION_ROWS) {
+				await flush();
+			}
+			pending.push(extraction);
+			pendingRows += rows;
+			if (pendingRows >= STAGE_EXTRACTION_ROWS) await flush();
+		}
+		await flush();
+		return stats;
+	}
+
+	/**
+	 * Re-extraction (kg2.md G7): copy the published version's fragments and vectors into a new
+	 * version (no source read, no embedding), extract them with this handler's extractor, and
+	 * return it for settle to publish in place of the old one. The old version is read meanwhile.
+	 */
+	async function reextractVersion(
+		input: Extract<IngestNextInput, { mode: "reextract" }>,
+		signal: AbortSignal,
+	): Promise<IngestNextOutput> {
+		const { sweep, target } = input;
+		const gone: IngestNextOutput = {
+			kind: "reextract_gone",
+			previousVersionId: input.versionId,
+		};
+		const write = <T>(operation: (tx: Tx) => T): Promise<T> =>
+			deps.writer.write((tx) => {
+				touchChainInTransaction(tx, sweep, deps.clock.now());
+				return operation(tx);
+			});
+		signal.throwIfAborted();
+		const copy = await write((tx) =>
+			getChainInTransaction(tx).openSweep === sweep
+				? readVersionToCopyInTransaction(tx, input.versionId)
+				: null,
+		);
+		if (!copy || copy.vectors.length !== copy.fragments.length) return gone;
+		const versionId = await write((tx) => {
+			if (getChainInTransaction(tx).openSweep !== sweep) return null;
+			const row = getDocumentInTransaction(tx, target);
+			if (
+				!row ||
+				row.state !== "current" ||
+				row.publishedVersionId !== input.versionId ||
+				row.generation !== target.generation
+			) {
+				return null;
+			}
+			return createStagingVersionInTransaction(
+				tx,
+				{
+					...target,
+					byteLength: copy.byteLength,
+					expectedFragments: copy.fragments.length,
+					instructionDigest: INSTRUCTION_SET_DIGEST,
+					extractor: fingerprint,
+				},
+				deps.clock.now(),
+			);
+		});
+		if (versionId === null) return gone;
+		for (const batch of batches(copy.fragments, STAGE_BATCH)) {
+			signal.throwIfAborted();
+			const items = batch.map((fragment) => ({
+				fragment,
+				searchText: normalizeForSearch(fragment.text),
+			}));
+			await write((tx) => stageFragmentsInTransaction(tx, versionId, items));
+		}
+		const stats = await extractAndStage(
+			copy.fragments,
+			versionId,
+			signal,
+			input.deadlineAtMs,
+			write,
+		);
+		for (const batch of batches(copy.vectors, MAX_EMBED_BATCH)) {
+			signal.throwIfAborted();
+			await write((tx) =>
+				stageVectorsInTransaction(tx, versionId, copy.space, batch),
+			);
+		}
+		return {
+			kind: "reextracted",
+			versionId,
+			previousVersionId: input.versionId,
+			target,
+			stats: { fragments: copy.fragments.length, ...stats },
+		};
+	}
 
 	function applySuccess(
 		tx: Tx,
@@ -648,6 +824,16 @@ function buildHandler(
 		const parsed = ingestNextOutputSchema.safeParse(raw);
 		if (!parsed.success) {
 			// An answer we cannot read is not applied; count it against what was prepared.
+			if (input?.mode === "reextract") {
+				discardStagingInTransaction(tx, input.target, now);
+				delayReextractInTransaction(
+					tx,
+					input.versionId,
+					now,
+					transientRetryDelayMs,
+				);
+				return "stale";
+			}
 			const target =
 				input?.mode === "ingest"
 					? input.target
@@ -660,6 +846,53 @@ function buildHandler(
 		}
 		const out = parsed.data;
 		if (out.kind === "cleanup_only") return "applied";
+		if (out.kind === "reextract_gone") {
+			// The copy could not be made (the version moved on, or lacks vectors or a space): wait,
+			// or the same version would be chosen again at once.
+			delayReextractInTransaction(
+				tx,
+				out.previousVersionId,
+				now,
+				transientRetryDelayMs,
+			);
+			return "stale";
+		}
+		if (out.kind === "reextracted") {
+			// Published in place of the copied version, only while the document still publishes it
+			// unchanged; otherwise the copy is given up (the document's own ingest follows).
+			if (
+				!republishVersionInTransaction(
+					tx,
+					out.versionId,
+					out.previousVersionId,
+					out.target,
+					now,
+				)
+			) {
+				abandonVersionInTransaction(tx, out.versionId, now);
+				delayReextractInTransaction(
+					tx,
+					out.previousVersionId,
+					now,
+					transientRetryDelayMs,
+				);
+				return "stale";
+			}
+			startLinkChainInTransaction(tx, deps.jobs, now);
+			safeEmit(deps.events, {
+				type: "knowledge.document.reextracted",
+				level: "info",
+				fields: {
+					documentId: out.target.documentId,
+					versionId: out.versionId,
+					previousVersionId: out.previousVersionId,
+					fragments: out.stats.fragments,
+					extractionsOk: out.stats.extractionsOk,
+					extractionsFailed: out.stats.extractionsFailed,
+				},
+			});
+			return "applied";
+		}
 		const target = out.target;
 
 		if (out.kind === "superseded") {

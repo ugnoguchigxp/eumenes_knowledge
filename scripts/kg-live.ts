@@ -1,7 +1,9 @@
-// `bun scripts/kg-live.ts`: the live run of kg.md (K4). Ingests the synthetic AI-memory corpus
-// (examples/corpus/ai-memory) through the example host with the real LARM (inference and
-// embedding), reads the knowledge graph through the API, checks every quotation it returns with
-// the evidence API, and compares the graph with the corpus' expected.json.
+// `bun scripts/kg-live.ts`: the live run of kg.md (K4) and kg2.md. Ingests a synthetic corpus
+// (examples/corpus/<name>) through the example host with the real LARM (embedding, and inference
+// when the model's path is asked for), reads the knowledge graph through the API, checks every
+// quotation it returns with the evidence API, and compares the graph with the corpus'
+// expected.json. By default the package's model-free extractor is used (kg2.md G7: the model's
+// extraction, identity and summaries are frozen; `--extract model` runs them).
 //
 // Not part of verify: it calls LARM. Documents are synthetic research notes, never personal ones.
 // Prompts, raw model answers and credentials are never printed or written; the log carries counts,
@@ -16,13 +18,15 @@
 //   --max-minutes <n>    stop waiting after this long (default 240)
 //   --reasoning default  leave the model's reasoning setting as served (default: off)
 //   --candidate-match text  identity candidates also by type and description (default: name)
-//   --relink <file>      start from the knowledge.db of an earlier run: its extraction is kept,
-//                        its identity links and summaries are dropped and made again (kg.md §7)
+//   --relink <file>      with --extract model: start from the knowledge.db of an earlier run: its
+//                        extraction is kept, its identity links and summaries are dropped and
+//                        made again (kg.md §7)
+//   --extract model      the model's extraction, identity and summaries (kg.md K4; frozen)
 //   --corpus <name>      the corpus under examples/corpus (default ai-memory); its expected.json
 //   --extract none       no model extraction (kg2.md G6): the inference port answers every
 //                        extraction with no entity and no relation, so the run only splits and
 //                        embeds (LARM's embedding is still used); kg-alt.ts reads the result
-//   --extract names      the package's model-free extractor (kg2.md G3: names and same-sentence
+//   --extract names      (default) the package's model-free extractor (kg2.md G3: names and same-sentence
 //                        relations from a tokenizer and rules); no model is asked: mentions of one
 //                        namespace with the same identity key are one node when read (G4), and
 //                        the identity chain compares none of them with the model
@@ -115,7 +119,7 @@ function parseArgs(argv: readonly string[]): Options {
 		candidateMatch: "name",
 		relink: null,
 		corpus: "ai-memory",
-		extract: "model",
+		extract: "names",
 		tokenizer: null,
 		jsModules: null,
 	};
@@ -136,7 +140,10 @@ function parseArgs(argv: readonly string[]): Options {
 		else if (flag === "--relink") options.relink = resolve(value);
 		else if (flag === "--corpus" && /^[a-z0-9-]+$/.test(value))
 			options.corpus = value;
-		else if (flag === "--extract" && (value === "none" || value === "names"))
+		else if (
+			flag === "--extract" &&
+			(value === "none" || value === "names" || value === "model")
+		)
 			options.extract = value;
 		else if (flag === "--tokenizer" && ENGINES.includes(value as Engine))
 			options.tokenizer = value as Engine;
@@ -330,6 +337,8 @@ async function main() {
 		inferenceTimeoutMs: INFERENCE_TIMEOUT_MS,
 		transientRetryDelayMs: RETRY_DELAY_MS,
 		candidateMatch: options.candidateMatch,
+		// The model's summaries (frozen) only on the model's path, as K4 ran them.
+		summaries: options.extract === "model",
 	};
 	const host = createExampleHost({
 		...(relinked ? { dir: relinked.dir } : {}),
@@ -341,7 +350,11 @@ async function main() {
 		embedding: larm.embedding,
 		...(tokenizer ? { tokenizer } : {}),
 		handlerFactories: [
-			(deps: IngestDeps) => createSyncPageHandler(deps, {}),
+			(deps: IngestDeps) =>
+				createSyncPageHandler(deps, {
+					extractor: ingestOptions.extractor,
+					summaries: linkOptions.summaries,
+				}),
 			(deps: IngestDeps) => createIngestNextHandler(deps, ingestOptions),
 			// --extract names: mentions with an identity key are never compared by the model, so
 			// the chain marks their versions compared without a call (kg2.md G4).

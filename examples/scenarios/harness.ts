@@ -224,6 +224,9 @@ export async function createScenario(options: ScenarioOptions = {}) {
 		clock,
 	});
 	const linkOptions: LinkOptions = options.linkOptions ?? {};
+	// One value for every job (the sync-page job must see what the others do).
+	const extractor = options.ingestOptions?.extractor ?? "model";
+	const summaries = linkOptions.summaries ?? true;
 	const embedding =
 		options.embedding ??
 		createMeaninglessHashEmbedding({ space: TEST_SPACE }).port;
@@ -243,14 +246,19 @@ export async function createScenario(options: ScenarioOptions = {}) {
 		inference: inference.port,
 		embedding,
 		handlerFactories: [
+			// The P2/P3 scenarios script the model's extraction, identity and summaries (frozen since
+			// kg2.md G7, kept on request); the KG2 scenarios ask for `extractor: "names"`.
 			(deps: IngestDeps) =>
 				createSyncPageHandler(deps, {
 					maxUnappliedAttempts: options.ingestOptions?.maxUnappliedAttempts,
 					summaryMinMentions: linkOptions.summaryMinMentions,
+					summaries,
+					extractor,
 				}),
 			(deps: IngestDeps) =>
-				createIngestNextHandler(deps, options.ingestOptions),
-			(deps: IngestDeps) => createLinkNextHandler(deps, linkOptions),
+				createIngestNextHandler(deps, { ...options.ingestOptions, extractor }),
+			(deps: IngestDeps) =>
+				createLinkNextHandler(deps, { ...linkOptions, summaries }),
 		],
 		readStatusInSnapshot,
 		readScanInSnapshot,

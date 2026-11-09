@@ -174,12 +174,16 @@ function buildHandler(deps: IngestDeps, options: LinkOptions): LinkNextHandler {
 		version: summarizeInstruction.version,
 	};
 
+	// Summaries are the model's (instruction `summarize`): frozen unless the host asks (kg2.md G7).
+	const summaries = options.summaries ?? false;
 	const pickSummary = (tx: Tx, now: number) =>
-		pickSummaryWorkInTransaction(tx, {
-			minMentions: summaryMinMentions,
-			maxMentions: MAX_SUMMARY_MENTIONS,
-			now,
-		});
+		summaries
+			? pickSummaryWorkInTransaction(tx, {
+					minMentions: summaryMinMentions,
+					maxMentions: MAX_SUMMARY_MENTIONS,
+					now,
+				})
+			: null;
 	const hasWork = (tx: Tx, now: number) =>
 		pickVersionToCompareInTransaction(tx, now) !== null ||
 		pickSummary(tx, now) !== null;

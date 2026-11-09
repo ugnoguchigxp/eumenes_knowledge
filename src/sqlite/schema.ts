@@ -282,4 +282,12 @@ INSERT INTO knowledge_link_chain (id, next_sweep) VALUES (1, 1);`,
 	// or a row written before this) joins nothing by key.
 	`ALTER TABLE knowledge_entity_mentions ADD COLUMN name_key TEXT NOT NULL DEFAULT '';
 CREATE INDEX knowledge_entity_mentions_name_key ON knowledge_entity_mentions(name_key) WHERE name_key <> '';`,
+	// KG2 G7: what extracted a version (`names:<tokenizer>@rules<n>`, `model:<instruction>`; ''
+	// for a version written before this, never extracted again for it), when a failed
+	// re-extraction may be tried again (epoch ms) and how many failed in a row (the wait doubles).
+	// The index finds the published versions of another extractor without reading the others.
+	`ALTER TABLE knowledge_versions ADD COLUMN extractor TEXT NOT NULL DEFAULT '';
+ALTER TABLE knowledge_versions ADD COLUMN reextract_not_before INTEGER NOT NULL DEFAULT 0 CHECK (reextract_not_before >= 0);
+ALTER TABLE knowledge_versions ADD COLUMN reextract_failures INTEGER NOT NULL DEFAULT 0 CHECK (reextract_failures >= 0);
+CREATE INDEX knowledge_versions_reextract ON knowledge_versions(extractor, version_id) WHERE state = 'published' AND extractor <> '';`,
 ];
