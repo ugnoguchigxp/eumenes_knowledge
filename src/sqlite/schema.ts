@@ -277,4 +277,9 @@ CREATE TABLE knowledge_link_chain (
  CHECK ((active_kind IS NULL) = (active_id IS NULL))
 );
 INSERT INTO knowledge_link_chain (id, next_sweep) VALUES (1, 1);`,
+	// KG2 G4: the identity key a model-free extractor gives a mention (kg2.md §3.3). Mentions of
+	// one namespace with the same non-empty key are one entity when read; '' (a model's mention,
+	// or a row written before this) joins nothing by key.
+	`ALTER TABLE knowledge_entity_mentions ADD COLUMN name_key TEXT NOT NULL DEFAULT '';
+CREATE INDEX knowledge_entity_mentions_name_key ON knowledge_entity_mentions(name_key) WHERE name_key <> '';`,
 ];

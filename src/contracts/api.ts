@@ -428,8 +428,10 @@ export const graphResponseSchema = z.strictObject({
 	),
 	/**
 	 * One node per entity: the current mentions in the caller's scope joined by `same` links whose
-	 * both ends are in scope (a mention outside never joins two inside). A `same` link that would put
-	 * two mentions judged `different` into one node is not used (`linking_conflict`).
+	 * both ends are in scope (a mention outside never joins two inside), and by identity key (the
+	 * mentions of one namespace with the same model-free key; `decidedBy` names it `name_key`). A
+	 * `same` link that would put two mentions judged `different` into one node is not used
+	 * (`linking_conflict`); a key join judged `different` is not made.
 	 */
 	nodes: z.array(
 		z.strictObject({

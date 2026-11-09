@@ -23,10 +23,9 @@
 //                        extraction with no entity and no relation, so the run only splits and
 //                        embeds (LARM's embedding is still used); kg-alt.ts reads the result
 //   --extract names      the package's model-free extractor (kg2.md G3: names and same-sentence
-//                        relations from a tokenizer and rules); no model is asked and the identity
-//                        chain (knowledge.link-next) does no work (its jobs end at prepare; kg2.md
-//                        G4 replaces it), so the graph has no identity links: kg-keys.ts joins the
-//                        mentions by their keys from the knowledge.db
+//                        relations from a tokenizer and rules); no model is asked: mentions of one
+//                        namespace with the same identity key are one node when read (G4), and
+//                        the identity chain compares none of them with the model
 //   --tokenizer <engine> with --extract names: charclass (default, no dictionary), sudachi-napi,
 //                        kuromoji or lindera (scripts/kg-alt/candidates.ts; all but charclass need
 //                        --js-modules <dir>, sudachi-napi also NAPI_SUDACHI_ROOT and SUDACHI_DICT_PATH)
@@ -77,6 +76,7 @@ import {
 	readGraphFitting,
 	env,
 	evaluate,
+	fullGraph,
 	type Expected,
 	graphStats,
 	linkingStats,
@@ -343,21 +343,9 @@ async function main() {
 		handlerFactories: [
 			(deps: IngestDeps) => createSyncPageHandler(deps, {}),
 			(deps: IngestDeps) => createIngestNextHandler(deps, ingestOptions),
-			// --extract names: the identity chain's jobs are still accepted (the host refuses a kind
-			// without a handler, which would fail the publication) and end at prepare without work;
-			// kg2.md G4 is its model-free replacement.
-			(deps: IngestDeps) => {
-				const link = createLinkNextHandler(deps, linkOptions);
-				return tokenizer
-					? {
-							...link,
-							prepareInTransaction: () => ({
-								status: "stale" as const,
-								reason: "names_extractor_no_identity_chain",
-							}),
-						}
-					: link;
-			},
+			// --extract names: mentions with an identity key are never compared by the model, so
+			// the chain marks their versions compared without a call (kg2.md G4).
+			(deps: IngestDeps) => createLinkNextHandler(deps, linkOptions),
 		],
 		readStatusInSnapshot,
 		readScanInSnapshot,
@@ -460,6 +448,11 @@ async function main() {
 		);
 		const docIdByPath = new Map(documents.map((d) => [d.path, d.document_id]));
 		const evaluation = evaluate(graph, expected, corpus, docIdByPath);
+		// Every name of every mention (the graph API lists at most 10 names per node and may have
+		// been read at smaller limits): the same joins, read from the database.
+		const evaluationAllNames = host.store.read(
+			(db) => evaluate(fullGraph(db), expected, corpus, docIdByPath).summary,
+		);
 		const jobs = host.runner.listJobs();
 		const jobStates: Record<string, number> = {};
 		for (const j of jobs)
@@ -471,7 +464,7 @@ async function main() {
 				options.extract === "none"
 					? "Synthetic notes split and embedded through LARM; no extraction (every extraction answer was empty, no model was asked). A single run: not a benchmark."
 					: options.extract === "names"
-						? "Synthetic notes ingested with the model-free extractor (names and same-sentence relations from a tokenizer and rules) and embedded through LARM; no model was asked and no identity link was made, so the graph's nodes are not joined across mentions (kg-keys.ts joins them by key). A single run: not a benchmark."
+						? "Synthetic notes ingested with the model-free extractor (names and same-sentence relations from a tokenizer and rules, mentions joined by identity key when read) and embedded through LARM; no model was asked. A single run: not a benchmark."
 						: "Synthetic research notes ingested with a real model through LARM. A single run: not a benchmark.",
 			corpusName: options.corpus,
 			extract: options.extract,
@@ -523,6 +516,7 @@ async function main() {
 			},
 			evidence,
 			evaluation,
+			evaluationAllNames,
 		};
 		// "wx": an earlier run's files are never overwritten.
 		await writeFile(
@@ -547,6 +541,7 @@ async function main() {
 		log(`wrote ${join(out, "graph.json")}, report.json and knowledge.db`);
 		log(`linking: ${JSON.stringify(linking)}`);
 		log(`evaluation: ${JSON.stringify(evaluation.summary)}`);
+		log(`evaluation (all names): ${JSON.stringify(evaluationAllNames)}`);
 		log(`evidence: ${JSON.stringify(evidence)}`);
 	} finally {
 		await host.close();

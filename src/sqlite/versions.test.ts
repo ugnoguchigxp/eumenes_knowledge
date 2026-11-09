@@ -740,7 +740,42 @@ describe("staging validation", () => {
 		});
 		bad({ fragmentOrdinal: 5, status: "failed", errorCode: "x", model: null });
 		bad({ fragmentOrdinal: 0, status: "failed", errorCode: "", model: null });
+		// An identity key is a non-empty string of at most keyChars.
+		for (const key of ["", "k".repeat(401), 7 as never]) {
+			bad({
+				fragmentOrdinal: 0,
+				status: "ok",
+				entities: [{ ...ent, key }],
+				relations: [],
+				dropped: [],
+				model: null,
+			});
+		}
 		expect(count(db, "knowledge_extractions")).toBe(0);
+		// The key is stored with the mention; a mention without one stores ''.
+		stageExtractionsInTransaction(db, id, [
+			{
+				fragmentOrdinal: 0,
+				status: "ok",
+				entities: [
+					{ ...ent, key: "lantern" },
+					{ ...ent, id: "e2" },
+				],
+				relations: [],
+				dropped: [],
+				model: "names:charclass@rules5",
+			},
+		]);
+		expect(
+			db
+				.query(
+					"SELECT local_id, name_key FROM knowledge_entity_mentions ORDER BY local_id",
+				)
+				.all(),
+		).toEqual([
+			{ local_id: "e1", name_key: "lantern" },
+			{ local_id: "e2", name_key: "" },
+		]);
 	});
 
 	test("evidence must lie inside its fragment's byte range", () => {

@@ -22,6 +22,7 @@ import {
 } from "../../sqlite/graph.js";
 import {
 	MAX_SUMMARY_MEMBERS,
+	NAME_KEY_PROVENANCE,
 	clusterDigest,
 	countUncomparedVersionsInSnapshot,
 	countVersionsWithFailedMentionsInSnapshot,
@@ -42,15 +43,18 @@ type Provenance = Node["decidedBy"][number];
 /**
  * The knowledge graph of the caller's scope, read from one snapshot (nothing is written).
  *
- * Nodes are the components of `same` links among the current mentions the caller may read,
- * under that caller's `different` judgments as cannot-link constraints (a `same` link that
- * would put two mentions judged `different` into one node is not used: `linking_conflict`).
+ * Nodes are the components of `same` links and of identity keys (mentions of one namespace with
+ * the same model-free key, kg2.md §3.3) among the current mentions the caller may read, under
+ * that caller's `different` judgments as cannot-link constraints (a stored `same` link that would
+ * put two mentions judged `different` into one node is not used: `linking_conflict`; a key join
+ * judged `different` is simply not made).
  * Everything is computed over that read set alone, so a mention outside the scope never joins
  * or splits anything inside and nothing about it shows. Edges are the relation mentions of the
  * same versions whose two ends are read mentions of returned nodes, grouped by the two nodes,
  * direction, normalized relation name, negation and certainty. Whether mentions are the same
- * entity is the model's judgment (the links, with `decidedBy`); this code joins by
- * connectivity and counts only. Node and edge ids are ordinals of the returned order.
+ * entity is a model's or a person's judgment (the links) or the model-free extractor's key
+ * (`name_key`), each named in `decidedBy`; this code joins by connectivity and counts only.
+ * Node and edge ids are ordinals of the returned order.
  */
 export const readGraph: ReadGraph = (deps, access, request) => {
 	const parsed = graphRequestSchema.safeParse(request);
@@ -138,14 +142,17 @@ function pickEvidence(points: readonly Point[]): EvidencePoint[] {
 }
 
 /**
- * Components of the read mentions joined by `same` links under the `different` judgments as
+ * Components of the read mentions joined by `same` links and by identity key (mentions of one
+ * namespace with the same model-free key, kg2.md §3.3), under the `different` judgments as
  * cannot-link constraints (`constrainedComponents`, the rule shared with the identity chain).
- * The links come in (entity_a, entity_b) order.
+ * The links come in (entity_a, entity_b) order. `rejected` counts the stored `same` links that a
+ * `different` judgment overruled; a key join a person judged `different` is simply not made.
  */
 function components(
 	mentions: readonly GraphMention[],
 	links: ReturnType<typeof readGraphLinksInSnapshot>,
 	documentOf: (versionId: number) => string,
+	namespaceOf: (versionId: number) => string,
 ): { list: Component[]; ofEntity: Map<number, Component>; rejected: number } {
 	const index = new Map<number, number>();
 	mentions.forEach((m, i) => index.set(m.entityId, i));
@@ -161,6 +168,32 @@ function components(
 		if (link.decision === "different") different.push([a, b]);
 		else sameLinks.push({ a, b, link });
 	}
+	const stored = sameLinks.length;
+	// Key joins: each mention of a (namespace, key) group to the group's first (smallest id).
+	const byKey = new Map<string, number[]>();
+	mentions.forEach((m, i) => {
+		if (m.nameKey === "") return;
+		const key = `${namespaceOf(m.versionId)}\u0000${m.nameKey}`;
+		const group = byKey.get(key);
+		if (group) group.push(i);
+		else byKey.set(key, [i]);
+	});
+	for (const [first, ...others] of byKey.values()) {
+		const a = mentions[first as number] as GraphMention;
+		for (const i of others) {
+			const b = mentions[i] as GraphMention;
+			sameLinks.push({
+				a: first as number,
+				b: i,
+				link: {
+					a: a.entityId,
+					b: b.entityId,
+					decision: "same",
+					...NAME_KEY_PROVENANCE,
+				},
+			});
+		}
+	}
 	const joined = constrainedComponents(
 		norm,
 		sameLinks.map((l) => [l.a, l.b] as const),
@@ -170,7 +203,9 @@ function components(
 	const used = joined.used.map(
 		(i) => (sameLinks[i] as { link: GraphLink }).link,
 	);
-	const rejected = joined.rejected;
+	const usedSet = new Set(joined.used);
+	let rejected = 0;
+	for (let i = 0; i < stored; i++) if (!usedSet.has(i)) rejected++;
 	const byComp = new Map<number, Component>();
 	const ofEntity = new Map<number, Component>();
 	mentions.forEach((m, i) => {
@@ -229,7 +264,12 @@ function compute(db: Tx, p: Params): GraphResponse {
 		db,
 		read.mentions.map((m) => m.entityId),
 	);
-	const all = components(read.mentions, links, documentOf);
+	const all = components(
+		read.mentions,
+		links,
+		documentOf,
+		(versionId) => (documents.get(versionId) as GraphDocument).namespace,
+	);
 	if (all.rejected > 0) reasons.add("linking_conflict");
 
 	// Nodes: more mentions, then more documents, then the label, then the smallest member id
@@ -477,10 +517,13 @@ function summaryOf(db: Tx, c: Component): string | null {
 	const ids = c.members.map((m) => m.entityId);
 	const stored = readSummaryInSnapshot(db, c.anchor, clusterDigest(ids));
 	if (!stored) return null;
+	// Summaries are made for clusters of stored links; a node a key join made larger has none.
 	const whole = readSameClusterInTransaction(
 		db,
 		c.anchor,
 		MAX_SUMMARY_MEMBERS + 1,
+		undefined,
+		{ keys: false },
 	);
 	if (whole.truncated || whole.members.length !== ids.length) return null;
 	return stored.summary;

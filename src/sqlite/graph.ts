@@ -25,6 +25,8 @@ export type GraphMention = {
 	name: string;
 	/** NFKC + lower case of the name, as stored for candidate matching; may be empty on old rows. */
 	nameNorm: string;
+	/** The model-free extractor's identity key (kg2.md §3.3); '' for a model's mention. */
+	nameKey: string;
 	type: string;
 };
 
@@ -49,9 +51,10 @@ export function readGraphMentionsInSnapshot(
 			local_id: string;
 			name: string;
 			name_norm: string;
+			name_key: string;
 			type: string;
 		}>(
-			`SELECT m.entity_id, m.version_id, m.fragment_ordinal, m.local_id, m.name, m.name_norm, m.type
+			`SELECT m.entity_id, m.version_id, m.fragment_ordinal, m.local_id, m.name, m.name_norm, m.name_key, m.type
 FROM knowledge_entity_mentions m ${CURRENT_MENTION_JOIN}
 WHERE d.namespace IN (SELECT value FROM json_each(?1))
 ORDER BY m.entity_id LIMIT ?2`,
@@ -65,6 +68,7 @@ ORDER BY m.entity_id LIMIT ?2`,
 			localId: r.local_id,
 			name: r.name,
 			nameNorm: r.name_norm,
+			nameKey: r.name_key,
 			type: r.type,
 		})),
 		truncated: rows.length > cap,

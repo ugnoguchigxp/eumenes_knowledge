@@ -9,6 +9,7 @@ import {
 } from "../../contracts/index-data.js";
 import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
 import { sha256Hex } from "../bytes.js";
+import { normalizeForSearch } from "../text/normalize.js";
 import { blankOut, NAME_RULES_VERSION, namesFromTokens } from "./names.js";
 
 /** Limits of one fragment's model-free extraction; what is beyond is counted as `over_limit`. */
@@ -26,6 +27,13 @@ export const SAME_SENTENCE_RELATION = "同じ文";
 
 /** Entity types of the model-free extractor: a proper name, or any other noun run. */
 export const NAME_TYPES = { proper: "固有名", noun: "名詞" } as const;
+
+/**
+ * The identity key of a name (kg2.md §3.3): the tokenizer's normalized forms joined (ASCII words
+ * as written), NFKC, lower case, white space removed. Equal keys of one namespace are one entity.
+ */
+export const nameKey = (key: string): string =>
+	normalizeForSearch(key).replace(/\s+/gu, "");
 
 /** The `model` recorded with a model-free extraction: the tokenizer and the rules' version. */
 export const namesModel = (tokenizer: Pick<TokenizerPort, "id">): string =>
@@ -184,7 +192,7 @@ export function extractNames(
 	// Entities: one per name (by its blanked surface), in the order of first occurrence.
 	const byName = new Map<
 		string,
-		{ order: number; proper: boolean; occurrences: Span[] }
+		{ order: number; proper: boolean; key: string; occurrences: Span[] }
 	>();
 	for (const n of names) {
 		const entry = byName.get(n.surface);
@@ -195,6 +203,8 @@ export function extractNames(
 			byName.set(n.surface, {
 				order: byName.size,
 				proper: n.proper,
+				// The first occurrence's key (a tokenizer may normalize one surface two ways).
+				key: nameKey(n.key) || nameKey(n.surface),
 				occurrences: [n],
 			});
 	}
@@ -223,6 +233,7 @@ export function extractNames(
 			type: e.proper ? NAME_TYPES.proper : NAME_TYPES.noun,
 			description: "",
 			evidence: e.evidence,
+			key: e.key.slice(0, EXTRACTION_LIMITS.keyChars),
 		};
 	});
 	function quotesOf(e: { occurrences: Span[] }): EvidenceRange[] {

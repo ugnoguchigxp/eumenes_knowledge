@@ -39,6 +39,8 @@ export const EXTRACTION_LIMITS = {
 	keywords: 10,
 	keywordChars: 60,
 	conditionChars: 300,
+	/** An identity key (`VerifiedEntity.key`). */
+	keyChars: 400,
 } as const;
 
 const L = EXTRACTION_LIMITS;
@@ -108,6 +110,12 @@ export type EvidenceRange = {
 
 export type VerifiedEntity = Omit<ExtractionEntity, "evidence"> & {
 	evidence: EvidenceRange[];
+	/**
+	 * The identity key the model-free extractor gives (kg2.md §3.3): the tokenizer's normalized
+	 * forms joined, NFKC, lower case, white space removed. Mentions of one namespace with the same
+	 * key are one entity when read. Absent for a model's extraction (the model's links decide).
+	 */
+	key?: string;
 };
 export type VerifiedRelation = Omit<ExtractionRelation, "evidence"> & {
 	evidence: EvidenceRange[];

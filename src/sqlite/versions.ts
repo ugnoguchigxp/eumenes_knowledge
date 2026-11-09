@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+	EXTRACTION_LIMITS,
 	KnowledgeError,
 	embeddingSpaceKey,
 	type EmbeddingSpace,
@@ -412,6 +413,13 @@ function checkExtraction(x: FragmentExtraction, expected: number): void {
 	const entityIds = new Set<string>();
 	for (const e of x.entities) {
 		if (entityIds.has(e.id) || e.evidence.length === 0) return invalid();
+		if (
+			e.key !== undefined &&
+			(typeof e.key !== "string" ||
+				e.key.length === 0 ||
+				e.key.length > EXTRACTION_LIMITS.keyChars)
+		)
+			return invalid();
 		entityIds.add(e.id);
 		for (const ev of e.evidence) checkEvidence(ev, x.fragmentOrdinal);
 	}
@@ -478,8 +486,8 @@ export function stageExtractionsInTransaction(
 	);
 	const insertEntity = db.query(
 		`INSERT INTO knowledge_entity_mentions (
- version_id, fragment_ordinal, local_id, name, type, description, name_norm
-) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+ version_id, fragment_ordinal, local_id, name, type, description, name_norm, name_key
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 	);
 	const insertRelation = db.query(
 		`INSERT INTO knowledge_relation_mentions (
@@ -549,6 +557,7 @@ export function stageExtractionsInTransaction(
 				e.type,
 				e.description,
 				mentionSearchText([e.name]),
+				e.key ?? "",
 			);
 			indexEntity.run(
 				r.lastInsertRowid,

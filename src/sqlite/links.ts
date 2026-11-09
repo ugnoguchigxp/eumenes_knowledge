@@ -33,6 +33,16 @@ export const MAX_SUMMARY_MEMBERS = 100;
 export const MAX_RELATED_STARTS = 1_000;
 
 export type LinkDecision = "same" | "different" | "unsure";
+
+/**
+ * The provenance of a join by identity key (kg2.md §3.3): mentions of one namespace with the same
+ * model-free key are one entity. Not stored as links; readers add these joins as they read.
+ */
+export const NAME_KEY_PROVENANCE = {
+	model: null,
+	instructionId: "name_key",
+	instructionVersion: 1,
+} as const;
 export type LinkProvenance = {
 	model: string | null;
 	instructionId: string;
@@ -103,7 +113,10 @@ WHERE d.published_version_id = ? AND d.state = 'current'`,
 	);
 }
 
-/** Up to `limit` mentions of the version with an id above `afterEntityId`, in id order. */
+/**
+ * Up to `limit` mentions of the version with an id above `afterEntityId`, in id order. Mentions
+ * with an identity key are not compared by the model (they join by key when read, kg2.md §3.3).
+ */
 export function listMentionsAfterInTransaction(
 	db: Tx,
 	versionId: number,
@@ -114,7 +127,7 @@ export function listMentionsAfterInTransaction(
 	return db
 		.query<RawMention>(
 			`SELECT ${MENTION_COLUMNS} FROM knowledge_entity_mentions m
-WHERE m.version_id = ? AND m.entity_id > ? ORDER BY m.entity_id LIMIT ?`,
+WHERE m.version_id = ? AND m.entity_id > ? AND m.name_key = '' ORDER BY m.entity_id LIMIT ?`,
 		)
 		.all(versionId, afterEntityId, limit)
 		.map(toMention);
@@ -128,7 +141,7 @@ export function hasMentionsAfterInTransaction(
 	return (
 		db
 			.query(
-				"SELECT 1 AS x FROM knowledge_entity_mentions WHERE version_id = ? AND entity_id > ? LIMIT 1",
+				"SELECT 1 AS x FROM knowledge_entity_mentions WHERE version_id = ? AND entity_id > ? AND name_key = '' LIMIT 1",
 			)
 			.get(versionId, afterEntityId) !== null
 	);
@@ -220,7 +233,8 @@ const NOT_DECIDED = `NOT EXISTS (SELECT 1 FROM knowledge_entity_links l
  * `match` says. Other documents' mentions qualify, and so do mentions of the same document's
  * same version that sit in a different fragment (a mention in the same fragment never does: it
  * was told apart by the one extraction that produced it). Both kinds share one ordering. A pair
- * that already has a decision is never returned. At most `limit`; empty when the mention is not
+ * that already has a decision is never returned. A mention with an identity key is never a
+ * candidate (it joins by key, not by the model). At most `limit`; empty when the mention is not
  * current.
  */
 export function readLinkCandidatesInTransaction(
@@ -262,7 +276,7 @@ FROM knowledge_entity_mentions m ${CURRENT_MENTION_JOIN} WHERE m.entity_id = ?`,
 		}
 	};
 	const columns = `${MENTION_COLUMNS}, d.source_namespace, d.document_id`;
-	const others = `m.entity_id <> ?1 AND (NOT (d.source_namespace = ?2 AND d.document_id = ?3) OR m.fragment_ordinal <> ?6) AND ${NOT_DECIDED}`;
+	const others = `m.entity_id <> ?1 AND m.name_key = '' AND (NOT (d.source_namespace = ?2 AND d.document_id = ?3) OR m.fragment_ordinal <> ?6) AND ${NOT_DECIDED}`;
 	take(
 		db
 			.query<RawMention & { source_namespace: string; document_id: string }>(
@@ -595,7 +609,7 @@ export function markLinkVersionDoneInTransaction(
 				`UPDATE knowledge_link_versions SET state = 'done', updated_at = ?2
 WHERE version_id = ?1 AND state = 'partial'
  AND NOT EXISTS (SELECT 1 FROM knowledge_entity_mentions m
-  WHERE m.version_id = ?1 AND m.entity_id > knowledge_link_versions.cursor_entity_id)`,
+  WHERE m.version_id = ?1 AND m.entity_id > knowledge_link_versions.cursor_entity_id AND m.name_key = '')`,
 			)
 			.run(versionId, now).changes === 1
 	);
@@ -783,8 +797,14 @@ const toMember = (r: RawMember): ClusterMember => ({
 
 /**
  * The cluster of a current mention: every current mention reachable through `same` links whose
- * both ends are current. Empty when the mention is not current. At most `cap` members; a larger
- * cluster is cut (`truncated`), keeping the first ones found breadth first.
+ * both ends are current, and through identity keys (a mention with a key reaches the current
+ * mentions of its namespace with the same key, by a link of `NAME_KEY_PROVENANCE`; kg2.md §3.3).
+ * Empty when the mention is not current. At most `cap` members; a larger cluster is cut
+ * (`truncated`), keeping the first ones found breadth first.
+ *
+ * With `keys: false`, only the stored links are followed: the definition the summaries are made
+ * and checked on (`listSameClustersInTransaction` reads stored links alone), so a summary is
+ * never asked for a cluster that a key join would make larger.
  *
  * With `namespaces`, only mentions of documents in those namespaces take part: the links are
  * followed through them alone, the cap counts them alone, and a mention outside never connects
@@ -795,7 +815,9 @@ export function readSameClusterInTransaction(
 	entityId: number,
 	cap: number = MAX_CLUSTER_MEMBERS,
 	namespaces?: readonly string[],
+	options: { keys?: boolean } = {},
 ): Cluster {
+	const byKey = options.keys ?? true;
 	if (
 		!Number.isSafeInteger(entityId) ||
 		!Number.isSafeInteger(cap) ||
@@ -806,16 +828,33 @@ export function readSameClusterInTransaction(
 	}
 	const scope = namespaces === undefined ? null : JSON.stringify(namespaces);
 	const seed = db
-		.query<RawMember>(
-			`SELECT ${MEMBER_COLUMNS} FROM knowledge_entity_mentions m ${MEMBER_JOIN}
+		.query<RawMember & { name_key: string }>(
+			`SELECT ${MEMBER_COLUMNS}, m.name_key FROM knowledge_entity_mentions m ${MEMBER_JOIN}
 WHERE m.entity_id = ?1 AND (?2 IS NULL OR d.namespace IN (SELECT value FROM json_each(?2)))`,
 		)
 		.get(entityId, scope);
 	if (!seed) return { members: [], links: [], truncated: false };
 	const members = new Map<number, ClusterMember>([[entityId, toMember(seed)]]);
+	const keyOf = new Map<number, string>([[entityId, seed.name_key]]);
+	// One read per (namespace, key): the first member to reach a key links to all its mentions.
+	const keysRead = new Set<string>();
+	const keyMates = db.query<RawMember & { name_key: string }>(
+		`SELECT ${MEMBER_COLUMNS}, m.name_key FROM knowledge_entity_mentions m ${MEMBER_JOIN}
+WHERE m.name_key = ?1 AND m.name_key <> '' AND d.namespace = ?2 AND m.entity_id <> ?3
+ AND (?4 IS NULL OR d.namespace IN (SELECT value FROM json_each(?4)))
+ORDER BY m.entity_id LIMIT ?5`,
+	);
+	// A database without stored `same` links (the model-free path) needs no link query per member.
+	const anyLinks =
+		db
+			.query(
+				"SELECT 1 AS x FROM knowledge_entity_links WHERE decision = 'same' LIMIT 1",
+			)
+			.get() !== null;
 	const links = new Map<string, SameLink>();
 	const neighbors = db.query<
 		RawMember & {
+			name_key: string;
 			link_a: number;
 			link_b: number;
 			model: string | null;
@@ -824,7 +863,7 @@ WHERE m.entity_id = ?1 AND (?2 IS NULL OR d.namespace IN (SELECT value FROM json
 			decided_at: number;
 		}
 	>(
-		`SELECT ${MEMBER_COLUMNS}, l.entity_a AS link_a, l.entity_b AS link_b, l.model, l.instruction_id,
+		`SELECT ${MEMBER_COLUMNS}, m.name_key, l.entity_a AS link_a, l.entity_b AS link_b, l.model, l.instruction_id,
  l.instruction_version, l.decided_at
 FROM knowledge_entity_links l
 JOIN knowledge_entity_mentions m ON m.entity_id = CASE WHEN l.entity_a = ?1 THEN l.entity_b ELSE l.entity_a END
@@ -836,8 +875,37 @@ ORDER BY m.entity_id`,
 	let truncated = false;
 	const queue = [entityId];
 	const pending: SameLink[] = [];
+	const reach = (r: RawMember & { name_key: string }) => {
+		if (members.has(r.entity_id)) return;
+		if (members.size >= cap) {
+			truncated = true;
+			return;
+		}
+		members.set(r.entity_id, toMember(r));
+		keyOf.set(r.entity_id, r.name_key);
+		queue.push(r.entity_id);
+	};
 	for (let i = 0; i < queue.length; i++) {
-		for (const r of neighbors.all(queue[i] as number, scope)) {
+		const from = queue[i] as number;
+		const key = keyOf.get(from) ?? "";
+		const namespace = (members.get(from) as ClusterMember).namespace;
+		if (byKey && key !== "" && !keysRead.has(`${namespace}\u0000${key}`)) {
+			keysRead.add(`${namespace}\u0000${key}`);
+			// More than `cap` others of one key make the cluster larger than `cap`: read no more.
+			const mates = keyMates.all(key, namespace, from, scope, cap + 1);
+			if (mates.length > cap) truncated = true;
+			for (const r of mates) {
+				const [a, b] = canonicalPair(from, r.entity_id);
+				pending.push({
+					a,
+					b,
+					provenance: { ...NAME_KEY_PROVENANCE },
+					decidedAt: 0,
+				});
+				reach(r);
+			}
+		}
+		for (const r of anyLinks ? neighbors.all(from, scope) : []) {
 			const link: SameLink = {
 				a: r.link_a,
 				b: r.link_b,
@@ -849,13 +917,7 @@ ORDER BY m.entity_id`,
 				decidedAt: r.decided_at,
 			};
 			pending.push(link);
-			if (members.has(r.entity_id)) continue;
-			if (members.size >= cap) {
-				truncated = true;
-				continue;
-			}
-			members.set(r.entity_id, toMember(r));
-			queue.push(r.entity_id);
+			reach(r);
 		}
 	}
 	for (const link of pending) {
@@ -872,9 +934,10 @@ ORDER BY m.entity_id`,
 
 /**
  * Entity ids of the version's mentions that have a `same` link to a mention of another version,
- * in id order, at most `limit` (the answer says when more exist). A link inside one version
- * (two fragments of one document) does not count: it cannot make another document related, and
- * would crowd out the starts that can. Only these can start a related cluster.
+ * or an identity key that a current mention of another version in the same namespace has, in id
+ * order, at most `limit` (the answer says when more exist). A link inside one version (two
+ * fragments of one document) does not count: it cannot make another document related, and would
+ * crowd out the starts that can. Only these can start a related cluster.
  */
 export function listLinkedMentionIdsInSnapshot(
 	db: Tx,
@@ -887,7 +950,11 @@ export function listLinkedMentionIdsInSnapshot(
 			`SELECT m.entity_id FROM knowledge_entity_mentions m
 WHERE m.version_id = ?1 AND (
  EXISTS (SELECT 1 FROM knowledge_entity_links l WHERE l.entity_a = m.entity_id AND l.decision = 'same' AND l.version_a <> l.version_b)
- OR EXISTS (SELECT 1 FROM knowledge_entity_links l WHERE l.entity_b = m.entity_id AND l.decision = 'same' AND l.version_a <> l.version_b))
+ OR EXISTS (SELECT 1 FROM knowledge_entity_links l WHERE l.entity_b = m.entity_id AND l.decision = 'same' AND l.version_a <> l.version_b)
+ OR (m.name_key <> '' AND EXISTS (SELECT 1 FROM knowledge_entity_mentions o
+  JOIN knowledge_documents od ON od.published_version_id = o.version_id AND od.state = 'current'
+  WHERE o.name_key = m.name_key AND o.name_key <> '' AND o.version_id <> m.version_id
+   AND od.namespace = (SELECT namespace FROM knowledge_documents WHERE published_version_id = ?1))))
 ORDER BY m.entity_id LIMIT ?2`,
 		)
 		.all(versionId, limit + 1)
@@ -1064,7 +1131,13 @@ WHERE anchor_entity_id = ? AND members_digest = ? AND status = 'ok'`,
 
 /** The anchor is the cluster's smallest id and the digest is the cluster as it is now. */
 function clusterMatches(db: Tx, anchor: number, digest: string): boolean {
-	const cluster = readSameClusterInTransaction(db, anchor);
+	const cluster = readSameClusterInTransaction(
+		db,
+		anchor,
+		MAX_CLUSTER_MEMBERS,
+		undefined,
+		{ keys: false },
+	);
 	if (cluster.truncated || cluster.members.length === 0) return false;
 	const ids = cluster.members.map((m) => m.entityId);
 	return ids[0] === anchor && clusterDigest(ids) === digest;

@@ -39,10 +39,13 @@ type Shared = Result["shared"][number];
  *
  * What a caller sees: only documents in its namespaces (narrowed by `request.namespaces`) that
  * are `current` (or `unverified`, derived from the last verification). Entities are the
- * clusters of `same` links among current mentions. A cluster is read through mentions the
+ * clusters of `same` links and identity keys among current mentions (a key joins the mentions of
+ * one namespace with the same model-free key, kg2.md §3.3; `decidedBy` names it `name_key`). A
+ * cluster is read through mentions the
  * caller may read alone (the limit of 500 mentions counts only those), so a mention outside the
  * caller's namespaces never connects two readable ones and its number shows nowhere. The
- * search starts from the requested document's mentions that have a `same` link (at most
+ * search starts from the requested document's mentions that have a `same` link or a key another
+ * document has (at most
  * `MAX_RELATED_STARTS`; more is `response_truncated`). A summary is returned only when every
  * mention of the entity's whole cluster is current and readable by the caller and the summary
  * was made for exactly that cluster.
@@ -215,10 +218,13 @@ function compute(db: Tx, p: Params): RelatedResponse {
 		// `MAX_SUMMARY_MEMBERS` mentions, so a larger one has none and is not read further.
 		let summary: string | null = null;
 		if (!cluster.truncated) {
+			// Summaries are made for clusters of stored links: one a key join made larger has none.
 			const whole = readSameClusterInTransaction(
 				db,
 				mention.entityId,
 				MAX_SUMMARY_MEMBERS + 1,
+				undefined,
+				{ keys: false },
 			);
 			if (!whole.truncated && whole.members.length === cluster.members.length) {
 				const ids = whole.members.map((m) => m.entityId);

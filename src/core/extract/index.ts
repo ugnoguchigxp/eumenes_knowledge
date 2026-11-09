@@ -18,6 +18,7 @@ export {
 	extractNames,
 	NAME_TYPES,
 	NAMES_LIMITS,
+	nameKey,
 	namesModel,
 	SAME_SENTENCE_RELATION,
 	TokenizerFailure,

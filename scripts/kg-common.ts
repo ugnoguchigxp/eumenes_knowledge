@@ -433,6 +433,8 @@ export type Mention = {
 	id: number;
 	name: string;
 	nameNorm: string;
+	/** The model-free extractor's identity key; '' for a model's mention (kg2.md G4). */
+	nameKey: string;
 	type: string;
 	description: string;
 	namespace: string;
@@ -445,9 +447,15 @@ export type Mention = {
 
 /** The mentions of the published versions of current documents, in entity id order. */
 export function readMentions(db: Database): Mention[] {
+	// A database written before the identity key (kg2.md G4) has no name_key column.
+	const keyed = (
+		db.query("PRAGMA table_info(knowledge_entity_mentions)").all() as {
+			name: string;
+		}[]
+	).some((c) => c.name === "name_key");
 	return db
 		.query(
-			`SELECT m.entity_id AS id, m.name, m.name_norm AS nameNorm, m.type, m.description,
+			`SELECT m.entity_id AS id, m.name, m.name_norm AS nameNorm, ${keyed ? "m.name_key" : "''"} AS nameKey, m.type, m.description,
  d.namespace, m.version_id AS versionId, m.fragment_ordinal AS fragment, m.local_id AS localId,
  d.document_id AS documentId, d.path
 FROM knowledge_entity_mentions m
@@ -509,6 +517,17 @@ export function nodesOf(db: Database): { ms: Mention[]; of: number[] } {
 		if (l.decision === "different") different.push([a, b]);
 		else if (l.decision === "same") same.push([a, b]);
 	}
+	// Identity keys join as the package's graph read does (src/core/link/graph.ts).
+	const byKey = new Map<string, number[]>();
+	ms.forEach((m, i) => {
+		if (!m.nameKey) return;
+		const key = `${m.namespace}\u0000${m.nameKey}`;
+		const group = byKey.get(key);
+		if (group) group.push(i);
+		else byKey.set(key, [i]);
+	});
+	for (const [first, ...others] of byKey.values())
+		for (const i of others) same.push([first as number, i]);
 	const { of } = constrainedComponents(
 		ms.map((m) =>
 			m.nameNorm !== "" ? m.nameNorm : normalizeForSearch(m.name),

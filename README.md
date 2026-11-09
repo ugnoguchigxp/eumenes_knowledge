@@ -13,7 +13,7 @@ Eumenes に集約した Markdown 文書を、会話・制作・coding agent か�
 | P2 分割・抽出・ベクトル・根拠・失効 | 実装済み・固定検証済み | [p2.md](p2.md) |
 | P3 検索・関連探索・根拠取得 | 実装済み・固定検証済み | [p3.md](p3.md) |
 | KG グラフの読み取り・実モデルでの試行 | 実装済み。実モデルで 1 回実行し、同一視だけを方式を変えて比べた（examples の中だけ）。LLM で作る部分は費用に見合わず、KG2 へ切り替える | [kg.md](kg.md) |
-| KG2 LLM に頼らない知識グラフ | 計画を確定（2026-11-09）。G1・G2・G6（scripts）と G3（src: モデルを使わない抽出器。取り込みの設定 `extractor: "names"` で選ぶ。既定はまだ LLM）まで。次は G4（決定的な同一視）。言及・同一視・辺を、取り込みに LLM を使わずに作る | [kg2.md](kg2.md) |
+| KG2 LLM に頼らない知識グラフ | 計画を確定（2026-11-09）。G1・G2・G6（scripts）、G3（src: モデルを使わない抽出器。取り込みの設定 `extractor: "names"` で選ぶ。既定はまだ LLM）、G4（src: 同じ namespace で名前のキーが同じ言及を、読むときに 1 つの実体にする）まで。次は G5（グラフの絞り込みと関連の経路）。言及・同一視・辺を、取り込みに LLM を使わずに作る | [kg2.md](kg2.md) |
 | P4 CLI・MCP | 未着手（入口のスタブだけ） | — |
 | P5 tgz 受入 | 配布の検査は通る。clean な commit からの受入は未実施 | — |
 | P6 Eumenes 統合 | 未着手。examples で十分に検証してから着手する | — |
@@ -81,7 +81,7 @@ LARM_API_TOKEN=… KG_LARM_BASE_URL=… KG_LARM_PROFILE=… KG_LARM_AUDIENCE=…
   bun scripts/kg-live.ts --relink verification/kg-ai-memory/<前の実行>/knowledge.db   # 抽出はそのまま、同一視だけをやり直す
 LARM_API_TOKEN=… KG_LARM_BASE_URL=… KG_LARM_PROFILE=… KG_LARM_AUDIENCE=… \
   bun scripts/kg-live.ts --corpus notes-mixed --extract none   # LLM の抽出なしで分割と埋め込みだけ（kg2.md G6。出力は verification/kg-<素材>/）
-  bun scripts/kg-live.ts --corpus notes-mixed --extract names [--tokenizer charclass|sudachi-napi|kuromoji|lindera] [--js-modules <dir>]   # package のモデルを使わない抽出器で取り込む（kg2.md G3。同一視はしない。kg-keys.ts でキーごとに結ぶ）
+  bun scripts/kg-live.ts --corpus notes-mixed --extract names [--tokenizer charclass|sudachi-napi|kuromoji|lindera] [--js-modules <dir>]   # package のモデルを使わない抽出器で取り込む（kg2.md G3・G4。推論を呼ばず、言及は名前のキーで結ばれる）
 bun scripts/kg-keys.ts --from verification/kg-ai-memory/<前の実行>/knowledge.db [--corpus <素材>] [--key nfkc|sudachi] [--rules] [--compare <比べる実行>/knowledge.db] [--judgments <判定>.json]   # LARM なし。名前の正規化キーで同一視する（kg.md §8）
 LARM_API_TOKEN=… KG_LARM_BASE_URL=… KG_LARM_PROFILE=… KG_LARM_AUDIENCE=… \
   bun scripts/kg-keys.ts --from … --rules --vote run   # 名前を含む組だけをローカル LLM に問い、票を足す（kg.md §8.7。--vote dry は問いを数えるだけ）

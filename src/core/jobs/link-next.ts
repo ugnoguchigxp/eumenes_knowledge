@@ -548,7 +548,14 @@ function buildHandler(deps: IngestDeps, options: LinkOptions): LinkNextHandler {
 	): Promise<LinkNextOutput> {
 		signal.throwIfAborted();
 		const members = await write((tx) => {
-			const cluster = readSameClusterInTransaction(tx, input.anchorEntityId);
+			// Stored links alone: the definition the summary work was picked on.
+			const cluster = readSameClusterInTransaction(
+				tx,
+				input.anchorEntityId,
+				undefined,
+				undefined,
+				{ keys: false },
+			);
 			const ids = cluster.members.map((m) => m.entityId);
 			if (
 				cluster.truncated ||
