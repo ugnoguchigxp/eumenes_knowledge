@@ -345,4 +345,18 @@ GROUP BY version_id, sk, tk, directed, negated, certainty, relation;`,
 	// by keys draws no edge: the pairs are read by nothing. A version of an older rules version is
 	// extracted again (G7); its relation mentions go with it.
 	`DROP TABLE knowledge_relation_pairs;`,
+	// kg2.md §7.14 (F): the links of a version's fragments to other Markdown documents, as
+	// written (`href`, without its anchor; resolved against the linking document's path when
+	// read). `target_name`: the href's file name in lower case, by which a document finds the
+	// links to it. Written with the fragments, deleted with the version's other derived rows.
+	// The current documents' paths are indexed to resolve a link to them.
+	`CREATE TABLE knowledge_document_links (
+ version_id INTEGER NOT NULL REFERENCES knowledge_versions(version_id),
+ fragment_ordinal INTEGER NOT NULL CHECK (fragment_ordinal >= 0),
+ href TEXT NOT NULL CHECK (href <> '' AND length(href) <= 1024),
+ target_name TEXT NOT NULL CHECK (target_name <> ''),
+ PRIMARY KEY (version_id, fragment_ordinal, href)
+);
+CREATE INDEX knowledge_document_links_name ON knowledge_document_links(target_name, version_id);
+CREATE INDEX knowledge_documents_current_path ON knowledge_documents(namespace, path) WHERE state = 'current';`,
 ];

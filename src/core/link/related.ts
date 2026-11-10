@@ -7,10 +7,18 @@ import {
 	relatedResponseSchema,
 	type ReadRelated,
 	type RelatedResponse,
+	relatedRoutes,
 	type RelatedRoute,
 	type Tx,
 	type VectorIndex,
 } from "../../contracts/index.js";
+import {
+	countVersionLinksInSnapshot,
+	readCurrentDocumentsAtPathsInSnapshot,
+	readFirstOrdinalsInSnapshot,
+	readLinksNamedInSnapshot,
+	readVersionLinksInSnapshot,
+} from "../../sqlite/document-links.js";
 import { readGraphDocumentsInSnapshot } from "../../sqlite/graph.js";
 import {
 	MAX_CLUSTER_MEMBERS,
@@ -40,6 +48,7 @@ import {
 	readSearchCoverageInSnapshot,
 } from "../../sqlite/search.js";
 import { searchVectorIndexInSnapshot } from "../search/vector-index.js";
+import { documentPath, linkName, resolveLink } from "../text/links.js";
 
 type Reason = RelatedResponse["partialReasons"][number];
 type Result = RelatedResponse["results"][number];
@@ -47,6 +56,11 @@ type Shared = Result["shared"][number];
 
 /** Reciprocal rank fusion constant (kg.md §9.3, `scripts/kg-alt.ts`). */
 const RRF_K = 60;
+/**
+ * Links read to find those to the requested document: every link in its namespace to a file of
+ * its name (`README.md` may be many, to other folders), resolved before the limit of links used.
+ */
+const LINK_CANDIDATES = 20_000;
 
 /**
  * Documents related to one document (p3.md §8, kg2.md §3.5). Everything is read from one
@@ -73,11 +87,18 @@ const RRF_K = 60;
  *   off), the nearest fragments by that index (`RELATED_LIMITS.nearestPerFragment` per
  *   fragment), without a threshold. An index that cannot run, a document without vectors, or
  *   documents of another embedding space in scope give `vector_unavailable`.
- * Documents that share an entity come first, then those the embedding alone found, then those
- * that share only names of IDF 0 (a name in every fragment, or of a cluster cut at its cap: it
- * says nothing of the two documents, kg2.md §7.10); within each, a document's place is its best
- * pair of fragments, equal scores by document id. Each result
- * lists its best pairs (`passages`) and the routes that found any of its pairs.
+ * - `links` (kg2.md §7.14): the Markdown links the author wrote, either way, between the
+ *   requested document and another current document of its namespace, resolved against the two
+ *   documents' current paths. A link pairs the fragment that holds it with the first fragment of
+ *   the document it names. At most `RELATED_LIMITS.linksToDocument` links to the requested
+ *   document are read (more is `response_truncated`).
+ * Documents linked either way come first, then those that share an entity, then those linked
+ * only by an index (a document of more than `RELATED_LIMITS.indexLinks` links: a table of
+ * contents says where to go, not what is related), then those the embedding alone found, then
+ * those that share only names of IDF 0 (a name in every fragment, or of a cluster cut at its cap:
+ * it says nothing of the two documents, kg2.md §7.10); within each, a document's place is its best
+ * pair of fragments, equal scores by document id. Each result lists its best pairs (`passages`),
+ * the routes that found any of its pairs and the links' directions (`links`).
  *
  * Shared entities: one per (cluster component, other document), the most specific first. The pair
  * of mentions shown is chosen by a fixed rule, because the contract carries one pair and one
@@ -108,7 +129,7 @@ export const readRelated: ReadRelated = (deps, access, request) => {
 	const scope = req.namespaces
 		? access.namespaces.filter((n) => req.namespaces?.includes(n))
 		: [...access.namespaces];
-	const routes = new Set(req.routes ?? ["entities", "embedding"]);
+	const routes = new Set<RelatedRoute>(req.routes ?? relatedRoutes);
 	const response = deps.read((db) =>
 		compute(db, {
 			documentId: req.documentId,
@@ -119,6 +140,7 @@ export const readRelated: ReadRelated = (deps, access, request) => {
 			maxUnappliedAttempts: deps.options.maxUnappliedAttempts,
 			vectors: routes.has("embedding") ? (deps.vectors ?? null) : null,
 			entities: routes.has("entities"),
+			links: routes.has("links"),
 		}),
 	);
 	const checked = relatedResponseSchema.safeParse(response);
@@ -136,6 +158,8 @@ type Params = {
 	vectors: VectorIndex | null;
 	/** Whether the `entities` route is used (`request.routes`). */
 	entities: boolean;
+	/** Whether the `links` route is used (`request.routes`). */
+	links: boolean;
 };
 
 /** One fragment of another document, as ranked for one fragment of the requested document. */
@@ -168,9 +192,103 @@ type Relation = {
 	 * only such an entity is still related (after the documents that share more).
 	 */
 	weak: Map<number, { mine: number; other: Ref }[]>;
+	/** Per other version linked either way: the directions, and whether a link is not an index's. */
+	links: Map<number, { directions: Set<"to" | "from">; strong: boolean }>;
 	truncated: boolean;
 	vectorUnavailable: boolean;
 };
+
+/** A link between a fragment of the requested document and a fragment of another (kg2.md §7.14). */
+type LinkPair = {
+	mine: number;
+	other: Ref;
+	direction: "to" | "from";
+	/** The linking document is an index (more than `RELATED_LIMITS.indexLinks` links). */
+	index: boolean;
+};
+
+/**
+ * The links between one version's document and the other current documents of its namespace,
+ * either way, resolved against the documents' current paths (kg2.md §7.14).
+ */
+function linkPairs(
+	db: Tx,
+	versionId: number,
+	compared: readonly number[],
+): { pairs: LinkPair[]; truncated: boolean } {
+	const self = readGraphDocumentsInSnapshot(db, [versionId])[0];
+	const selfPath = self ? documentPath(self.path) : null;
+	// Paths compare as written, with a leading `/` or with a leading `./` (as a link to a document
+	// finds it): a path stored otherwise (`a//b.md`) is found by no link, either way. Case counts,
+	// as on the web.
+	if (
+		!self ||
+		selfPath === null ||
+		![selfPath, `/${selfPath}`, `./${selfPath}`].includes(self.path)
+	)
+		return { pairs: [], truncated: false };
+	const comparedSet = new Set(compared);
+	// To: the requested document's links, resolved against its own path.
+	const to = readVersionLinksInSnapshot(db, versionId).flatMap((l) => {
+		const path = comparedSet.has(l.fragmentOrdinal)
+			? resolveLink(self.path, l.href)
+			: null;
+		return path === null ? [] : [{ mine: l.fragmentOrdinal, path }];
+	});
+	const targets = new Map<string, number[]>();
+	for (const d of readCurrentDocumentsAtPathsInSnapshot(db, self.namespace, [
+		...new Set(to.map((l) => l.path)),
+	])) {
+		const key = documentPath(d.path);
+		if (key === null || d.versionId === versionId) continue;
+		targets.set(key, [...(targets.get(key) ?? []), d.versionId]);
+	}
+	// From: links whose file name is this document's, resolved against their documents' paths.
+	const named = readLinksNamedInSnapshot(
+		db,
+		self.namespace,
+		linkName(selfPath),
+		LINK_CANDIDATES,
+	);
+	const resolved = named.links.filter(
+		(l) =>
+			l.versionId !== versionId &&
+			resolveLink(l.sourcePath, l.href) === selfPath,
+	);
+	const from = resolved.slice(0, RELATED_LIMITS.linksToDocument);
+	const firsts = readFirstOrdinalsInSnapshot(db, [...targets.values()].flat());
+	const counts = countVersionLinksInSnapshot(db, [
+		versionId,
+		...from.map((l) => l.versionId),
+	]);
+	const index = (v: number) => (counts.get(v) ?? 0) > RELATED_LIMITS.indexLinks;
+	const pairs: LinkPair[] = [];
+	for (const l of to)
+		for (const v of targets.get(l.path) ?? []) {
+			const first = firsts.get(v);
+			if (first === undefined) continue;
+			pairs.push({
+				mine: l.mine,
+				other: { versionId: v, ordinal: first },
+				direction: "to",
+				index: index(versionId),
+			});
+		}
+	const mine = compared[0];
+	if (mine !== undefined)
+		for (const l of from)
+			pairs.push({
+				mine,
+				other: { versionId: l.versionId, ordinal: l.fragmentOrdinal },
+				direction: "from",
+				index: index(l.versionId),
+			});
+	return {
+		pairs,
+		truncated:
+			named.truncated || resolved.length > RELATED_LIMITS.linksToDocument,
+	};
+}
 
 /**
  * What the routes find for one version's fragments: the fused ranking of the other documents'
@@ -184,6 +302,7 @@ function relate(
 	scopeList: readonly string[],
 	vectors: VectorIndex | null,
 	entities = true,
+	links = false,
 ): Relation {
 	const scope = new Set(scopeList);
 	const allOrdinals = listFragmentOrdinalsInSnapshot(db, versionId);
@@ -385,8 +504,27 @@ function relate(
 		}
 	}
 
+	// --- Route `links`: the links the author wrote, either way.
+	const linked = links
+		? linkPairs(db, versionId, compared)
+		: { pairs: [], truncated: false };
+	if (linked.truncated) truncated = true;
+	const linkInfo = new Map<
+		number,
+		{ directions: Set<"to" | "from">; strong: boolean }
+	>();
+	for (const pair of linked.pairs) {
+		const info = linkInfo.get(pair.other.versionId) ?? {
+			directions: new Set<"to" | "from">(),
+			strong: false,
+		};
+		info.directions.add(pair.direction);
+		info.strong ||= !pair.index;
+		linkInfo.set(pair.other.versionId, info);
+	}
+
 	// --- Fusion, per fragment of the requested document. Equal scores keep path, then ordinal.
-	const versions = new Set<number>();
+	const versions = new Set<number>(linked.pairs.map((p) => p.other.versionId));
 	for (const scores of nodeScores.values())
 		for (const key of scores.keys()) versions.add(Number(key.split(":")[0]));
 	for (const refs of nearest.values())
@@ -421,12 +559,30 @@ function relate(
 			.slice(0, RELATED_LIMITS.nearestPerFragment);
 		byNodes.forEach((r, rank) => add(r, rank, "entities"));
 		(nearest.get(o) ?? []).forEach((r, rank) => add(r, rank, "embedding"));
+		// One rank per linked fragment: a fragment linked twice (to and from) counts once.
+		const seenLinks = new Set<string>();
+		linked.pairs
+			.filter((p) => p.mine === o)
+			.filter((p) => {
+				const key = refKey(p.other);
+				if (seenLinks.has(key)) return false;
+				seenLinks.add(key);
+				return true;
+			})
+			.forEach((p, rank) => add(p.other, rank, "links"));
 		rankings.set(
 			o,
 			[...fused.values()].sort((x, y) => y.score - x.score || tie(x, y)),
 		);
 	}
-	return { rankings, shared, weak, truncated, vectorUnavailable };
+	return {
+		rankings,
+		shared,
+		weak,
+		links: linkInfo,
+		truncated,
+		vectorUnavailable,
+	};
 }
 
 /**
@@ -477,6 +633,7 @@ function compute(db: Tx, p: Params): RelatedResponse {
 		p.scope,
 		p.vectors,
 		p.entities,
+		p.links,
 	);
 
 	// Documents by their best pair of fragments.
@@ -522,12 +679,18 @@ function compute(db: Tx, p: Params): RelatedResponse {
 					x.mine - y.mine ||
 					x.other.ordinal - y.other.ordinal,
 			);
-			// 0: shares an entity that ranks; 1: found by the embedding alone; 2: IDF 0 names alone.
+			// 0: linked (not by an index alone); 1: shares an entity that ranks; 2: linked by an index
+			// alone; 3: found by the embedding alone; 4: IDF 0 names alone.
+			const link = found.links.get(v);
 			const tier = weakOnly.has(v)
-				? 2
-				: sorted.some((x) => x.other.routes.includes("entities"))
+				? 4
+				: link?.strong
 					? 0
-					: 1;
+					: sorted.some((x) => x.other.routes.includes("entities"))
+						? 1
+						: link
+							? 2
+							: 3;
 			return {
 				versionId: v,
 				pairs: sorted,
@@ -571,7 +734,7 @@ function compute(db: Tx, p: Params): RelatedResponse {
 	};
 	const routeOrder = (routes: Iterable<RelatedRoute>): RelatedRoute[] => {
 		const set = new Set(routes);
-		return (["entities", "embedding"] as const).filter((r) => set.has(r));
+		return relatedRoutes.filter((r) => set.has(r));
 	};
 	const results: Result[] = ranked.map((r, i) => {
 		const d = documents.get(r.versionId) as NonNullable<
@@ -604,6 +767,9 @@ function compute(db: Tx, p: Params): RelatedResponse {
 					? "unverified"
 					: "current",
 			routes: routeOrder(r.pairs.flatMap((x) => x.other.routes)),
+			links: (["to", "from"] as const).filter((x) =>
+				found.links.get(r.versionId)?.directions.has(x),
+			),
 			passages: r.pairs.slice(0, RELATED_LIMITS.passagesPerResult).map((x) => ({
 				document: pointOf(published.versionId, x.mine),
 				related: pointOf(x.other.versionId, x.other.ordinal),

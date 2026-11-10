@@ -76,7 +76,7 @@ VALUES ('docling', 'd1', ?, 0, 0, 'wiki', 3, 'published', 1, 'x', 0)`,
 	db.close();
 });
 
-test("the last migration drops the relation pairs, and the versions stay (kg2.md §7.14)", () => {
+test("migration 8 drops the relation pairs, and the versions stay (kg2.md §7.14)", () => {
 	const db = new Database(":memory:");
 	for (const m of migrations.slice(0, 7)) db.exec(m);
 	db.exec("PRAGMA foreign_keys = OFF");
@@ -90,7 +90,6 @@ VALUES ('docling', 'd1', ?, 0, 0, 'wiki', 3, 'published', 1, 'x', 0)`,
 		`INSERT INTO knowledge_relation_pairs (version_id, source_key, target_key, directed, negated,
  certainty, relation, mentions, first_ids) VALUES (1, 'a', 'b', 0, 0, 'stated', '同じ文', 1, '[1]')`,
 	);
-	expect(migrations).toHaveLength(8);
 	db.exec(migrations[7] as string);
 	expect(
 		db
@@ -102,5 +101,23 @@ VALUES ('docling', 'd1', ?, 0, 0, 'wiki', 3, 'published', 1, 'x', 0)`,
 	expect(
 		db.query("SELECT COUNT(*) AS n FROM knowledge_versions").get(),
 	).toEqual({ n: 1 });
+	db.close();
+});
+
+test("migration 9 records links once per fragment and href, as written (kg2.md §7.14)", () => {
+	const db = new Database(":memory:");
+	for (const m of migrations.slice(0, 9)) db.exec(m);
+	expect(migrations).toHaveLength(9);
+	db.exec("PRAGMA foreign_keys = OFF");
+	const insert = (href: string, name: string) =>
+		db.run(
+			"INSERT INTO knowledge_document_links (version_id, fragment_ordinal, href, target_name) VALUES (1, 0, ?, ?)",
+			[href, name],
+		);
+	insert("a.md", "a.md");
+	expect(() => insert("a.md", "a.md")).toThrow();
+	expect(() => insert("", "x")).toThrow();
+	expect(() => insert("b.md", "")).toThrow();
+	expect(() => insert(`${"x".repeat(1022)}.md`, "x.md")).toThrow();
 	db.close();
 });

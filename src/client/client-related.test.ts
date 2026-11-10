@@ -35,6 +35,7 @@ const okAnswer = {
 			markdownSha256: SHA,
 			state: "current",
 			routes: ["entities"],
+			links: [],
 			passages: [{ document: point, related: point, routes: ["entities"] }],
 			shared: [
 				{

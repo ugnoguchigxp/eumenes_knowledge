@@ -283,6 +283,43 @@ export function stageFragmentsInTransaction(
 	).run(prepared.length, versionId);
 }
 
+/** A link of a staged fragment to another Markdown document (kg2.md §7.14, `markdownLinks`). */
+export type LinkToStage = {
+	fragmentOrdinal: number;
+	/** As written, without its anchor (`documentHref`); at most 1024 characters. */
+	href: string;
+	/** The href's file name in lower case (`linkName`). */
+	targetName: string;
+};
+
+/**
+ * Record the links of a staging version's fragments (written with the fragments, in the same
+ * transaction). A link written twice in one fragment is recorded once.
+ */
+export function stageLinksInTransaction(
+	db: Tx,
+	versionId: number,
+	links: readonly LinkToStage[],
+): void {
+	const v = requireStaging(db, versionId);
+	for (const l of links)
+		if (
+			!isCount(l.fragmentOrdinal) ||
+			l.fragmentOrdinal >= v.expectedFragments ||
+			typeof l.href !== "string" ||
+			l.href === "" ||
+			l.href.length > 1024 ||
+			!isText(l.targetName)
+		)
+			return invalid();
+	const insert = db.query(
+		`INSERT OR IGNORE INTO knowledge_document_links (version_id, fragment_ordinal, href, target_name)
+VALUES (?, ?, ?, ?)`,
+	);
+	for (const l of links)
+		insert.run(versionId, l.fragmentOrdinal, l.href, l.targetName);
+}
+
 const LITTLE_ENDIAN = new Uint8Array(new Uint16Array([1]).buffer)[0] === 1;
 
 /** float32 little-endian bytes of `values`; null when a value is not finite as a float32. */
@@ -930,6 +967,7 @@ const DERIVED_STEPS: readonly {
 	table: string;
 	index?: { idColumn: string; fts: string };
 }[] = [
+	{ table: "knowledge_document_links" },
 	{ table: "knowledge_evidence" },
 	{
 		table: "knowledge_relation_mentions",

@@ -48,9 +48,11 @@ import {
 	setActiveIngestInTransaction,
 	stageExtractionsInTransaction,
 	stageFragmentsInTransaction,
+	stageLinksInTransaction,
 	stageVectorsInTransaction,
 	touchChainInTransaction,
 	type IngestExpectation,
+	type LinkToStage,
 } from "../../sqlite/index.js";
 import { sha256Hex, utf8Bytes } from "../bytes.js";
 import {
@@ -75,7 +77,12 @@ import {
 	isContentErrorCode,
 	safeEmit,
 } from "../support.js";
-import { chunkMarkdown, normalizeForSearch } from "../text/index.js";
+import {
+	chunkMarkdown,
+	linkName,
+	markdownLinks,
+	normalizeForSearch,
+} from "../text/index.js";
 import { DEFAULT_EXTRACTOR, extractorFingerprint } from "./extractor.js";
 import { startLinkChainInTransaction } from "./link-start.js";
 
@@ -528,14 +535,7 @@ function buildHandler(
 			});
 			if (versionId === null) return superseded();
 
-			for (const batch of batches(fragments, STAGE_BATCH)) {
-				signal.throwIfAborted();
-				const items = batch.map((fragment) => ({
-					fragment,
-					searchText: normalizeForSearch(fragment.text),
-				}));
-				await write((tx) => stageFragmentsInTransaction(tx, versionId, items));
-			}
+			await stageFragments(fragments, versionId, signal, write);
 
 			// 3. Extract fragment by fragment; write the checked results in bundles.
 			const stats = await extractAndStage(
@@ -692,6 +692,41 @@ function buildHandler(
 		},
 	};
 
+	/**
+	 * Write the fragments in batches, each with the links it holds to other Markdown documents
+	 * (kg2.md §7.14; code holds none, read from the body's structure across fragments).
+	 */
+	async function stageFragments(
+		fragments: readonly Fragment[],
+		versionId: number,
+		signal: AbortSignal,
+		write: <T>(operation: (tx: Tx) => T) => Promise<T>,
+	): Promise<void> {
+		const structures = fragmentStructures(fragments.map((f) => f.text));
+		const links = new Map<number, LinkToStage[]>(
+			fragments.map((f, i) => [
+				f.ordinal,
+				markdownLinks(f.text, structures[i]?.code ?? []).map((href) => ({
+					fragmentOrdinal: f.ordinal,
+					href,
+					targetName: linkName(href),
+				})),
+			]),
+		);
+		for (const batch of batches(fragments, STAGE_BATCH)) {
+			signal.throwIfAborted();
+			const items = batch.map((fragment) => ({
+				fragment,
+				searchText: normalizeForSearch(fragment.text),
+			}));
+			const batchLinks = batch.flatMap((f) => links.get(f.ordinal) ?? []);
+			await write((tx) => {
+				stageFragmentsInTransaction(tx, versionId, items);
+				stageLinksInTransaction(tx, versionId, batchLinks);
+			});
+		}
+	}
+
 	/** Extract the fragments one by one and write the checked results in bundles. */
 	async function extractAndStage(
 		fragments: readonly Fragment[],
@@ -796,14 +831,7 @@ function buildHandler(
 			);
 		});
 		if (versionId === null) return gone;
-		for (const batch of batches(copy.fragments, STAGE_BATCH)) {
-			signal.throwIfAborted();
-			const items = batch.map((fragment) => ({
-				fragment,
-				searchText: normalizeForSearch(fragment.text),
-			}));
-			await write((tx) => stageFragmentsInTransaction(tx, versionId, items));
-		}
+		await stageFragments(copy.fragments, versionId, signal, write);
 		const stats = await extractAndStage(
 			copy.fragments,
 			versionId,

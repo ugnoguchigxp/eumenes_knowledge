@@ -13,6 +13,7 @@
 import { Database } from "bun:sqlite";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { relative } from "node:path";
 import type {
 	AccessContext,
 	EmbeddingSpace,
@@ -28,7 +29,12 @@ import {
 import { readGraph } from "../src/core/link/graph.js";
 import { readRelated } from "../src/core/link/related.js";
 import { createVectorIndex, search } from "../src/core/search/index.js";
-import { chunkMarkdown, normalizeForSearch } from "../src/core/text/index.js";
+import {
+	chunkMarkdown,
+	linkName,
+	markdownLinks,
+	normalizeForSearch,
+} from "../src/core/text/index.js";
 import {
 	createStagingVersionInTransaction,
 	migrations,
@@ -37,6 +43,7 @@ import {
 	readStatusInSnapshot,
 	stageExtractionsInTransaction,
 	stageFragmentsInTransaction,
+	stageLinksInTransaction,
 	stageVectorsInTransaction,
 } from "../src/sqlite/index.js";
 import { insideRepository, listNotes } from "./kg-heldout.js";
@@ -92,9 +99,12 @@ export function build(
 		throw new Error("--notes and --db must lie outside the repository");
 	const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
 	const texts: string[] = [];
+	/** The notes' paths under --notes: links between them resolve within each copy. */
+	const paths: string[] = [];
 	for (const f of listNotes(notes)) {
 		try {
 			texts.push(decoder.decode(readFileSync(f)));
+			paths.push(relative(notes, f));
 		} catch {
 			// Not UTF-8: left out, as the package refuses it.
 		}
@@ -124,7 +134,7 @@ export function build(
 						sourceNamespace: "docling",
 						documentId,
 						namespace: NAMESPACE,
-						path: `copy${c}/${n}.md`,
+						path: `copy${c}/${paths[n]}`,
 						title: `Copy ${c} note ${n}`,
 						etag: `"${sha(`e${d}`)}"`,
 						markdownSha256,
@@ -160,6 +170,17 @@ export function build(
 						searchText: normalizeForSearch(fragment.text),
 					})),
 				);
+				stageLinksInTransaction(
+					db,
+					versionId,
+					fragments.flatMap((f, i) =>
+						markdownLinks(f.text, structures[i]?.code ?? []).map((href) => ({
+							fragmentOrdinal: f.ordinal,
+							href,
+							targetName: linkName(href),
+						})),
+					),
+				);
 				stageVectorsInTransaction(
 					db,
 					versionId,
@@ -187,6 +208,7 @@ export function build(
 		relationMentions: count(
 			"SELECT COUNT(*) AS n FROM knowledge_relation_mentions",
 		),
+		links: count("SELECT COUNT(*) AS n FROM knowledge_document_links"),
 		buildSeconds: Math.round((performance.now() - t0) / 1000),
 	};
 	db.close();
@@ -253,6 +275,15 @@ export async function time(
 			)
 			.all() as { document_id: string }[]
 	).map((r) => r.document_id);
+	// The document of the most links (an index, kg2.md §7.14), when any.
+	const index = db
+		.query(
+			`SELECT d.document_id FROM knowledge_document_links l
+JOIN knowledge_documents d ON d.published_version_id = l.version_id AND d.state = 'current'
+GROUP BY l.version_id ORDER BY COUNT(*) DESC, d.document_id LIMIT 1`,
+		)
+		.get() as { document_id: string } | null;
+	if (index) ids.push(index.document_id);
 	for (const [i, documentId] of ids.entries()) {
 		best(
 			`related${i + 1}`,
@@ -260,7 +291,11 @@ export async function time(
 				readRelated({ read, clock, options, vectors }, ACCESS, {
 					documentId,
 				}),
-			(r) => ({ results: r.results.length, reasons: r.partialReasons }),
+			(r) => ({
+				results: r.results.length,
+				linked: r.results.filter((x) => x.links.length > 0).length,
+				reasons: r.partialReasons,
+			}),
 		);
 	}
 	const embedding = {

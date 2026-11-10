@@ -144,3 +144,50 @@ test("関連文書の 2 つの経路: 名前と埋め込みで見つけた文書
 	const bob = await scenario.client(BOB).related({ documentId: c });
 	expect(bob.results).toEqual([]);
 });
+
+test("文書のリンク: 書き手が書いたリンクで結ばれた文書が両向きで見つかり、リンクを書いた断片を根拠として確かめられる", async () => {
+	const scenario = await createScenario({
+		documents: [
+			{
+				namespace: "notes",
+				path: "links/index.md",
+				title: "入口",
+				markdown:
+					"# 入口\n\n夜間の作業は [運用の手引き](ops/run.md) を見る。\n",
+			},
+			{
+				namespace: "notes",
+				path: "links/ops/run.md",
+				title: "運用",
+				markdown: "# 運用\n\n再起動の順番。\n",
+			},
+		],
+		ingestOptions: { extractor: "names" },
+	});
+	opened.push(scenario);
+	await scenario.sync();
+	const [index, run] = ["links/index.md", "links/ops/run.md"].map((p) =>
+		idOf(scenario, p),
+	) as [string, string];
+	const from = await scenario.client(ALICE).related({ documentId: index });
+	expect(from.results[0]).toMatchObject({ documentId: run, links: ["to"] });
+	expect(from.results[0]?.routes).toContain("links");
+	const to = await scenario
+		.client(ALICE)
+		.related({ documentId: run, routes: ["links"] });
+	expect(to.results.map((r) => [r.documentId, r.routes, r.links])).toEqual([
+		[index, ["links"], ["from"]],
+	]);
+	const result = to.results[0];
+	const pair = result?.passages[0];
+	if (!result || !pair) throw new Error("no passage");
+	const answer = await scenario.client(ALICE).evidence({
+		documentId: index,
+		markdownSha256: result.markdownSha256,
+		byteStart: pair.related.byteStart,
+		byteEnd: pair.related.byteEnd,
+		quoteSha256: pair.related.quoteSha256,
+	});
+	expect(answer.status).toBe("valid");
+	if (answer.status === "valid") expect(answer.quote).toContain("(ops/run.md)");
+});

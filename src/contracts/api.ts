@@ -271,8 +271,11 @@ export type EvidenceResponse = z.infer<typeof evidenceResponseSchema>;
 // Related documents (p3.md §8)
 // ---------------------------------------------------------------------------
 
-/** How a related document was found (kg2.md §3.5): shared entities, or nearness of fragments. */
-export const relatedRoutes = ["entities", "embedding"] as const;
+/**
+ * How a related document was found (kg2.md §3.5, §7.14): shared entities, nearness of fragments,
+ * or a link the author wrote between the two documents.
+ */
+export const relatedRoutes = ["entities", "embedding", "links"] as const;
 
 export const relatedRequestSchema = z.strictObject({
 	documentId: doclingDocumentIdSchema,
@@ -284,10 +287,10 @@ export const relatedRequestSchema = z.strictObject({
 		.default(SEARCH_LIMITS.defaultResults),
 	namespaces: z.array(z.string().min(1).max(512)).max(100).optional(),
 	/**
-	 * The routes to use (default both). `embedding` needs the host's vector index; without it the
+	 * The routes to use (default all). `embedding` needs the host's vector index; without it the
 	 * route finds nothing.
 	 */
-	routes: z.array(z.enum(relatedRoutes)).min(1).max(2).optional(),
+	routes: z.array(z.enum(relatedRoutes)).min(1).max(3).optional(),
 });
 export type RelatedRequest = z.input<typeof relatedRequestSchema>;
 
@@ -306,6 +309,16 @@ export const RELATED_LIMITS = {
 	fragmentsPerDocument: 64,
 	/** Nearest fragments read per fragment of the requested document (the embedding route). */
 	nearestPerFragment: 200,
+	/**
+	 * A document that links to more documents than this is an index (a table of contents): its
+	 * links say where to go, not what is related, and rank after shared entities (kg2.md §7.14).
+	 */
+	indexLinks: 20,
+	/**
+	 * Links to the requested document used (the links route); more is `response_truncated`, as
+	 * are more than 20,000 links in its namespace to files of its file name (`README.md`).
+	 */
+	linksToDocument: 1000,
 } as const;
 
 export const relatedPartialReasons = [
@@ -335,10 +348,12 @@ export const relatedResponseSchema = z.strictObject({
 	results: z.array(
 		z.strictObject({
 			/**
-			 * Documents that share an entity first, then those the embedding route alone found (the
-			 * nearest fragments, without a threshold: near is not the same as related). Within each,
-			 * by the best pair of fragments (one of the requested document, one of this one): the
-			 * reciprocal rank fusion of the fragments' shared entities (weighted by IDF) and of their
+			 * Documents linked to or from the requested one first (a link the author wrote, kg2.md
+			 * §7.14), then those that share an entity, then those linked only by an index (a document of
+			 * more than `RELATED_LIMITS.indexLinks` links), then those the embedding route alone found
+			 * (the nearest fragments, without a threshold: near is not the same as related). Within
+			 * each, by the best pair of fragments (one of the requested document, one of this one): the
+			 * reciprocal rank fusion of the fragments' links, shared entities (weighted by IDF) and
 			 * embedding nearness; equal scores by document id. An order, not a measure of truth.
 			 */
 			rank: z.number().int().min(1),
@@ -350,6 +365,12 @@ export const relatedResponseSchema = z.strictObject({
 			state: z.enum(["current", "unverified"]),
 			/** The routes that found any pair of fragments of this document (`passages` shows the best). */
 			routes: z.array(z.enum(relatedRoutes)),
+			/**
+			 * The links between the two documents (the links route): `to`, the requested document links
+			 * to this one; `from`, this one links to the requested one. A link's pair of fragments is
+			 * the fragment that holds the link and the first fragment of the document it names.
+			 */
+			links: z.array(z.enum(["to", "from"])).max(2),
 			/**
 			 * The best pairs of fragments, at most `RELATED_LIMITS.passagesPerResult`: each fragment as a
 			 * quotation of its document (the whole fragment), and the routes that ranked the pair.

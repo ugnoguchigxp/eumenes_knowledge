@@ -48,10 +48,12 @@ export {
 	republishVersionInTransaction,
 	stageExtractionsInTransaction,
 	stageFragmentsInTransaction,
+	stageLinksInTransaction,
 	stageVectorsInTransaction,
 } from "./versions.js";
 export type {
 	FragmentToStage,
+	LinkToStage,
 	ReextractTarget,
 	StagingTicket,
 	VersionRow,
