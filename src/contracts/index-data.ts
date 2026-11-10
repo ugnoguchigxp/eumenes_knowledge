@@ -131,7 +131,11 @@ export const extractionDropReasons = [
 	"unknown_entity",
 	/** Two elements share an id. */
 	"duplicate_id",
-	/** Beyond a fragment's limit of the model-free extractor (kg2.md G3), or too far apart to quote. */
+	/**
+	 * Beyond a fragment's limit of the model-free extractor (kg2.md G3): a name longer than the
+	 * limit of a name, or a common noun beyond the limit of names. (Up to rules version 7, also a
+	 * relation beyond the limit of relations or whose names were too far apart to quote.)
+	 */
 	"over_limit",
 	/**
 	 * A proper name beyond a fragment's limit of names (the model-free extractor, kg2.md §7.10):

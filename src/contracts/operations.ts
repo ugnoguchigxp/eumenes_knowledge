@@ -116,12 +116,11 @@ export type IngestOptions = {
 	/**
 	 * How fragments are extracted (kg2.md §3.1). `model`: the model's answer for each fragment
 	 * (instruction `extract`, checked by `verifyExtraction`). `names`: no model; names from the
-	 * tokenizer by the package's rules, and two names in one sentence as the relation `同じ文`
-	 * (`extractNames`). Default `names` (KG2 G7: the model's extraction is frozen, kept for a host
-	 * that asks for it). With `names`, a published version extracted by another extractor,
-	 * tokenizer or rules version is extracted again from its stored fragments (no source read, no
-	 * embedding), while the old version is still read. Hosts must pass the same value to the
-	 * sync-page job.
+	 * tokenizer by the package's rules, and no relation (`extractNames`; kg2.md §7.14). Default
+	 * `names` (KG2 G7: the model's extraction is frozen, kept for a host that asks for it). With
+	 * `names`, a published version extracted by another extractor, tokenizer or rules version is
+	 * extracted again from its stored fragments (no source read, no embedding), while the old
+	 * version is still read. Hosts must pass the same value to the sync-page job.
 	 */
 	extractor?: "model" | "names";
 	/** Additional extraction passes per fragment (p0.md #4). Default 0; only for `model`. */

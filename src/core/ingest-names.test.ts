@@ -14,10 +14,7 @@ import {
 	listFragmentsInSnapshot,
 	listRelationMentionsInSnapshot,
 } from "../sqlite/reads.js";
-import {
-	createCharclassTokenizer,
-	SAME_SENTENCE_RELATION,
-} from "./extract/index.js";
+import { createCharclassTokenizer } from "./extract/index.js";
 import {
 	docId,
 	type Env,
@@ -47,27 +44,18 @@ function published(env: Env) {
 	if (!v) throw new Error("not published");
 	const fragments = listFragmentsInSnapshot(env.db, v.versionId);
 	const entities = listEntityMentionsInSnapshot(env.db, v.versionId);
-	const nameOf = (ordinal: number, localId: string) =>
-		entities.find((e) => e.fragmentOrdinal === ordinal && e.localId === localId)
-			?.name;
 	return {
 		v,
 		fragments,
 		extractions: listExtractionsInSnapshot(env.db, v.versionId),
 		names: entities.map((e) => e.name),
-		relations: listRelationMentionsInSnapshot(env.db, v.versionId).map((r) => ({
-			...r,
-			pair: [
-				nameOf(r.fragmentOrdinal, r.sourceLocalId),
-				nameOf(r.fragmentOrdinal, r.targetLocalId),
-			],
-		})),
+		relations: listRelationMentionsInSnapshot(env.db, v.versionId),
 		evidence: listEvidenceInSnapshot(env.db, v.versionId),
 	};
 }
 
 describe("ingest with the model-free extractor (kg2.md G3)", () => {
-	test("names and same-sentence relations are indexed without one model call", async () => {
+	test("names are indexed without one model call, and no relation (rules version 8)", async () => {
 		const env = makeEnv({ maxFragmentBytes: 120, extractor: "names" });
 		env.source.put(makeDoc(1, BODY));
 		await syncAll(env);
@@ -82,7 +70,7 @@ describe("ingest with the model-free extractor (kg2.md G3)", () => {
 			fragments.map((f) => f.text),
 		);
 		expect(extractions.map((x) => [x.status, x.model])).toEqual(
-			fragments.map(() => ["ok", "names:charclass@rules7"]),
+			fragments.map(() => ["ok", "names:charclass@rules8"]),
 		);
 		expect(names).toEqual(
 			expect.arrayContaining([
@@ -96,22 +84,8 @@ describe("ingest with the model-free extractor (kg2.md G3)", () => {
 		// The URL is no name.
 		expect(names.some((n) => n.includes("example"))).toBe(false);
 
-		expect(relations.map((r) => r.pair)).toEqual(
-			expect.arrayContaining([
-				["Lantern", "MySQL"],
-				["Lantern", "再起動"],
-			]),
-		);
-		// Mira Okafor and MySQL are written in two sentences: no relation.
-		expect(
-			relations.some(
-				(r) => r.pair.includes("Mira Okafor") && r.pair.includes("MySQL"),
-			),
-		).toBe(false);
-		for (const r of relations) {
-			expect(r.relation).toBe(SAME_SENTENCE_RELATION);
-			expect(r.directed).toBe(false);
-		}
+		// Two names of one sentence are no relation (kg2.md §7.14).
+		expect(relations).toEqual([]);
 
 		// Every quotation is located in its fragment, as written, and hashed.
 		const bytes = Buffer.from(BODY, "utf8");
@@ -145,7 +119,7 @@ describe("ingest with the model-free extractor (kg2.md G3)", () => {
 		expect(seen).toHaveLength(fragments.length);
 		expect(seen.join("")).not.toContain("example.com");
 		expect(new Set(extractions.map((x) => x.model))).toEqual(
-			new Set(["names:host-analyzer@rules7"]),
+			new Set(["names:host-analyzer@rules8"]),
 		);
 	});
 

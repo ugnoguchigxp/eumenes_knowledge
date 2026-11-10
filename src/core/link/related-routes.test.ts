@@ -262,7 +262,7 @@ FROM knowledge_embedding_spaces LIMIT 1`,
 });
 
 describe("graph filters and the answer's size (kg2.md G5)", () => {
-	test("minDocuments, types and minEdgeDocuments narrow the graph; omitted, the answer is as before", async () => {
+	test("minDocuments and types narrow the graph; omitted, the answer is as before", async () => {
 		const env = await names({
 			1: "Lantern と MySQL と設計。",
 			2: "Lantern と MySQL の移行。",
@@ -277,16 +277,6 @@ describe("graph filters and the answer's size (kg2.md G5)", () => {
 			"Lantern",
 			"MySQL",
 		]);
-		const strong = readGraph(deps(env), access("wiki"), {
-			minEdgeDocuments: 2,
-		});
-		expect(strong.edges.map((e) => e.documentIds.length)).toEqual([2]);
-		const label = new Map(strong.nodes.map((n) => [n.nodeId, n.label]));
-		expect(
-			strong.edges.map((e) =>
-				[label.get(e.source), label.get(e.target)].sort(),
-			),
-		).toEqual([["Lantern", "MySQL"]]);
 	});
 
 	test("an answer larger than responseChars keeps the first nodes and the edges between them", async () => {
@@ -378,7 +368,7 @@ describe("fitting the graph answer", () => {
 });
 
 describe("the search index of model-free mentions (kg2.md G5)", () => {
-	test("a mention is found by its name, never by the fixed type or relation words", async () => {
+	test("a mention is found by its name, never by the fixed type words; no relation is stored", async () => {
 		const env = await names({ 1: "Lantern と MySQL を使う。" });
 		const find = (kind: "entity" | "relation", q: string) =>
 			searchMentionsInSnapshot(env.db, kind, q, 10, ["wiki"]).map(
@@ -387,10 +377,9 @@ describe("the search index of model-free mentions (kg2.md G5)", () => {
 		expect(find("entity", "lantern")).toEqual(["Lantern"]);
 		expect(find("entity", "名詞")).toEqual([]);
 		expect(find("entity", "固有名")).toEqual([]);
-		expect(find("relation", "同じ文")).toEqual([]);
-		// The relation is still stored and read by the graph.
+		// Two names of one sentence are no relation (rules version 8, kg2.md §7.14).
 		expect(
 			rows(env.db, "SELECT relation FROM knowledge_relation_mentions"),
-		).toEqual([{ relation: "同じ文" }]);
+		).toEqual([]);
 	});
 });

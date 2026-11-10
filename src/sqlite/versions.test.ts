@@ -778,12 +778,12 @@ describe("staging validation", () => {
 					{ ...ent, id: "e3", key: "mysql" },
 				],
 				relations: [
-					// One end without a key: indexed. Both ends keyed (同じ文): not indexed.
+					// Indexed, whatever its ends (the model-free extractor makes none, kg2.md §7.14).
 					{ ...rel("r1", "e1", "e2"), relation: "uses" },
-					{ ...rel("r2", "e1", "e3"), relation: "同じ文" },
+					{ ...rel("r2", "e1", "e3"), relation: "uses" },
 				],
 				dropped: [],
-				model: "names:charclass@rules7",
+				model: "names:charclass@rules8",
 			},
 		]);
 		expect(
@@ -814,10 +814,10 @@ JOIN knowledge_entity_mentions m ON m.entity_id = f.rowid ORDER BY m.local_id`,
 			db
 				.query(
 					`SELECT m.local_id FROM knowledge_relation_fts f
-JOIN knowledge_relation_mentions m ON m.relation_id = f.rowid`,
+JOIN knowledge_relation_mentions m ON m.relation_id = f.rowid ORDER BY m.local_id`,
 				)
 				.all(),
-		).toEqual([{ local_id: "r1" }]);
+		).toEqual([{ local_id: "r1" }, { local_id: "r2" }]);
 	});
 
 	test("evidence must lie inside its fragment's byte range", () => {

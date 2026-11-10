@@ -22,7 +22,6 @@ export {
 	NAMES_LIMITS,
 	nameKey,
 	namesModel,
-	SAME_SENTENCE_RELATION,
 	TokenizerFailure,
 } from "./extract-names.js";
 export {

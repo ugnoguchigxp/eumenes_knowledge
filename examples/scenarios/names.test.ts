@@ -68,17 +68,11 @@ test("名前の抽出器: モデルを呼ばずに取り込み、同じ namespac
 	expect(lanterns[0]?.decidedBy).toEqual([KEY]);
 	const sluice = graph.nodes.find((n) => n.names.includes("北水門"));
 	expect(sluice?.documentIds.length).toBe(2);
-	// Same-sentence edges, each quoting its sentence.
-	expect(graph.edges.length).toBeGreaterThan(0);
-	expect(new Set(graph.edges.map((e) => e.relation))).toEqual(
-		new Set(["同じ文"]),
-	);
+	// No edge: the model-free extractor makes no relation (kg2.md §7.14).
+	expect(graph.edges).toEqual([]);
 
 	// Every quotation of the graph checks out with the evidence API.
-	for (const point of [
-		...graph.nodes.flatMap((n) => n.evidence),
-		...graph.edges.flatMap((e) => e.evidence),
-	]) {
+	for (const point of graph.nodes.flatMap((n) => n.evidence)) {
 		const answer = await scenario.client(ALICE).evidence({
 			documentId: point.documentId,
 			markdownSha256: point.markdownSha256,

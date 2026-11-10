@@ -16,7 +16,6 @@ import {
 	readGraphKeyFirstMentionsInSnapshot,
 	readGraphKeyGroupsInSnapshot,
 	readGraphKeyMentionStatsInSnapshot,
-	readGraphKeyPairsInSnapshot,
 	type GraphEvidence,
 	type KeyGroupCount,
 	readGraphMentionsInSnapshot,
@@ -58,7 +57,8 @@ type Provenance = Node["decidedBy"][number];
  * Everything is computed over that read set alone, so a mention outside the scope never joins
  * or splits anything inside and nothing about it shows. Edges are the relation mentions of the
  * same versions whose two ends are read mentions of returned nodes, grouped by the two nodes,
- * direction, normalized relation name, negation and certainty. Whether mentions are the same
+ * direction, normalized relation name, negation and certainty. The model-free extractor makes
+ * no relation (rules version 8, kg2.md §7.14): a scope it alone extracted has no edge. Whether mentions are the same
  * entity is a model's or a person's judgment (the links) or the model-free extractor's key
  * (`name_key`), each named in `decidedBy`; this code joins by connectivity and counts only.
  * Node and edge ids are ordinals of the returned order.
@@ -589,9 +589,11 @@ function evidenceIds(
  * The graph by identity keys (kg2.md §7.12), when every current mention of the scope was
  * extracted by the model-free extractor and no judgment joins or splits them: a node is one
  * key of one namespace, so nodes are counted in SQL over the whole scope and only the returned
- * ones are read further; edges are read from the relation pairs of the returned keys. The
- * answer is the one `byMentions` would give over every mention, except that quotations are
- * picked in relation id order (the order they were written) rather than by local id.
+ * ones are read further. It draws no edge: the model-free extractor makes no relation (rules
+ * version 8, kg2.md §7.14). The nodes are the ones `byMentions` would give over every mention,
+ * except that quotations are picked in id order (the order they were written) rather than by
+ * local id. A version of rules version 7 or before not yet extracted again (G7) has relations
+ * of two names of one sentence: `byMentions` would draw them, this does not.
  */
 function byKeys(db: Tx, p: Params, reasons: Set<Reason>): Drawn {
 	const max = GRAPH_LIMITS.evidencePerItem;
@@ -705,111 +707,8 @@ function byKeys(db: Tx, p: Params, reasons: Set<Reason>): Drawn {
 		};
 	});
 
-	// Edges: the relation pairs of the returned keys, grouped as `byMentions` groups relations.
-	const ordinalOf = new Map<string, number>();
-	order.forEach(({ g }, n) => {
-		if (g.solo === 0) ordinalOf.set(`${g.namespace}\u0000${g.key}`, n + 1);
-	});
-	type KeyEdge = {
-		tie: string;
-		source: number;
-		target: number;
-		directed: boolean;
-		negated: boolean;
-		certainty: Edge["certainty"];
-		mentions: number;
-		relations: Tally;
-		/** Per version: the first relation, and how many. */
-		versions: Map<number, number>;
-		perVersion: Map<number, number>;
-		firstIds: number[];
-	};
-	const groups = new Map<string, KeyEdge>();
-	const keys = order.filter(({ g }) => g.solo === 0).map(({ g }) => g.key);
-	for (const r of readGraphKeyPairsInSnapshot(db, p.scope, keys)) {
-		let source = ordinalOf.get(`${r.namespace}\u0000${r.sourceKey}`);
-		let target = ordinalOf.get(`${r.namespace}\u0000${r.targetKey}`);
-		if (source === undefined || target === undefined || source === target)
-			continue;
-		if (!r.directed && source > target) [source, target] = [target, source];
-		const tie = [
-			r.directed ? 1 : 0,
-			r.negated ? 1 : 0,
-			r.certainty,
-			normalizeForSearch(r.relation).trim(),
-		].join("|");
-		const key = `${source}|${target}|${tie}`;
-		let e = groups.get(key);
-		if (!e) {
-			e = {
-				tie,
-				source,
-				target,
-				directed: r.directed,
-				negated: r.negated,
-				certainty: r.certainty,
-				mentions: 0,
-				relations: new Map(),
-				versions: new Map(),
-				perVersion: new Map(),
-				firstIds: [],
-			};
-			groups.set(key, e);
-		}
-		const first = r.firstIds[0] as number;
-		e.mentions += r.mentions;
-		tally(e.relations, r.relation, r.mentions, first);
-		e.versions.set(
-			r.versionId,
-			Math.min(e.versions.get(r.versionId) ?? first, first),
-		);
-		e.perVersion.set(
-			r.versionId,
-			(e.perVersion.get(r.versionId) ?? 0) + r.mentions,
-		);
-		e.firstIds = [...e.firstIds, ...r.firstIds]
-			.sort((x, y) => x - y)
-			.slice(0, max);
-	}
-	const orderedEdges = [...groups.values()]
-		.filter((e) => e.versions.size >= p.minEdgeDocuments)
-		.sort(
-			(x, y) =>
-				y.mentions - x.mentions ||
-				x.source - y.source ||
-				x.target - y.target ||
-				cmp(x.tie, y.tie),
-		);
-	if (orderedEdges.length > p.maxEdges) reasons.add("edges_truncated");
-	const keptEdges = orderedEdges.slice(0, p.maxEdges);
-	const edgeQuoted = keptEdges.map((e) =>
-		evidenceIds(e.versions, e.firstIds, max),
-	);
-	const relationEvidence = evidencePoints(
-		readGraphEvidenceInSnapshot(db, "relation", edgeQuoted.flat(), max),
-		documents,
-	);
-	const edges: Edge[] = keptEdges.map((e, i) => ({
-		edgeId: `e${i + 1}`,
-		source: `n${e.source}`,
-		target: `n${e.target}`,
-		directed: e.directed,
-		relation: ranked(e.relations)[0] as string,
-		// The model-free extractor writes no keywords and no condition.
-		keywords: [],
-		negated: e.negated,
-		certainty: e.certainty,
-		conditions: [],
-		mentionCount: e.mentions,
-		documentCount: e.versions.size,
-		documentIds: listedDocuments(byDocument(e.perVersion)),
-		evidence: pickEvidence(
-			(edgeQuoted[i] as number[]).flatMap(
-				(id) => relationEvidence.get(id) ?? [],
-			),
-		),
-	}));
-	return { nodes, edges, documents };
+	// No edge: the model-free extractor makes no relation (rules version 8, kg2.md §7.14).
+	return { nodes, edges: [], documents };
 }
 
 /** The answer: what fits in its size, the documents it names, and every partial reason. */

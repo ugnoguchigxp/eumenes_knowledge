@@ -135,12 +135,13 @@ describe("identity by key (kg2.md G4)", () => {
 		expect(g.partialReasons).not.toContain("linking_conflict");
 	});
 
-	test("a relation whose ends are joined into one node is no edge (no loop)", async () => {
+	test("a same judgment joins two keys into one node", async () => {
 		const env = makeLinkEnv({}, { extractor: "names" });
 		putDoc(env, 1, "# 比較\n\nLantern と ランタン を比べる。");
 		await scanAndDrain(env);
 		const before = readGraph(deps(env), access("wiki"), {});
-		expect(before.edges).toHaveLength(1);
+		expect(nodeOf(before, "Lantern")).toHaveLength(1);
+		expect(nodeOf(before, "ランタン")).toHaveLength(1);
 		judge(
 			env,
 			mentionOf(env, 1, "Lantern"),
@@ -151,7 +152,6 @@ describe("identity by key (kg2.md G4)", () => {
 		const [one, ...more] = nodeOf(g, "Lantern");
 		expect(more).toEqual([]);
 		expect(new Set(one?.names)).toEqual(new Set(["Lantern", "ランタン"]));
-		expect(g.edges).toEqual([]);
 	});
 
 	test("documents sharing a key are related, the share decided by name_key", async () => {

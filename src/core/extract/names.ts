@@ -9,7 +9,9 @@ import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
  * dot, plain words for the space join, the identifier boundary and glosses in parentheses;
  * version 7 (kg2.md §7.10) changes no rule of names: it blanks more secrets (a URL of any
  * scheme, system paths, base64 keys, PEM blocks, `Bearer` credentials) and, given the Markdown
- * structure, fenced code blocks and the keys of the frontmatter.
+ * structure, fenced code blocks and the keys of the frontmatter. Version 8 (kg2.md §7.14)
+ * changes no rule of names either: the extraction makes no relation (two names of one sentence
+ * were judged no deep relation, §7.13).
  *
  * - A name is a run of adjacent noun tokens (nouns, prefixes, noun-like suffixes) and ASCII
  *   words. Two plain capitalized words (a capital, then small letters: "Temporal Reasoning")
@@ -41,7 +43,7 @@ import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
  * The lists are general (function words, formal nouns, markers), never names of a subject
  * (plan.md §5.3 as approved for KG2).
  */
-export const NAME_RULES_VERSION = 7;
+export const NAME_RULES_VERSION = 8;
 
 /** A name found in a text: where it is (UTF-16 offsets), how it is keyed, and whether proper. */
 export type NameCandidate = {

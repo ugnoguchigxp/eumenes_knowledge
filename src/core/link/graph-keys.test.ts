@@ -1,18 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import {
-	GRAPH_LIMITS,
-	type AccessContext,
-	type GraphRequest,
-} from "../../contracts/index.js";
-import {
-	canReadGraphByKeysInSnapshot,
-	readGraphKeyPairsInSnapshot,
-} from "../../sqlite/graph.js";
-import { cleanupInTransaction } from "../../sqlite/index.js";
-import {
-	RELATION_PAIR_FIRST_IDS,
-	RELATION_PAIRS_OF,
-} from "../../sqlite/schema.js";
+import type { AccessContext, GraphRequest } from "../../contracts/index.js";
+import { canReadGraphByKeysInSnapshot } from "../../sqlite/graph.js";
 import { docId, rows } from "../harness.fixture.js";
 import { readGraph, readGraphIn } from "./graph.js";
 import {
@@ -104,7 +92,8 @@ describe("the graph by identity keys (kg2.md §7.12)", () => {
 				// Not a comparison of two empty answers.
 				if (Object.keys(request).length === 0) {
 					expect(keys.nodes.length).toBeGreaterThan(5);
-					expect(keys.edges.length).toBeGreaterThan(0);
+					// The model-free extractor makes no relation (rules version 8, kg2.md §7.14).
+					expect(keys.edges).toEqual([]);
 				}
 				if (request.maxNodes === 3)
 					expect(keys.partialReasons).toContain("nodes_truncated");
@@ -138,67 +127,13 @@ describe("the graph by identity keys (kg2.md §7.12)", () => {
 			);
 			for (const n of [22, 23, 24, 25])
 				expect(lantern?.documentIds).toContain(docId(n));
-			const edge = g.edges[0];
-			expect(edge?.documentCount).toBe(25);
-			expect(edge?.documentIds).toHaveLength(20);
-			// The answer names only the listed documents: 1 to 20 (MySQL, the edge: equal counts,
-			// smallest ids) and 22 to 25 (Lantern's most mentioned).
+			// The answer names only the listed documents: 1 to 20 (MySQL: equal counts, smallest
+			// ids) and 22 to 25 (Lantern's most mentioned).
 			expect(g.documents.map((d) => d.documentId)).toEqual(
 				[...Array.from({ length: 20 }, (_, i) => i + 1), 22, 23, 24, 25].map(
 					docId,
 				),
 			);
-		}
-	});
-
-	test("relations of every direction, negation, certainty and name still give the same answer", async () => {
-		for (const seed of [5, 6]) {
-			const env = await corpus(seed, 10);
-			// What the model-free extractor never writes, but a pair must still be grouped by.
-			const next = random(seed * 31);
-			const ids = rows(
-				env.db,
-				"SELECT relation_id FROM knowledge_relation_mentions ORDER BY relation_id",
-			).map((r) => r.relation_id as number);
-			for (const id of ids) {
-				const pick = <T>(list: readonly T[]) =>
-					list[Math.floor(next() * list.length)] as T;
-				env.db.run(
-					`UPDATE knowledge_relation_mentions SET directed = ?, qualifier_negated = ?,
- qualifier_certainty = ?, relation = ? WHERE relation_id = ?`,
-					[
-						pick([0, 1]),
-						pick([0, 0, 1]),
-						pick(["stated", "stated", "uncertain"]),
-						pick(["uses", "Uses", "uses ", "同じ文"]),
-						id,
-					],
-				);
-				if (next() < 0.3)
-					env.db.run(
-						`UPDATE knowledge_relation_mentions SET source_local_id = target_local_id,
- target_local_id = source_local_id WHERE relation_id = ?`,
-						[id],
-					);
-			}
-			env.db.run("DELETE FROM knowledge_relation_pairs");
-			env.db.run(
-				RELATION_PAIRS_OF(
-					"SELECT version_id FROM knowledge_versions WHERE state = 'published'",
-				),
-			);
-			for (const request of REQUESTS) {
-				const keys = readGraphIn("keys")(
-					deps(env),
-					access("wiki", "team"),
-					request,
-				);
-				expect(keys).toEqual(
-					readGraphIn("mentions")(deps(env), access("wiki", "team"), request),
-				);
-			}
-			const all = readGraphIn("keys")(deps(env), access("wiki", "team"), {});
-			expect(new Set(all.edges.map((e) => e.directed)).size).toBe(2);
 		}
 	});
 
@@ -224,10 +159,6 @@ describe("the graph by identity keys (kg2.md §7.12)", () => {
 		}
 	});
 
-	test("a pair keeps as many relation ids as a graph quotes per edge", () => {
-		expect(RELATION_PAIR_FIRST_IDS).toBe(GRAPH_LIMITS.evidencePerItem);
-	});
-
 	test("one key in two namespaces is two nodes; a key outside the scope shows nowhere", async () => {
 		const env = makeLinkEnv({}, { extractor: "names" });
 		putDoc(env, 1, "Lantern と MySQL。\n", "wiki");
@@ -241,11 +172,41 @@ describe("the graph by identity keys (kg2.md §7.12)", () => {
 			["MySQL", 1],
 			["MySQL", 1],
 		]);
-		expect(g.edges).toHaveLength(2);
+		expect(g.edges).toEqual([]);
 		expect(g.nodes.some((n) => n.label === "Zircon")).toBe(false);
 		expect(g).toEqual(
 			readGraphIn("mentions")(deps(env), access("wiki", "team"), {}),
 		);
+	});
+
+	test("a relation of rules version 7 not yet extracted again is drawn mention by mention only (kg2.md §7.14)", async () => {
+		const env = makeLinkEnv({}, { extractor: "names" });
+		putDoc(env, 1, "Lantern と MySQL。\n");
+		await scanAndDrain(env);
+		const [a, b] = rows(
+			env.db,
+			"SELECT version_id, fragment_ordinal, local_id FROM knowledge_entity_mentions ORDER BY entity_id",
+		);
+		// What rules version 7 wrote for two names of one sentence.
+		env.db.run(
+			`INSERT INTO knowledge_relation_mentions (version_id, fragment_ordinal, local_id,
+ source_local_id, target_local_id, directed, relation, description, keywords_json,
+ qualifier_negated, qualifier_condition, qualifier_certainty)
+VALUES (?, ?, 'r1', ?, ?, 0, '同じ文', '', '[]', 0, NULL, 'stated')`,
+			[
+				a?.version_id as number,
+				a?.fragment_ordinal as number,
+				a?.local_id as string,
+				b?.local_id as string,
+			],
+		);
+		expect(canReadGraphByKeysInSnapshot(env.db, ["wiki"])).toBe(true);
+		expect(readGraph(deps(env), access("wiki"), {}).edges).toEqual([]);
+		expect(
+			readGraphIn("mentions")(deps(env), access("wiki"), {}).edges.map(
+				(e) => e.relation,
+			),
+		).toEqual(["同じ文"]);
 	});
 
 	test("a judgment of two mentions, or a model's version, makes the graph read mention by mention", async () => {
@@ -272,65 +233,5 @@ FROM knowledge_entity_mentions ma, knowledge_entity_mentions mb WHERE ma.entity_
 		);
 		expect(canReadGraphByKeysInSnapshot(env.db, ["wiki", "team"])).toBe(false);
 		expect(canReadGraphByKeysInSnapshot(env.db, ["team"])).toBe(true);
-	});
-
-	test("relation pairs are written at publication, smaller key first when undirected, and go with their version", async () => {
-		const env = makeLinkEnv({}, { extractor: "names" });
-		putDoc(
-			env,
-			1,
-			"Zircon と Lantern。Lantern と Zircon と MySQL。\nlantern。\n",
-		);
-		await scanAndDrain(env);
-		const pairs = () =>
-			rows(
-				env.db,
-				"SELECT source_key, target_key, directed, relation, mentions, first_ids FROM knowledge_relation_pairs ORDER BY source_key, target_key",
-			);
-		const before = pairs();
-		expect(before.map((r) => [r.source_key, r.target_key, r.mentions])).toEqual(
-			[
-				["lantern", "mysql", 1],
-				["lantern", "zircon", 1],
-				["mysql", "zircon", 1],
-			],
-		);
-		for (const r of before) {
-			expect(r.directed).toBe(0);
-			expect(JSON.parse(r.first_ids as string)).toHaveLength(1);
-		}
-		expect(
-			readGraphKeyPairsInSnapshot(env.db, ["wiki"], ["lantern", "zircon"]).map(
-				(p) => [p.sourceKey, p.targetKey],
-			),
-		).toEqual([["lantern", "zircon"]]);
-		// A new body: the old version is retired, and its pairs go with the cleanup.
-		putDoc(env, 1, "Lantern と Kafka。\n");
-		await scanAndDrain(env);
-		const keys = ["lantern", "zircon", "mysql", "kafka"];
-		expect(
-			readGraphKeyPairsInSnapshot(env.db, ["wiki"], keys).map((p) => [
-				p.sourceKey,
-				p.targetKey,
-			]),
-		).toEqual([["kafka", "lantern"]]);
-		// Pairs of a document that is not current are stored, but never read.
-		env.db.run("UPDATE knowledge_documents SET state = 'stale'");
-		expect(readGraphKeyPairsInSnapshot(env.db, ["wiki"], keys)).toEqual([]);
-		env.db.run("UPDATE knowledge_documents SET state = 'current'");
-		const published = rows(
-			env.db,
-			"SELECT published_version_id AS v FROM knowledge_documents",
-		)[0]?.v;
-		while (cleanupInTransaction(env.db, 1000, { now: env.clock.now() }).more);
-		expect(
-			rows(
-				env.db,
-				"SELECT DISTINCT version_id AS v FROM knowledge_relation_pairs",
-			).map((r) => r.v),
-		).toEqual([published]);
-		expect(pairs().map((r) => [r.source_key, r.target_key])).toEqual([
-			["kafka", "lantern"],
-		]);
 	});
 });

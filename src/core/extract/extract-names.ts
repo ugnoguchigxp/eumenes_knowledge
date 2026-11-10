@@ -5,7 +5,6 @@ import {
 	type Fragment,
 	type FragmentExtraction,
 	type VerifiedEntity,
-	type VerifiedRelation,
 } from "../../contracts/index-data.js";
 import type { NameToken, TokenizerPort } from "../../contracts/ports.js";
 import { sha256Hex } from "../bytes.js";
@@ -22,15 +21,11 @@ import {
 /** Limits of one fragment's model-free extraction; what is beyond is counted as `over_limit` or `proper_over_limit`. */
 export const NAMES_LIMITS = {
 	entities: 100,
-	relations: 200,
 	evidencePerItem: EXTRACTION_LIMITS.evidencePerItem,
 	quoteChars: EXTRACTION_LIMITS.quoteChars,
 	/** Longer names (a run of capitalized words, a long kanji run) are no names. */
 	nameChars: EXTRACTION_LIMITS.nameChars,
 } as const;
-
-/** The relation name of two names written in one sentence (kg2.md §3.1); it claims nothing more. */
-export const SAME_SENTENCE_RELATION = "同じ文";
 
 /** Entity types of the model-free extractor: a proper name, or any other noun run. */
 export const NAME_TYPES = { proper: "固有名", noun: "名詞" } as const;
@@ -184,24 +179,21 @@ function evidenceOf(
 }
 
 /**
- * The model-free extraction of one fragment (kg2.md §3.1, G3): its names as entities and every
- * two names written in one sentence as one undirected relation `同じ文`. Every quotation is a
- * sentence of the original text (or a window of it at most `quoteChars` long that holds the
- * names), located by offset, so it occurs in the fragment as written. Names are as written in
- * the original text; two occurrences of one name are one entity.
+ * The model-free extraction of one fragment (kg2.md §3.1, G3): its names as entities, and no
+ * relation. Two names of one sentence were relations up to rules version 7; judged on held-out
+ * notes, they were no deep relation and half of them noise (kg2.md §7.13), so the extraction
+ * claims none (§7.14). Every quotation is a sentence of the original text (or a window of it at
+ * most `quoteChars` long that holds the name), located by offset, so it occurs in the fragment
+ * as written. Names are as written in the original text; two occurrences of one name are one
+ * entity.
  *
  * What does not fit is counted in `dropped`:
  * - `over_limit`: a name longer than `nameChars`; common nouns beyond the limit of entities
- *   (proper names are kept first, then names in the order they first occur); two names of one
- *   sentence too far apart to be quoted; relations beyond the limit of relations (pairs of two
- *   proper names are kept first, then in the order of their first sentence: what is beyond is a
- *   sentence of many names, an enumeration). A dense fragment has many: not reported as a loss.
+ *   (proper names are kept first, then names in the order they first occur). A dense fragment
+ *   has many: not reported as a loss.
  * - `proper_over_limit` (kg2.md §7.10): proper names beyond the limit of entities, which no
  *   search by name finds. The version is reported `extraction_truncated`.
  * - `no_evidence`: a name with no quotation (one that crosses a sentence end).
- * Only a pair with a proper name at one end at least is a relation (two common nouns make none;
- * rules version 6), and never a pair of two names with one key. Relations are only made between
- * kept entities; the pairs a dropped entity would have made are not counted.
  *
  * `structure` (`fragmentStructures`) names the fragment's code and frontmatter: code is no
  * prose and holds no name (rules version 7). Without it the fragment is read as prose.
@@ -320,90 +312,11 @@ export function extractNames(
 		return evidence;
 	}
 
-	// Relations: two kept names in one sentence, once per pair (whichever comes first in a
-	// sentence), the sentences as evidence. A pair is keyed and directed by entity order.
-	const indexOf = new Map(kept.map((e, i) => [e, i]));
-	const inSentence = sentences.map(() => new Map<number, Span>());
-	for (const e of kept)
-		for (const o of e.occurrences) {
-			const at = inSentence[sentenceOf(o.start)];
-			const i = indexOf.get(e) as number;
-			if (at && !at.has(i)) at.set(i, o);
-		}
-	const pairs = new Map<
-		string,
-		{ source: number; target: number; spans: Span[]; proper: number }
-	>();
-	inSentence.forEach((found, s) => {
-		const list = [...found].sort((x, y) => x[1].start - y[1].start);
-		for (let i = 0; i < list.length; i++)
-			for (let j = i + 1; j < list.length; j++) {
-				const [a, sa] = list[i] as [number, Span];
-				const [b, sb] = list[j] as [number, Span];
-				const source = Math.min(a, b);
-				const target = Math.max(a, b);
-				// Two common nouns make no relation (rules v6, kg2.md §7.9): they were most of the
-				// pairs and of the noise, and none of the known relations needed them.
-				if (
-					!(kept[source] as { proper: boolean }).proper &&
-					!(kept[target] as { proper: boolean }).proper
-				)
-					continue;
-				// Two surfaces of one key are one entity when read ("Google" and "google", or a
-				// tokenizer's normal form: Sudachi gives グーグル the key of Google): no relation.
-				if (
-					(kept[source] as { key: string }).key ===
-					(kept[target] as { key: string }).key
-				)
-					continue;
-				const key = `${source} ${target}`;
-				const pair = pairs.get(key) ?? {
-					source,
-					target,
-					spans: [],
-					proper:
-						Number((kept[source] as { proper: boolean }).proper) +
-						Number((kept[target] as { proper: boolean }).proper),
-				};
-				if (pair.spans.length < NAMES_LIMITS.evidencePerItem) {
-					const span = windowAround(
-						fragment.text,
-						sentences[s] as Span,
-						{ start: sa.start, end: Math.max(sa.end, sb.end) },
-						NAMES_LIMITS.quoteChars,
-					);
-					if (span && wholeChars(fragment.text, span)) pair.spans.push(span);
-				}
-				pairs.set(key, pair);
-			}
-	});
-	const withEvidence = [...pairs.values()].filter((p) => p.spans.length > 0);
-	drop(pairs.size - withEvidence.length);
-	// A stable sort: within one count of proper names, the order of the first sentence stays.
-	const sortedPairs = [...withEvidence].sort((x, y) => y.proper - x.proper);
-	const keptPairs = sortedPairs.slice(0, NAMES_LIMITS.relations);
-	// More than the limit is a sentence of many names (an enumeration): its pairs say little.
-	const leftPairs = sortedPairs.slice(NAMES_LIMITS.relations);
-	drop(leftPairs.length);
-	const relations: VerifiedRelation[] = keptPairs.map((p, i) => ({
-		id: `r${i + 1}`,
-		source: `e${p.source + 1}`,
-		target: `e${p.target + 1}`,
-		directed: false,
-		relation: SAME_SENTENCE_RELATION,
-		description: "",
-		keywords: [],
-		qualifiers: { negated: false, condition: null, certainty: "stated" },
-		evidence: p.spans.map(
-			(span) => evidenceOf(fragment, span) as EvidenceRange,
-		),
-	}));
-
 	return {
 		fragmentOrdinal: fragment.ordinal,
 		status: "ok",
 		entities,
-		relations,
+		relations: [],
 		dropped: [...dropped].map(([reason, count]) => ({ reason, count })),
 		model,
 	};

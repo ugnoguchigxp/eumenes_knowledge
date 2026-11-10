@@ -10,7 +10,6 @@ import {
 	fragmentStructures,
 	NAME_TYPES,
 	NAMES_LIMITS,
-	SAME_SENTENCE_RELATION,
 	TokenizerFailure,
 } from "./extract-names.js";
 import { createCharclassTokenizer } from "./names.js";
@@ -48,7 +47,7 @@ describe("model-free extraction of one fragment", () => {
 	test("names as entities, the model string, the types; the quotation is the sentence", () => {
 		const text = "# 設計\nLantern と ＭｙＳＱＬ を使う。\n\n日本語の説明。";
 		const x = extract(text);
-		expect(x.model).toBe("names:charclass@rules7");
+		expect(x.model).toBe("names:charclass@rules8");
 		expect(x.fragmentOrdinal).toBe(3);
 		expect(x.dropped).toEqual([]);
 		expect(
@@ -73,39 +72,18 @@ describe("model-free extraction of one fragment", () => {
 		]);
 	});
 
-	test("two names in one sentence are one undirected relation 同じ文, never across sentences", () => {
+	test("two names in one sentence make no relation (rules version 8, kg2.md §7.14)", () => {
 		const text =
 			"Lantern と MySQL を使う。Mira Okafor が書いた！ 次は Lantern と Mira Okafor。";
 		const x = extract(text);
-		const name = new Map(x.entities.map((e) => [e.id, e.name]));
 		// 「使」「書」「次」 are one character each: no name.
 		expect(x.entities.map((e) => e.name)).toEqual([
 			"Lantern",
 			"MySQL",
 			"Mira Okafor",
 		]);
-		const relations = x.relations.map((r) => ({
-			pair: [name.get(r.source), name.get(r.target)],
-			quotes: r.evidence.map((v) => quoteAt(text, v)),
-		}));
-		expect(relations).toEqual([
-			{ pair: ["Lantern", "MySQL"], quotes: ["Lantern と MySQL を使う。"] },
-			{
-				pair: ["Lantern", "Mira Okafor"],
-				quotes: ["次は Lantern と Mira Okafor。"],
-			},
-		]);
-		for (const r of x.relations) {
-			expect(r.relation).toBe(SAME_SENTENCE_RELATION);
-			expect(r.directed).toBe(false);
-			expect(r.description).toBe("");
-			expect(r.keywords).toEqual([]);
-			expect(r.qualifiers).toEqual({
-				negated: false,
-				condition: null,
-				certainty: "stated",
-			});
-		}
+		expect(x.relations).toEqual([]);
+		expect(x.dropped).toEqual([]);
 	});
 
 	test("one entity per name; a sentence once per entity; a repeated sentence is ambiguous", () => {
@@ -128,15 +106,12 @@ describe("model-free extraction of one fragment", () => {
 		expect(x.relations).toEqual([]);
 	});
 
-	test("at most four quotations per entity and per relation", () => {
+	test("at most four quotations per entity", () => {
 		const text = "Alpha と Beta。".repeat(6);
 		const x = extract(text);
 		expect(x.entities.map((e) => [e.name, e.evidence.length])).toEqual([
 			["Alpha", NAMES_LIMITS.evidencePerItem],
 			["Beta", NAMES_LIMITS.evidencePerItem],
-		]);
-		expect(x.relations.map((r) => r.evidence.length)).toEqual([
-			NAMES_LIMITS.evidencePerItem,
 		]);
 	});
 
@@ -152,24 +127,8 @@ describe("model-free extraction of one fragment", () => {
 		expect(x.dropped).toEqual([{ reason: "proper_over_limit", count: 20 }]);
 	});
 
-	test("relations beyond the limit are dropped, counted over_limit (an enumeration's pairs are no loss)", () => {
-		// 25 names in one sentence: 300 pairs.
-		const names = Array.from(
-			{ length: 25 },
-			(_, i) => `N${String(i).padStart(2, "0")}`,
-		);
-		const x = extract(`${names.join(" と ")}。`);
-		expect(x.entities).toHaveLength(25);
-		expect(x.relations).toHaveLength(NAMES_LIMITS.relations);
-		expect(x.relations.map((r) => r.id).at(-1)).toBe(
-			`r${NAMES_LIMITS.relations}`,
-		);
-		expect(x.dropped).toEqual([{ reason: "over_limit", count: 100 }]);
-	});
-
-	test("two common nouns make no relation; over the limit, pairs of two proper names are kept first", () => {
-		// 18 proper names (identifiers) and 6 common nouns (kanji) in one sentence: 153 pairs of two
-		// proper names, 108 of one proper name and 15 of two nouns (not relations).
+	test("an enumeration of many names in one sentence: every name, nothing dropped", () => {
+		// 18 proper names (identifiers) and 6 common nouns (kanji) in one sentence.
 		const K = "甲乙丙丁戊己";
 		const proper = Array.from(
 			{ length: 18 },
@@ -177,30 +136,15 @@ describe("model-free extraction of one fragment", () => {
 		);
 		const nouns = Array.from({ length: 6 }, (_, i) => `${K[i]}${K[i]}子`);
 		const x = extract(`${[...proper, ...nouns].join(" と ")}。`);
-		const name = new Map(x.entities.map((e) => [e.id, e]));
-		expect(x.relations).toHaveLength(NAMES_LIMITS.relations);
-		expect(x.dropped).toEqual([
-			{ reason: "over_limit", count: 153 + 108 - 200 },
+		expect(x.entities.map((e) => [e.name, e.type])).toEqual([
+			...proper.map((p) => [p, NAME_TYPES.proper]),
+			...nouns.map((n) => [n, NAME_TYPES.noun]),
 		]);
-		const count = x.relations.map(
-			(r) =>
-				Number(name.get(r.source)?.type === NAME_TYPES.proper) +
-				Number(name.get(r.target)?.type === NAME_TYPES.proper),
-		);
-		expect(count.filter((n) => n === 0)).toEqual([]);
-		expect(count.filter((n) => n === 2)).toHaveLength(153);
-		expect(count.slice(0, 153).every((n) => n === 2)).toBe(true);
-		// Among the pairs of one proper name, the first kept is the first pair of the sentence.
-		const first = x.relations[153];
-		expect([
-			name.get(first?.source ?? "")?.name,
-			name.get(first?.target ?? "")?.name,
-		]).toEqual([proper[0], nouns[0]]);
-		// Common nouns alone make no relation at all.
-		expect(extract("東京と大阪を比べる。").relations).toEqual([]);
+		expect(x.relations).toEqual([]);
+		expect(x.dropped).toEqual([]);
 	});
 
-	test("a long sentence is quoted by a window around the names; names too far apart are no relation", () => {
+	test("a long sentence is quoted by a window around each name", () => {
 		const filler = "あ".repeat(500);
 		const text = `Alpha と Beta${filler}Omega。`;
 		const x = extract(text);
@@ -210,12 +154,7 @@ describe("model-free extraction of one fragment", () => {
 			expect(quote?.length).toBeLessThanOrEqual(NAMES_LIMITS.quoteChars);
 			expect(quote).toContain(e.name);
 		}
-		const name = new Map(x.entities.map((e) => [e.id, e.name]));
-		expect(
-			x.relations.map((r) => [name.get(r.source), name.get(r.target)]),
-		).toEqual([["Alpha", "Beta"]]);
-		// Alpha–Omega and Beta–Omega cannot be quoted within the limit.
-		expect(x.dropped).toEqual([{ reason: "over_limit", count: 2 }]);
+		expect(x.dropped).toEqual([]);
 	});
 
 	test("a window never splits a surrogate pair", () => {
@@ -271,36 +210,14 @@ describe("model-free extraction of one fragment", () => {
 		expect(x.dropped).toEqual([{ reason: "over_limit", count: 12 }]);
 	});
 
-	test("one pair is one relation, whichever name comes first in each sentence", () => {
-		const text = "Lantern と MySQL を比べる。\nMySQL と Lantern は違う。";
-		const x = extract(text);
-		expect(x.entities.map((e) => [e.id, e.name])).toEqual([
-			["e1", "Lantern"],
-			["e2", "MySQL"],
-		]);
-		expect(x.relations).toHaveLength(1);
-		const [r] = x.relations;
-		expect([r?.source, r?.target]).toEqual(["e1", "e2"]);
-		expect(r?.evidence.map((v) => quoteAt(text, v))).toEqual([
-			"Lantern と MySQL を比べる。",
-			"MySQL と Lantern は違う。",
-		]);
-	});
-
-	test("two names of one key are no relation (they are one entity when read)", () => {
+	test("two surfaces of one key are two entities of one key (one entity when read)", () => {
 		const x = extract("GitHub と github と Lantern を使う。");
-		const name = new Map(x.entities.map((e) => [e.id, e.name]));
 		expect(x.entities.map((e) => [e.name, e.key])).toEqual([
 			["GitHub", "github"],
 			["github", "github"],
 			["Lantern", "lantern"],
 		]);
-		expect(
-			x.relations.map((r) => [name.get(r.source), name.get(r.target)]),
-		).toEqual([
-			["GitHub", "Lantern"],
-			["github", "Lantern"],
-		]);
+		expect(x.relations).toEqual([]);
 	});
 
 	test("a host's name that crosses a sentence end has no quotation (no_evidence)", () => {
@@ -370,7 +287,7 @@ describe("model-free extraction of one fragment", () => {
 				fragmentOrdinal: 3,
 				status: "failed",
 				errorCode: "invalid_tokens",
-				model: "names:wrong@rules7",
+				model: "names:wrong@rules8",
 			});
 		}
 	});
@@ -453,10 +370,9 @@ describe("what a fragment's limits leave out (kg2.md §7.10)", () => {
 
 	test("proper names beyond the limit are a loss (proper_over_limit); common nouns are not", () => {
 		const proper = Array.from({ length: 120 }, (_, i) => `N${i + 100}`);
-		// 20 names beyond the limit; the pairs of the 100 kept beyond the limit are over_limit.
+		// 20 names beyond the limit.
 		const x = dropped(`${proper.join(" ")}。`);
-		expect(x.proper_over_limit).toBe(20);
-		expect(x.over_limit).toBeGreaterThan(0);
+		expect(x).toEqual({ proper_over_limit: 20 });
 		// Common nouns (small letters in an English sentence) beyond the limit: over_limit only.
 		const letters = "abcdefghij";
 		const common = Array.from(
@@ -464,7 +380,7 @@ describe("what a fragment's limits leave out (kg2.md §7.10)", () => {
 			(_, i) => `zq${letters[Math.floor(i / 10)]}${letters[i % 10]}`,
 		);
 		const y = dropped(`Lantern ${common.join(" ")}.`);
-		expect(y.over_limit).toBeGreaterThanOrEqual(20);
+		expect(y.over_limit).toBeGreaterThan(0);
 		expect(y.proper_over_limit).toBeUndefined();
 	});
 });

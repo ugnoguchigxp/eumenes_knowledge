@@ -438,6 +438,50 @@ describe("readGraph", () => {
 		expect(new Set(g.edges.map((e) => e.edgeId)).size).toBe(3);
 	});
 
+	test("a relation whose ends are joined into one node is no edge (no loop)", async () => {
+		for (const decision of ["different", "same"] as const) {
+			const env = makeLinkEnv();
+			installExtraction(env);
+			env.decide = () => decision;
+			putDoc(env, 1, "Alpha Corp and Alpha Corp Japan are partners.", "wiki");
+			putDoc(env, 2, "Alpha Corp Japan alone.", "wiki");
+			putDoc(env, 3, "Alpha Corp alone.", "wiki");
+			await scanAndDrain(env);
+			const g = graph(env, ["wiki"]);
+			if (decision === "different") {
+				expect(g.nodes.length).toBeGreaterThan(1);
+				expect(g.edges).toHaveLength(1);
+			} else {
+				expect(g.nodes).toHaveLength(1);
+				expect(g.edges).toEqual([]);
+			}
+		}
+	});
+
+	test("minEdgeDocuments keeps the edges written in that many documents", async () => {
+		const env = makeLinkEnv();
+		installExtraction(env);
+		putDoc(env, 1, "Alpha Corp and Beta Ltd are partners.", "wiki");
+		putDoc(env, 2, "Alpha Corp and Beta Ltd sign a deal.", "wiki");
+		putDoc(env, 3, "Alpha Corp and Gamma Inc are partners.", "wiki");
+		await scanAndDrain(env);
+		const label = (g: GraphResponse) =>
+			new Map(g.nodes.map((n) => [n.nodeId, n.label]));
+		const ends = (g: GraphResponse) =>
+			g.edges.map((e) => [
+				label(g).get(e.source),
+				label(g).get(e.target),
+				e.documentCount,
+			]);
+		expect(ends(graph(env, ["wiki"]))).toEqual([
+			["Alpha Corp", "Beta Ltd", 2],
+			["Alpha Corp", "Gamma Inc", 1],
+		]);
+		expect(ends(graph(env, ["wiki"], { minEdgeDocuments: 2 }))).toEqual([
+			["Alpha Corp", "Beta Ltd", 2],
+		]);
+	});
+
 	test("nodes and edges are cut by the request; the answer says so", async () => {
 		const env = await populated();
 		const one = graph(env, ["wiki", "other"], { maxNodes: 1 });

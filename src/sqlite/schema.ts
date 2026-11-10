@@ -4,42 +4,6 @@
  * migration never changes; a change of the tables is a new entry. Times are epoch milliseconds
  * supplied by the caller.
  */
-/** Relation ids kept per pair and version (`first_ids`): as many as a graph quotes per edge. */
-export const RELATION_PAIR_FIRST_IDS = 3;
-
-/**
- * The rows of `knowledge_relation_pairs` for the versions `versions` selects (a constant SQL
- * fragment: a SELECT of version ids, or a parameter; never a value from outside): their relation
- * mentions whose two ends have identity keys, grouped by the pair of keys (an undirected one
- * smaller key first), direction, negation, certainty and relation name. Written when a version is
- * published; migration 7 holds the same statement as it was then (a migration never changes).
- */
-export const RELATION_PAIRS_OF = (versions: string): string =>
-	`INSERT INTO knowledge_relation_pairs (version_id, source_key, target_key, directed, negated, certainty,
- relation, mentions, first_ids)
-SELECT version_id, sk, tk, directed, negated, certainty, relation, COUNT(*),
- json_group_array(relation_id) FILTER (WHERE rn <= ${RELATION_PAIR_FIRST_IDS})
-FROM (
- SELECT r.version_id, r.relation_id, r.directed, r.qualifier_negated AS negated,
-  r.qualifier_certainty AS certainty, r.relation,
-  CASE WHEN r.directed = 0 AND t.name_key < s.name_key THEN t.name_key ELSE s.name_key END AS sk,
-  CASE WHEN r.directed = 0 AND t.name_key < s.name_key THEN s.name_key ELSE t.name_key END AS tk,
-  ROW_NUMBER() OVER (
-   PARTITION BY r.version_id,
-    CASE WHEN r.directed = 0 AND t.name_key < s.name_key THEN t.name_key ELSE s.name_key END,
-    CASE WHEN r.directed = 0 AND t.name_key < s.name_key THEN s.name_key ELSE t.name_key END,
-    r.directed, r.qualifier_negated, r.qualifier_certainty, r.relation
-   ORDER BY r.relation_id) AS rn
- FROM knowledge_relation_mentions r
- JOIN knowledge_entity_mentions s ON s.version_id = r.version_id
-  AND s.fragment_ordinal = r.fragment_ordinal AND s.local_id = r.source_local_id
- JOIN knowledge_entity_mentions t ON t.version_id = r.version_id
-  AND t.fragment_ordinal = r.fragment_ordinal AND t.local_id = r.target_local_id
- WHERE r.version_id IN (${versions})
-  AND s.name_key <> '' AND t.name_key <> '' AND s.name_key <> t.name_key
-)
-GROUP BY version_id, sk, tk, directed, negated, certainty, relation;`;
-
 export const migrations: readonly string[] = [
 	`CREATE TABLE knowledge_documents (
  source_namespace TEXT NOT NULL,
@@ -377,4 +341,8 @@ FROM (
   AND s.name_key <> '' AND t.name_key <> '' AND s.name_key <> t.name_key
 )
 GROUP BY version_id, sk, tk, directed, negated, certainty, relation;`,
+	// kg2.md §7.14: the model-free extractor makes no relation (rules version 8), and the graph
+	// by keys draws no edge: the pairs are read by nothing. A version of an older rules version is
+	// extracted again (G7); its relation mentions go with it.
+	`DROP TABLE knowledge_relation_pairs;`,
 ];
